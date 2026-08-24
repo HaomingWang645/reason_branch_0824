@@ -158,7 +158,26 @@ the render-validity guard (doc §5.5) remains necessary. **Adopted recipe:
 
 Full inference loop (gate → branch 5 views → token-confidence Top-2 prune with
 consensus early-stop → pose-tagged fusion), zero trained components; ~3.3 s per
-question on H100 (~2.5× the static memory condition). Full-benchmark run in
-progress; results to be appended.
+question on H100 (~2.5× the static memory condition). Full 5,130-question run:
 
-(frames12 / renders_only control columns and tree results pending)
+| condition | mean of types | 95% CI | Δ vs frames16 |
+|---|---|---|---|
+| tree (end-to-end, training-free) | 0.331 | [0.317, 0.345] | **+2.0 [+0.6, +3.3]** |
+| memory (static, for reference) | 0.333 | [0.320, 0.347] | +2.2 [+0.9, +3.6] |
+
+**Reading:** the untrained tree matches (does not yet beat) static all-evidence
+prompting overall, but with a different per-type profile that is highly
+informative for the trained stages:
+
+- It **fixes the object-size regression** (0.347 vs memory's 0.284 — above even
+  frames16's 0.334): pruning + direct-fallback avoids misleading renders.
+- It **loses the counting gain** (0.255 vs memory's 0.340): consensus early-stop
+  answers from one render instead of fusing all five.
+- Per-mode accuracy: direct 0.364 (n=325), branch_consensus 0.316 (n=2395),
+  fallback-direct 0.315 (n=1258), **fused 0.268 (n=1152 — the weakest path)**.
+
+The weak fused mode + weak token-confidence routing are precisely the doc's
+predictions H3/H4: untrained fusion hurts and answer-token probability is a poor
+branch score. This is the empirical justification for Stage II (rollout-trained
+confidence head) and Stage III (fusion training). An oracle per-question-type
+routing between memory and tree would already reach ≈0.35.
