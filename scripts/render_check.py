@@ -1,9 +1,11 @@
 """Renderer viability check (design doc's biggest unvalidated assumption).
 
-Protocol: one VGGT pass on 16 frames per scene. Build the point cloud from the
-8 even-indexed frames only, then render at the 8 odd-indexed (held-out) camera
-poses and compare against the real frames (PSNR + SSIM). Also saves example
-overview renders for qualitative inspection.
+Protocol: 16 uniformly sampled eval frames are held out and NEVER contribute
+points; a separate set of --num-frames source frames (uniform, half-step offset)
+builds the point cloud. One VGGT pass runs on [eval + source] so all cameras
+share a coordinate frame. We render at the odd 8 eval poses and compare with the
+real frames (PSNR, covered-pixel PSNR, SSIM, coverage). Eval poses are identical
+across --num-frames settings, so results are directly comparable.
 """
 import argparse
 import json
@@ -40,6 +42,8 @@ def ssim(a, b):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenes-per-dataset", type=int, default=20)
+    ap.add_argument("--num-frames", type=int, default=16)
+    ap.add_argument("--splat", type=int, default=1)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,23 +59,33 @@ def main():
         names = sorted(scenes)[: args.scenes_per_dataset]
         for si, name in enumerate(names):
             try:
-                frames = sample_frames(scenes[name], 16)
+                N = args.num_frames
+                NE = 16
+                allf = sample_frames(scenes[name], 257)  # fixed dense pool
+                total = len(allf)
+                eval_idx = np.linspace(0, total - 1, NE).round().astype(int)
+                half = (total - 1) / (2 * N)
+                src_idx = (np.linspace(0, total - 1 - 2 * half, N) + half).round().astype(int)
+                src_idx = np.array([i + 1 if i in set(eval_idx) else i for i in src_idx])
+                frames = [allf[i] for i in eval_idx] + [allf[i] for i in src_idx]
                 rec = reconstruct(frames)
                 H, W = rec["size"]
                 K = rec["intrinsics"][0]
-                src = torch.arange(0, 16, 2)
+                src = torch.arange(NE, NE + N)
                 m = rec["mask_maps"][src]
                 pts = rec["world_maps"][src][m]
                 cols = rec["color_maps"][src][m]
                 res = {"dataset": ds, "scene": name, "views": []}
-                for j in range(1, 16, 2):
+                for j in range(1, NE, 2):
                     img = render(pts, cols, rec["extrinsics"][j], rec["intrinsics"][j],
-                                 H, W, splat=1)
+                                 H, W, splat=args.splat)
                     img8 = (img.clamp(0, 1) * 255).byte().cpu().numpy()
                     real = (rec["color_maps"][j].clamp(0, 1) * 255).byte().cpu().numpy()
-                    cov = float((img8 != 255).any(-1).mean())
+                    covmask = (img8 != 255).any(-1)
+                    cov = float(covmask.mean())
+                    mpsnr = psnr(img8[covmask], real[covmask]) if covmask.any() else 0.0
                     res["views"].append({
-                        "frame": j, "psnr": psnr(img8, real),
+                        "frame": j, "psnr": psnr(img8, real), "masked_psnr": mpsnr,
                         "ssim": float(ssim(img8, real)), "coverage": cov,
                     })
                     if si == 0 and j == 7:
@@ -82,7 +96,8 @@ def main():
                 # qualitative overview renders from the full cloud
                 if si < 3:
                     for vi, pose in enumerate(overview_poses(rec)):
-                        img = render(rec["points"], rec["colors"], pose, K, H, W, splat=1)
+                        img = render(rec["points"], rec["colors"], pose, K, H, W,
+                                     splat=args.splat)
                         img8 = (img.clamp(0, 1) * 255).byte().cpu().numpy()
                         cv2.imwrite(f"{exdir}/{ds}_{name}_overview{vi}.png",
                                     cv2.cvtColor(img8, cv2.COLOR_RGB2BGR))
