@@ -203,6 +203,28 @@ patterns only; (b) answer supervision uses ground truth, never teacher text;
 (c) all-wrong ladders are excluded from control supervision; (d) the student
 (7B) ladder on MindCube tinybench is being measured as the pre-SFT baseline.
 
+### 7.6 Stage I SFT outcome: cross-view integration learned, control de-degenerated
+
+LoRA SFT (1 epoch, 16.8k examples, final loss ≈0.2). MindCube tinybench
+evidence-ladder accuracy, paired pre/post:
+
+| state | pre-SFT | post-SFT | paired Δ (95% CI) |
+|---|---|---|---|
+| s1 (1 view) | 0.343 | 0.533 | +0.190 [+0.152, +0.228] |
+| s4 (all views) | 0.255 | 0.508 | **+0.253 [+0.197, +0.306]** |
+| s4+render | 0.260 | 0.494 | +0.234 [+0.183, +0.285] |
+
+The more-views-degradation is nearly eliminated: pre-SFT lost 8.8 pts from
+s1→s4; post-SFT loses 2.5. The biggest gain is exactly at the multi-view states
+— SFT taught cross-view integration, not just answer formatting (though
+same-distribution adaptation contributes; the *pattern* change is the signal).
+
+Control probe (STOP/MOVE/RENDER at each state): the base model is **degenerate
+— 100% STOP everywhere**. The SFT controller produces a state-dependent policy:
+24–43% MOVE at partial-evidence states, 98% STOP at full evidence. RENDER is
+never emitted (only 2.5% of control training examples — rebalance in the next
+data round). Not yet calibrated, but a real learned policy where none existed.
+
 ## 8. Stage I training setup (added)
 
 LoRA (r=16, α=32, LM-only, vision tower frozen) on Qwen2.5-VL-7B; loss on

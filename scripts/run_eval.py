@@ -64,6 +64,7 @@ def main():
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="Qwen/Qwen2.5-VL-7B-Instruct")
+    ap.add_argument("--adapter", default=None)
     ap.add_argument("--limit-scenes", type=int, default=0)
     ap.add_argument("--render-cache", default=None)
     args = ap.parse_args()
@@ -91,7 +92,7 @@ def main():
             except Exception:
                 pass
 
-    vlm = QwenVL(args.model)
+    vlm = QwenVL(args.model, adapter=args.adapter)
     fout = open(args.out, "a")
     t0 = time.time()
     n_done = 0
