@@ -47,9 +47,11 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="Qwen/Qwen2.5-VL-32B-Instruct")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--split", default="MindCube_train")
+    ap.add_argument("--adapter", default=None)
     args = ap.parse_args()
 
-    rows = [json.loads(l) for l in open(os.path.join(MC_ROOT, "raw", "MindCube_train.jsonl"))]
+    rows = [json.loads(l) for l in open(os.path.join(MC_ROOT, "raw", args.split + ".jsonl"))]
     rows = rows[args.shard::args.num_shards]
     if args.limit:
         rows = rows[:args.limit]
@@ -67,7 +69,7 @@ def main():
     from viewtree.reconstruct import reconstruct
     from viewtree.render import overview_poses, render
 
-    vlm = QwenVL(args.model)
+    vlm = QwenVL(args.model, adapter=args.adapter)
     fout = open(args.out, "a")
     t0 = time.time()
     for ri, r in enumerate(rows):

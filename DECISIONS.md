@@ -181,3 +181,33 @@ predictions H3/H4: untrained fusion hurts and answer-token probability is a poor
 branch score. This is the empirical justification for Stage II (rollout-trained
 confidence head) and Stage III (fusion training). An oracle per-question-type
 routing between memory and tree would already reach ≈0.35.
+
+### 7.4 memory32 (better renderer recipe): no accuracy gain — negative result
+
+memory32 (32-frame reconstruction, splat-2 renders) = 0.331 [0.315, 0.346] ≈
+memory (0.333). **Render coverage is not the accuracy bottleneck at this
+operating point**; the 16-frame recipe is kept for QA (half the reconstruction
+cost), and the 32-frame recipe matters only if later stages show render-limited
+failures.
+
+### 7.5 Stage I teacher-ladder audit (doc §6.8): teacher is weak on cross-view integration
+
+10k-item outcome ladders (Qwen2.5-VL-32B on MindCube train; state = growing
+evidence): accuracy *decreases* with more views — s1 0.412, s2 0.385, s3 0.380,
+s4 0.371, s4+render 0.385 (4-choice, chance 0.25). "MOVE harmful" (correct→
+wrong when adding views: 1061) outnumbers "MOVE needed" (808); the top-down
+render is net-positive at s4 (+350/−258). ~32% of ladders are all-wrong.
+
+**Consequences adopted:** (a) SFT control labels come from ladder outcome
+patterns only; (b) answer supervision uses ground truth, never teacher text;
+(c) all-wrong ladders are excluded from control supervision; (d) the student
+(7B) ladder on MindCube tinybench is being measured as the pre-SFT baseline.
+
+## 8. Stage I training setup (added)
+
+LoRA (r=16, α=32, LM-only, vision tower frozen) on Qwen2.5-VL-7B; loss on
+target tokens only; examples = control decisions (STOP/MOVE/RENDER) + GT-letter
+answers at the ladder's first-correct state; bf16, grad-accum 16, cosine LR
+1e-4, 1 epoch, multi-GPU data parallel. Scripts: `build_sft.py`,
+`render_train_views.py`, `train_sft.py`; post-SFT eval reuses `gen_traj.py
+--adapter` on tinybench.

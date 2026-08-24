@@ -9,12 +9,16 @@ NUM_SUFFIX = "Do not respond with anything other than a single number!"
 
 class QwenVL:
     def __init__(self, model_path="Qwen/Qwen2.5-VL-7B-Instruct", device="cuda",
-                 max_pixels=448 * 448):
+                 max_pixels=448 * 448, adapter=None):
         from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_path, dtype=torch.bfloat16, attn_implementation="sdpa"
         ).to(device).eval()
+        if adapter:
+            from peft import PeftModel
+
+            self.model = PeftModel.from_pretrained(self.model, adapter).eval()
         self.processor = AutoProcessor.from_pretrained(model_path)
         self.device = device
         self.max_pixels = max_pixels
