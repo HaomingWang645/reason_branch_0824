@@ -126,7 +126,9 @@ any system), rel_direction_hard 0.260 retains part of the SFT transfer.
 Six annotated real traces (branch views, confidences, prune/arbitrate decisions,
 three successes + three instructive failures):
 https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
-(regenerate with `scripts/trace_examples.py`).
+(regenerate with `scripts/trace_examples.py`). Static figures — scoreboard,
+SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
+(`figures/viewtree_traces.html` is the interactive version).
 
 ## 6. Renderer study (held-out novel views, fixed eval poses, 30 scenes)
 
