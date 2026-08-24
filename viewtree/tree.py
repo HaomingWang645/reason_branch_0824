@@ -93,19 +93,41 @@ def build_q(row):
     return row["question"] + "\n" + NUM_SUFFIX
 
 
+def load_conf_head(path, device="cuda"):
+    import torch.nn as nn
+
+    ck = torch.load(path, map_location=device, weights_only=False)
+    head = nn.Sequential(nn.Linear(3584, 512), nn.GELU(), nn.Dropout(0.1),
+                         nn.Linear(512, 1)).to(device)
+    head.load_state_dict(ck["head"])
+    head.eval()
+    T = float(ck["T"])
+    return lambda feat: float(torch.sigmoid(
+        head(feat.to(device).float()[None]).squeeze() / T))
+
+
 @torch.no_grad()
-def run_tree(vlm, row, frames, rec, keep_k=2, num_branches=5, splat=2):
-    """Returns (pred, trace)."""
+def run_tree(vlm, row, frames, rec, keep_k=2, num_branches=5, splat=2,
+             conf=None):
+    """Returns (pred, trace). conf: optional feature->probability scorer
+    (trained confidence head); falls back to token log-prob when None."""
     trace = {"branches": []}
     qtext = build_q(row)
     base = [frames[i] for i in np.linspace(0, len(frames) - 1, 8).round().astype(int)]
+
+    def scored_answer(images, prompt):
+        if conf is None:
+            pred, lp = answer_logprob(vlm, images, prompt)
+            return pred, lp
+        pred, lp, ft = answer_logprob(vlm, images, prompt, want_feature=True)
+        return pred, conf(ft)
 
     # 1. root gate: STOP vs explore
     gate, _ = answer_logprob(vlm, base, ROOT_GATE.format(q=row["question"]),
                              max_new_tokens=4)
     trace["gate"] = gate.strip()
-    direct_pred, direct_lp = answer_logprob(
-        vlm, base, "These are frames of a video.\n" + qtext)
+    direct_pred, direct_lp = scored_answer(
+        base, "These are frames of a video.\n" + qtext)
     if "YES" in gate.upper():
         trace["mode"] = "direct"
         return direct_pred, trace
@@ -123,7 +145,7 @@ def run_tree(vlm, row, frames, rec, keep_k=2, num_branches=5, splat=2):
     scored = []
     for vi, v in enumerate(views):
         pre = BRANCH_PRE.format(k=len(base), desc=VIEW_DESCS[vi])
-        pred, lp = answer_logprob(vlm, base + [v], pre + qtext)
+        pred, lp = scored_answer(base + [v], pre + qtext)
         scored.append({"view": vi, "pred": pred, "logprob": lp})
     trace["branches"] = scored
 
@@ -140,7 +162,7 @@ def run_tree(vlm, row, frames, rec, keep_k=2, num_branches=5, splat=2):
     kept_views = [views[scored[i]["view"]] for i in kept]
     descs = ", ".join(VIEW_DESCS[scored[i]["view"]] for i in kept)
     pre = FUSE_PRE.format(k=len(base), m=len(kept_views), descs=descs)
-    fuse_pred, fuse_lp = answer_logprob(vlm, base + kept_views, pre + qtext)
+    fuse_pred, fuse_lp = scored_answer(base + kept_views, pre + qtext)
     trace["mode"] = "fused"
     trace["fuse_logprob"] = fuse_lp
     # final selection: best confidence among fuse and direct

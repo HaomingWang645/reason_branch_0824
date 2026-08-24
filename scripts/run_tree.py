@@ -21,6 +21,8 @@ def main():
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="Qwen/Qwen2.5-VL-7B-Instruct")
+    ap.add_argument("--adapter", default=None)
+    ap.add_argument("--conf-head", default=None)
     ap.add_argument("--num-frames", type=int, default=32)
     ap.add_argument("--keep-k", type=int, default=2)
     ap.add_argument("--limit-scenes", type=int, default=0)
@@ -49,7 +51,11 @@ def main():
     import torch
     from viewtree.reconstruct import reconstruct
 
-    vlm = QwenVL(args.model)
+    vlm = QwenVL(args.model, adapter=args.adapter)
+    conf = None
+    if args.conf_head:
+        from viewtree.tree import load_conf_head
+        conf = load_conf_head(args.conf_head)
     fout = open(args.out, "a")
     t0 = time.time()
     for si, (key, qrows) in enumerate(sorted(by_scene.items())):
@@ -68,7 +74,7 @@ def main():
             continue
         for r in qrows:
             try:
-                pred, trace = run_tree(vlm, r, frames, rec, keep_k=args.keep_k)
+                pred, trace = run_tree(vlm, r, frames, rec, keep_k=args.keep_k, conf=conf)
             except Exception:
                 traceback.print_exc()
                 pred, trace = "", {"mode": "error"}
