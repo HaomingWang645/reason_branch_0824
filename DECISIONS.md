@@ -243,6 +243,32 @@ questions, so ordering skill eroded slightly; Stage-II/III data should mix a
 temporal slice. sft_memory − memory overall is +0.3 (not significant); the gain
 is compositional, not uniform.
 
+### 7.8 Stage II confidence head: H4 confirmed
+
+Data: 45,743 states from on-policy (SFT) ladders over the 10k train items
+(3584-d last-token hidden features; label = eventual correctness from that
+state; positive rate 0.633). Group-level 80/10/10 split; MLP 3584→512→1;
+temperature T=0.95 fitted on the calibration split.
+
+| metric (held-out groups) | trained head | token-logprob |
+|---|---|---|
+| eventual-correctness AUROC | **0.907** | 0.751 |
+| Brier | 0.117 | — |
+| ECE (10-bin) | 0.019 | — |
+| state-selection accuracy | **0.568** | 0.530 |
+
+(oracle selection 0.820, fixed last-state 0.523.) The trained, calibrated head
+ranks partial-trajectory success far better than answer-token probability —
+the doc's H4, confirmed at the first attempt. Checkpoint:
+`checkpoints/conf_head.pt`; on-policy ladders are flat (~0.51 across states),
+so labels are not depth-confounded (§6.8 balance check).
+
+### 7.9 Trained end-to-end system (SFT adapter + confidence head in the tree)
+
+Full VSI-Bench run launched: `run_tree.py --adapter --conf-head` — branch
+scoring, consensus check, prune, and fuse/direct selection all driven by the
+calibrated head instead of token log-prob. Results to be appended.
+
 ## 8. Stage I training setup (added)
 
 LoRA (r=16, α=32, LM-only, vision tower frozen) on Qwen2.5-VL-7B; loss on
