@@ -26,7 +26,7 @@ scene-disjoint from all evaluation). Last updated: 2026-08-24 ~15:00.
 | 8 | sft_frames16 (Stage I adapter) | 0.326 | [0.311, 0.341] | **+1.5 [+0.4, +2.7]** |
 | 9 | **sft_memory (Stage I adapter + renders)** | **0.336** | [0.323, 0.349] | **+2.5 [+1.1, +4.0]** |
 | 10 | teacher 32B frames16 (upper reference) | 0.386 | [0.371, 0.403] | +7.5 [+5.7, +9.5] |
-| 11 | trained tree (SFT adapter + conf head) | *running* | — | — |
+| 11 | trained tree (SFT adapter + conf head) | 0.329 | [0.315, 0.344] | **+1.8 [+0.4, +3.3]** |
 
 ## 2. Design-doc hypothesis checks
 
@@ -82,7 +82,18 @@ depth (~0.51) → labels not depth-confounded.
 | system | score | notes |
 |---|---|---|
 | ViewTree-lite (training-free) | 0.331 | matches static memory; fixes size regression (0.347) via fallback, loses counting gain (0.255) via premature consensus; ~3.3 s/question (~2.5× static) |
-| **Trained tree (SFT adapter + calibrated head)** | *running, ETA ~15:30* | head drives branch scoring, consensus, pruning, fuse/direct selection |
+| Trained tree (SFT adapter + calibrated head) | 0.329 | beats frames16 (+1.8 [+0.4, +3.3]) but does **not** beat the untrained tree (0.331) or static sft_memory (0.336) |
+
+**Trained-tree diagnosis (honest negative-ish result):** in-domain-validated
+components did not compose into cross-domain end-to-end gains. Per-mode:
+fused **0.258** (still the weakest path — the head cannot fix fusion itself),
+direct 0.359 (n=928, up from 325 — the SFT gate stops more), consensus 0.294
+(rate and accuracy both down). Two causes identified: (a) **fusion remains
+untrained** — the doc's Stage III is confirmed as the critical path; (b) the
+confidence head was trained on MindCube-domain states and applied to VSI-Bench
+render-branch states — the §6.4 warning that calibration must be re-checked per
+condition, surfacing operationally. Bright spots: route_planning 0.335 (best of
+any system), rel_direction_hard 0.260 retains part of the SFT transfer.
 
 ## 6. Renderer study (held-out novel views, fixed eval poses, 30 scenes)
 
@@ -96,8 +107,10 @@ depth (~0.51) → labels not depth-confounded.
 
 ## 7. Next milestones
 
-1. Trained-tree VSI-Bench result (running) → §5.
-2. Stage III fusion training (complementary/redundant/distractor sets from
-   ladders) — targets the fused-mode weakness.
-3. Control-data rebalance (RENDER share, temporal slice) → SFT v2.
+1. ~~Trained-tree VSI-Bench result~~ → §5 (done; fusion confirmed as critical path).
+2. **Stage III / SFT v2 (in progress):** rebuild SFT data from *on-policy*
+   ladders with fusion-specific examples (complementary sets where no single
+   view suffices), boosted RENDER share, redundant/distractor robustness;
+   retrain LoRA; re-eval ladder + VSI transfer + tree.
+3. Confidence-head domain adaptation (add VSI-style states to head training).
 4. Stage IV resource-constrained GRPO (doc §6.6) — after III.
