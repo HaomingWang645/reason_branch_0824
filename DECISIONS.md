@@ -111,6 +111,22 @@ MRA (numerical). Headline = mean over the 10 question types.
 memory − frames16 = **+2.2 pts, 95% CI [+0.9, +3.6]** (paired scene bootstrap,
 B=2000) → reconstructed novel views add information beyond raw frames.
 
+Controls (full 5,130-question paired run):
+
+| condition | mean of types | 95% CI | Δ vs frames16 |
+|---|---|---|---|
+| frames12 (same frame count as memory) | 0.316 | [0.303, 0.329] | +0.5 [−0.3, +1.4] |
+| renders_only (5 rendered views, no frames) | 0.301 | [0.287, 0.316] | −1.0 [−2.7, +0.7] |
+
+Two conclusions the doc needs: (a) the memory gain is **not a frame-count
+effect** — frames12 ≈ frames16, so the +1.7 pts of memory over frames12 comes
+from the renders; (b) **5 rendered views alone ≈ 16 real frames overall**, and
+the two carry *complementary* information: renders_only is far better on
+object_rel_direction_hard (0.343 vs 0.217) and object_abs_distance (0.166 vs
+0.087) — allocentric/metric structure — while frames are better on
+room_size/object_size (appearance-scale). The combined condition wins overall,
+which is exactly the complementary-evidence premise behind branch-and-fuse (H3).
+
 Per-type deltas (memory − frames16): object_counting **+9.5**, room_size **+3.4**,
 rel_direction easy/medium/hard **+8.8/+1.4/+3.0**, route_planning +2.1,
 obj_appearance_order −0.3, object_rel_distance −1.0, object_abs_distance +0.7,
@@ -128,7 +144,8 @@ source-frame count varies; 30 scenes):
 | 16 | 1 | 0.654 | 16.1 dB | 10.0 dB |
 | 32 | 1 | 0.816 | 16.6 dB | 12.0 dB |
 | 48 | 1 | 0.869 | 16.5 dB | 12.7 dB |
-| 32 | 2 | ~0.80 | 17.4 dB | 12.0 dB |
+| 16 | 2 | 0.678 | 15.9 dB | 10.2 dB |
+| 32 | 2 | 0.833 | 16.4 dB | 12.2 dB |
 
 **Answer to "can sampling rate fix it": largely yes.** Coverage holes are the
 failure mode, not wrong colors (covered-pixel PSNR is stable ~16–17 dB).
