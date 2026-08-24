@@ -225,6 +225,24 @@ Control probe (STOP/MOVE/RENDER at each state): the base model is **degenerate
 never emitted (only 2.5% of control training examples — rebalance in the next
 data round). Not yet calibrated, but a real learned policy where none existed.
 
+### 7.7 Cross-domain transfer of Stage I SFT (MindCube → VSI-Bench): POSITIVE
+
+Full paired VSI-Bench run with the MindCube-trained adapter:
+
+| condition | mean of types | Δ vs base frames16 |
+|---|---|---|
+| sft_frames16 | 0.326 | **+1.5 [+0.4, +2.7]** |
+| sft_memory | **0.336** (best condition so far) | +2.5 [+1.1, +4.0] |
+
+Cross-view SFT on one domain transfers to egocentric-video spatial QA rather
+than overfitting to MindCube's format. The standout transfer:
+object_rel_direction_hard with memory+SFT reaches **0.330 vs 0.247** base —
+perspective-taking training moved the hardest perspective questions (+8.3).
+Cost: obj_appearance_order fell (0.256 vs 0.311) — MindCube has no temporal
+questions, so ordering skill eroded slightly; Stage-II/III data should mix a
+temporal slice. sft_memory − memory overall is +0.3 (not significant); the gain
+is compositional, not uniform.
+
 ## 8. Stage I training setup (added)
 
 LoRA (r=16, α=32, LM-only, vision tower frozen) on Qwen2.5-VL-7B; loss on

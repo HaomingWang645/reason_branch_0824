@@ -43,7 +43,14 @@ VIEW_DESCS = [
 
 
 @torch.no_grad()
-def answer_logprob(vlm, images, prompt, max_new_tokens=32):
+def state_feature(vlm, inputs):
+    """Last-layer hidden state of the final prompt token (confidence feature)."""
+    out = vlm.model(**inputs, output_hidden_states=True)
+    return out.hidden_states[-1][0, -1].float().cpu()
+
+
+@torch.no_grad()
+def answer_logprob(vlm, images, prompt, max_new_tokens=32, want_feature=False):
     """Greedy answer + mean token log-prob (training-free confidence)."""
     from qwen_vl_utils import process_vision_info
     from PIL import Image
@@ -74,7 +81,10 @@ def answer_logprob(vlm, images, prompt, max_new_tokens=32):
         if tok == vlm.processor.tokenizer.eos_token_id:
             break
     pred = vlm.processor.decode(seq, skip_special_tokens=True)
-    return pred, float(np.mean(lps)) if lps else -99.0
+    mean_lp = float(np.mean(lps)) if lps else -99.0
+    if want_feature:
+        return pred, mean_lp, state_feature(vlm, inputs)
+    return pred, mean_lp
 
 
 def build_q(row):

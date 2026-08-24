@@ -49,6 +49,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--split", default="MindCube_train")
     ap.add_argument("--adapter", default=None)
+    ap.add_argument("--features-out", default=None)
     args = ap.parse_args()
 
     rows = [json.loads(l) for l in open(os.path.join(MC_ROOT, "raw", args.split + ".jsonl"))]
@@ -69,6 +70,8 @@ def main():
     from viewtree.reconstruct import reconstruct
     from viewtree.render import overview_poses, render
 
+    if args.features_out:
+        os.makedirs(args.features_out, exist_ok=True)
     vlm = QwenVL(args.model, adapter=args.adapter)
     fout = open(args.out, "a")
     t0 = time.time()
@@ -79,8 +82,14 @@ def main():
             q = r["question"] + SUFFIX
             n = len(imgs)
             states = {}
+            feats = {}
             for k in range(1, n + 1):
-                pred, lp = answer_logprob(vlm, imgs[:k], PRE + q, max_new_tokens=8)
+                if args.features_out:
+                    pred, lp, ft = answer_logprob(vlm, imgs[:k], PRE + q,
+                                                  max_new_tokens=8, want_feature=True)
+                    feats[f"s{k}"] = ft.half()
+                else:
+                    pred, lp = answer_logprob(vlm, imgs[:k], PRE + q, max_new_tokens=8)
                 states[f"s{k}"] = {"pred": pred, "lp": lp,
                                    "correct": letter(pred) == r["gt_answer"]}
             # rendered top-down from all views
@@ -91,8 +100,14 @@ def main():
                 img = render(rec["points"], rec["colors"], pose,
                              rec["intrinsics"][0], H, W, splat=2)
                 td = (img.clamp(0, 1) * 255).byte().cpu().numpy()
-                pred, lp = answer_logprob(vlm, imgs + [td],
-                                          PRE_R.format(k=n) + q, max_new_tokens=8)
+                if args.features_out:
+                    pred, lp, ft = answer_logprob(vlm, imgs + [td],
+                                                  PRE_R.format(k=n) + q,
+                                                  max_new_tokens=8, want_feature=True)
+                    feats[f"s{n}r"] = ft.half()
+                else:
+                    pred, lp = answer_logprob(vlm, imgs + [td],
+                                              PRE_R.format(k=n) + q, max_new_tokens=8)
                 states[f"s{n}r"] = {"pred": pred, "lp": lp,
                                     "correct": letter(pred) == r["gt_answer"]}
                 del rec
@@ -100,6 +115,8 @@ def main():
             except Exception:
                 states[f"s{n}r"] = {"pred": "", "lp": -99.0, "correct": False,
                                     "error": "render_failed"}
+            if args.features_out and feats:
+                torch.save(feats, os.path.join(args.features_out, f"{r['id']}.pt"))
             fout.write(json.dumps({
                 "id": r["id"], "gt": r["gt_answer"], "n_views": n,
                 "category": os.path.dirname(r["images"][0]).split("/")[1]
