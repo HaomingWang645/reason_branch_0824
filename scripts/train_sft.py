@@ -70,7 +70,7 @@ def main():
     processor = AutoProcessor.from_pretrained(args.model)
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         args.model, dtype=torch.bfloat16, attn_implementation="sdpa").to(device)
-    model.visual.requires_grad_(False)
+    model.model.visual.requires_grad_(False)
     lcfg = LoraConfig(
         r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
