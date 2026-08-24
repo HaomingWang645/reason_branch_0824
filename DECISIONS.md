@@ -97,4 +97,51 @@ results/                # jsonl predictions + metrics + example renders
 
 ## 7. Results
 
-(to be filled in as runs complete)
+### 7.1 RQ1 — explicit-memory views vs frame prompting (design doc §9.2 check #1): PASS
+
+Qwen2.5-VL-7B, full VSI-Bench (5,130 questions), paired. Score = accuracy (MC) /
+MRA (numerical). Headline = mean over the 10 question types.
+
+| condition | mean of types | scene-bootstrap 95% CI |
+|---|---|---|
+| current (1 frame) | 0.266 | [0.252, 0.280] |
+| frames16 | 0.311 | [0.297, 0.325] |
+| **memory (12 frames + 5 rendered views)** | **0.333** | **[0.320, 0.347]** |
+
+memory − frames16 = **+2.2 pts, 95% CI [+0.9, +3.6]** (paired scene bootstrap,
+B=2000) → reconstructed novel views add information beyond raw frames.
+
+Per-type deltas (memory − frames16): object_counting **+9.5**, room_size **+3.4**,
+rel_direction easy/medium/hard **+8.8/+1.4/+3.0**, route_planning +2.1,
+obj_appearance_order −0.3, object_rel_distance −1.0, object_abs_distance +0.7,
+object_size_estimation **−5.0** (splat rendering distorts apparent object scale —
+motivates doc §5.7's warning that renders can mislead; a FUSE-trained model or
+size-question gating should recover this).
+
+### 7.2 Renderer viability (blocker #2): VIABLE, with a measured recipe
+
+Held-out novel-view protocol (fixed 16 eval poses excluded from the cloud; only
+source-frame count varies; 30 scenes):
+
+| source frames | splat | coverage | covered-pixel PSNR | overall PSNR |
+|---|---|---|---|---|
+| 16 | 1 | 0.654 | 16.1 dB | 10.0 dB |
+| 32 | 1 | 0.816 | 16.6 dB | 12.0 dB |
+| 48 | 1 | 0.869 | 16.5 dB | 12.7 dB |
+| 32 | 2 | ~0.80 | 17.4 dB | 12.0 dB |
+
+**Answer to "can sampling rate fix it": largely yes.** Coverage holes are the
+failure mode, not wrong colors (covered-pixel PSNR is stable ~16–17 dB).
+16→32 frames closes most of the gap; 32→48 has diminishing returns. The
+residual ~13–18% is never-observed geometry, which no sampling rate can fix —
+the render-validity guard (doc §5.5) remains necessary. **Adopted recipe:
+32 source frames, splat 2.**
+
+### 7.3 End-to-end training-free system (ViewTree-lite)
+
+Full inference loop (gate → branch 5 views → token-confidence Top-2 prune with
+consensus early-stop → pose-tagged fusion), zero trained components; ~3.3 s per
+question on H100 (~2.5× the static memory condition). Full-benchmark run in
+progress; results to be appended.
+
+(frames12 / renders_only control columns and tree results pending)
