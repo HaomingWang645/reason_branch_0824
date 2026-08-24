@@ -27,6 +27,8 @@ scene-disjoint from all evaluation). Last updated: 2026-08-24 ~15:00.
 | 9 | **sft_memory (Stage I adapter + renders)** | **0.336** | [0.323, 0.349] | **+2.5 [+1.1, +4.0]** |
 | 10 | teacher 32B frames16 (upper reference) | 0.386 | [0.371, 0.403] | +7.5 [+5.7, +9.5] |
 | 11 | trained tree (SFT adapter + conf head) | 0.329 | [0.315, 0.344] | **+1.8 [+0.4, +3.3]** |
+| 12 | **sft2_memory (Stage III adapter + renders)** | **0.340** | [0.326, 0.355] | **+2.9 [+1.4, +4.6]** |
+| 13 | tree v3 (Stage III adapter + conf head) | *running* | — | — |
 
 ## 2. Design-doc hypothesis checks
 
@@ -61,6 +63,29 @@ MindCube tinybench evidence ladder, paired pre/post:
   VSI-Bench frames16; sft_memory best overall (0.336); hard perspective
   questions 0.330 vs 0.247. Cost: appearance-order −5 pts (no temporal
   questions in MindCube — mix a temporal slice next round).
+
+## 3b. Stage III — SFT v2 with fusion training (22.9k examples, on-policy)
+
+Added families: 1,605 complementary-fusion (single view fails, full evidence
+succeeds), 1,040 redundant-robustness. Tinybench ladder, paired v2 − v1:
+
+| state | pre-SFT | v1 | v2 | paired v2−v1 (95% CI) |
+|---|---|---|---|---|
+| 1 view | 0.343 | 0.533 | 0.532 | −0.001 (n.s.) |
+| 2 views | 0.330 | 0.519 | 0.544 | +0.025 [+0.009, +0.041] |
+| 3 views | 0.320 | 0.523 | 0.559 | +0.036 [+0.018, +0.055] |
+| all views | 0.255 | 0.508 | **0.575** | **+0.067 [+0.039, +0.095]** |
+| all + render | 0.260 | 0.494 | 0.557 | +0.063 [+0.035, +0.090] |
+
+**The gain grows monotonically with evidence — the fusion-targeted signature.**
+The evidence gradient is now positive (more views help: 0.532→0.575); total
+improvement at the fused state is +32 pts over the base model. Control policy
+is now monotone (STOP 66%→100% as evidence grows; v1 was non-monotone); RENDER
+still never emitted (278 examples remain too few).
+
+**Cross-domain: `sft2_memory` = 0.340 [0.326, 0.355] — new best** (scoreboard:
+base 0.311 → sft v1 0.336 → sft v2 0.340; +2.9 [+1.4, +4.6] over baseline).
+Monotone improvement across SFT rounds transfers to VSI-Bench.
 
 ## 4. Stage II — confidence head
 
