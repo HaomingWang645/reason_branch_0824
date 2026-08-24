@@ -28,7 +28,7 @@ scene-disjoint from all evaluation). Last updated: 2026-08-24 ~15:00.
 | 10 | teacher 32B frames16 (upper reference) | 0.386 | [0.371, 0.403] | +7.5 [+5.7, +9.5] |
 | 11 | trained tree (SFT adapter + conf head) | 0.329 | [0.315, 0.344] | **+1.8 [+0.4, +3.3]** |
 | 12 | **sft2_memory (Stage III adapter + renders)** | **0.340** | [0.326, 0.355] | **+2.9 [+1.4, +4.6]** |
-| 13 | tree v3 (Stage III adapter + conf head) | *running* | — | — |
+| 13 | tree v3 (Stage III adapter + conf head) | 0.333 | [0.317, 0.348] | **+2.2 [+0.6, +3.7]** |
 
 ## 2. Design-doc hypothesis checks
 
@@ -108,6 +108,7 @@ depth (~0.51) → labels not depth-confounded.
 |---|---|---|
 | ViewTree-lite (training-free) | 0.331 | matches static memory; fixes size regression (0.347) via fallback, loses counting gain (0.255) via premature consensus; ~3.3 s/question (~2.5× static) |
 | Trained tree (SFT adapter + calibrated head) | 0.329 | beats frames16 (+1.8 [+0.4, +3.3]) but does **not** beat the untrained tree (0.331) or static sft_memory (0.336) |
+| Tree v3 (fusion-trained adapter + head) | 0.333 | best tree so far (+2.2 [+0.6, +3.7]); still ≤ static sft2_memory (0.340). Modes: direct 0.388, consensus 0.314, fallback 0.309, fused 0.231 — fusion routing receives the hardest residual questions AND its training format (MindCube canonical views) mismatches VSI branch prompts. Conclusion: with fusion trained off-domain, adaptive trees match but don't beat static all-evidence prompting — on-domain Stage IV RL is the remaining lever. |
 
 **Trained-tree diagnosis (honest negative-ish result):** in-domain-validated
 components did not compose into cross-domain end-to-end gains. Per-mode:
@@ -119,6 +120,13 @@ confidence head was trained on MindCube-domain states and applied to VSI-Bench
 render-branch states — the §6.4 warning that calibration must be re-checked per
 condition, surfacing operationally. Bright spots: route_planning 0.335 (best of
 any system), rel_direction_hard 0.260 retains part of the SFT transfer.
+
+## 5b. Reasoning-trace visualization
+
+Six annotated real traces (branch views, confidences, prune/arbitrate decisions,
+three successes + three instructive failures):
+https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
+(regenerate with `scripts/trace_examples.py`).
 
 ## 6. Renderer study (held-out novel views, fixed eval poses, 30 scenes)
 
