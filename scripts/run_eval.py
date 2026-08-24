@@ -28,13 +28,13 @@ MEM_PRE = (
 )
 
 
-def get_memory_views(scene_key, frames, args):
+def get_memory_views(scene_key, frames, args, splat=1, cache_dir=None):
     """Render (and cache) overview views for a scene."""
     import torch
     from viewtree.reconstruct import reconstruct
     from viewtree.render import overview_poses, render
 
-    cache = os.path.join(args.render_cache, scene_key)
+    cache = os.path.join(cache_dir or args.render_cache, scene_key)
     paths = [os.path.join(cache, f"view{i}.png") for i in range(5)]
     if all(os.path.exists(p) for p in paths):
         import cv2
@@ -45,7 +45,7 @@ def get_memory_views(scene_key, frames, args):
     views = []
     os.makedirs(cache, exist_ok=True)
     for i, pose in enumerate(overview_poses(rec)):
-        img = render(rec["points"], rec["colors"], pose, K, H, W, splat=1)
+        img = render(rec["points"], rec["colors"], pose, K, H, W, splat=splat)
         img8 = (img.clamp(0, 1) * 255).byte().cpu().numpy()
         views.append(img8)
         import cv2
@@ -58,7 +58,8 @@ def get_memory_views(scene_key, frames, args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--condition", required=True,
-                    choices=["current", "frames16", "frames12", "memory", "renders_only"])
+                    choices=["current", "frames16", "frames12", "memory",
+                             "renders_only", "memory32"])
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--out", required=True)
@@ -100,7 +101,8 @@ def main():
             continue
         scene_key = f"{key[0]}_{key[1]}"
         try:
-            frames = sample_frames(qrows[0]["video"], 16)
+            n_src = 32 if args.condition == "memory32" else 16
+            frames = sample_frames(qrows[0]["video"], n_src)
             if args.condition == "current":
                 images, pre = [frames[-1]], ""
             elif args.condition == "frames16":
@@ -114,6 +116,13 @@ def main():
                 pre = ("These are views of a room rendered from a 3D reconstruction "
                        "(they may contain holes or distortion; the final one is a "
                        "top-down view).\n")
+            elif args.condition == "memory32":
+                repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                views = get_memory_views(scene_key, frames, args, splat=2,
+                                         cache_dir=os.path.join(repo, "data", "renders32"))
+                sel = [frames[i] for i in np.linspace(0, 31, 12).round().astype(int)]
+                images = sel + views
+                pre = MEM_PRE.format(k=len(sel), m=len(views))
             else:
                 views = get_memory_views(scene_key, frames, args)
                 sel = [frames[i] for i in np.linspace(0, 15, 12).round().astype(int)]
