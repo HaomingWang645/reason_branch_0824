@@ -11,6 +11,10 @@ MC_ROOT = os.path.join(REPO, "data", "mindcube", "data")
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data", default=os.path.join(REPO, "data", "sft_data.jsonl"))
+    args = ap.parse_args()
     import torch
     from viewtree.reconstruct import reconstruct
     from viewtree.render import overview_poses, render
@@ -18,7 +22,7 @@ def main():
     train = {json.loads(l)["id"]: json.loads(l)
              for l in open(os.path.join(MC_ROOT, "raw", "MindCube_train.jsonl"))}
     need = set()
-    for l in open(os.path.join(REPO, "data", "sft_data.jsonl")):
+    for l in open(args.data):
         r = json.loads(l)
         if r["render"]:
             need.add(r["render"])
