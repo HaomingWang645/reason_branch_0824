@@ -228,6 +228,29 @@ SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 | 32 | 2 | 0.833 | 16.4 dB | 12.2 dB |
 | 48 | 1 | 0.869 | 16.5 dB | 12.7 dB |
 
+## 6a. Large-scale generalization study (in progress)
+
+**MindCube-rest-clean** (1,330 items from the untouched remainder of MindCube,
+scene-filtered against training — note: 8,774 of 10,104 remaining items shared
+scenes with train and were excluded):
+
+| state | base | SFT v2 | GRPO |
+|---|---|---|---|
+| 1 view | 0.286 | 0.675 | 0.674 |
+| 3 views | 0.197 | 0.748 | 0.749 |
+| all views (4) | 0.270 | 0.610 | 0.614 |
+| policy rollout | — | **0.765 @ 1.85 views** | **0.780 @ 2.05 views** |
+
+The adaptive policy again beats every fixed evidence level (best fixed 0.749),
+and GRPO leads SFT here (+1.5). Composition differs from tinybench (mostly
+among/around categories), so absolute levels are not comparable across splits;
+the base-vs-trained pairing is.
+
+**External benchmarks running** (paired base vs SFT-v2, ~36k inferences):
+ViewSpatial-Bench (5,712, perspective-taking on ScanNet/COCO), OST-Bench
+(10,165, online spatio-temporal exploration), OmniSpatial (1,533), BLINK
+spatial subsets (642). Results below when complete.
+
 ## 6b. Data-leakage audit (2026-08-24)
 
 Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-
