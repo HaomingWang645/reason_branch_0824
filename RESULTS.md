@@ -187,6 +187,24 @@ SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 | 32 | 2 | 0.833 | 16.4 dB | 12.2 dB |
 | 48 | 1 | 0.869 | 16.5 dB | 12.7 dB |
 
+## 6b. Data-leakage audit (2026-08-24)
+
+Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-
+group, scene-directory, and image level (SFT ladder gains are not scene
+memorization). **VSI even/odd split shares 0 physical rooms** (ScanNet multi-scan
+check). By construction: SFT/GRPO train only on MindCube (all VSI numbers are
+zero-gradient cross-domain); head v2 sees only the even half, tree v4 evaluated
+only on the odd half; scene-level splits throughout (§6.1).
+
+Residual risks stated honestly: (1) **adaptive test-set reuse** — ~13 variants
+iterated against full VSI-Bench informed design choices (§8.10 risk); mitigated
+by the untouched odd half, and a fresh benchmark is recommended before
+publication claims; (2) head-v2's 0.811 all-VSI AUROC includes trained scenes —
+cite 0.672 (held-out) only; (3) tree-v4 comparisons must be restricted to the
+odd-scene subset; (4) frozen VGGT / Qwen pretraining may have seen these scene
+corpora — unauditable, affects all conditions equally, so paired deltas remain
+valid while absolute numbers inherit backbone exposure.
+
 ## 7. Next milestones
 
 1. ~~Trained-tree VSI-Bench result~~ → §5 (done; fusion confirmed as critical path).
