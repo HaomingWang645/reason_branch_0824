@@ -67,6 +67,7 @@ def main():
     ap.add_argument("--adapter", default=None)
     ap.add_argument("--limit-scenes", type=int, default=0)
     ap.add_argument("--render-cache", default=None)
+    ap.add_argument("--parity", choices=["all", "even", "odd"], default="all")
     args = ap.parse_args()
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if args.render_cache is None:
@@ -74,6 +75,10 @@ def main():
 
     rows = load_questions()
     scenes = sorted({(r["dataset"], r["scene_name"]) for r in rows})
+    if args.parity == "even":
+        scenes = scenes[0::2]
+    elif args.parity == "odd":
+        scenes = scenes[1::2]
     scenes = scenes[args.shard::args.num_shards]
     if args.limit_scenes:
         scenes = scenes[:args.limit_scenes]
