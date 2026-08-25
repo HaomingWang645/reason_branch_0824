@@ -17,6 +17,13 @@ import sys
 
 import cv2
 import numpy as np
+
+# On Exclusive_Process GPUs every rank must only ever see its own device;
+# pin before torch initializes CUDA.
+_lr = os.environ.get("LOCAL_RANK")
+if _lr is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
+    os.environ["CUDA_VISIBLE_DEVICES"] = _lr
+
 import torch
 import torch.distributed as dist
 
@@ -76,10 +83,10 @@ def main():
     ddp = "RANK" in os.environ
     rank = int(os.environ.get("RANK", 0))
     world = int(os.environ.get("WORLD_SIZE", 1))
+    device = "cuda:0"  # each rank sees only its own GPU (CVD pinned above)
+    torch.cuda.set_device(0)
     if ddp:
         dist.init_process_group("nccl")
-        torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
-    device = f"cuda:{int(os.environ.get('LOCAL_RANK', 0))}"
 
     vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct", device=device,
                  adapter=os.path.join(REPO, "checkpoints", "sft_lora_v2"))
