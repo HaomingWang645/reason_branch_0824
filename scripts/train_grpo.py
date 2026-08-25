@@ -26,6 +26,7 @@ if _lr is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
 
 import torch
 import torch.distributed as dist
+from datetime import timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from viewtree.vlm import QwenVL
@@ -86,7 +87,7 @@ def main():
     device = "cuda:0"  # each rank sees only its own GPU (CVD pinned above)
     torch.cuda.set_device(0)
     if ddp:
-        dist.init_process_group("nccl")
+        dist.init_process_group("nccl", timeout=timedelta(minutes=60))
 
     vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct", device=device,
                  adapter=os.path.join(REPO, "checkpoints", "sft_lora_v2"))
@@ -103,14 +104,15 @@ def main():
     random.Random(1).shuffle(rows)
     rows = [r for r in rows
             if os.path.exists(os.path.join(RENDER_DIR, f"{r['id']}.png"))]
-    rows = rows[: args.items][rank::world]
+    per = args.items // world
+    rows = rows[: args.items][rank::world][:per]  # equal length on every rank
 
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
                             lr=args.lr)
     lam, eta = 0.0, 0.02
     stats = {"acc": [], "views": [], "loss": 0.0}
-    n_items = 0
-    for r in rows:
+    n_steps = 0
+    for idx, r in enumerate(rows):
         try:
             imgs = [cv2.cvtColor(cv2.imread(os.path.join(MC_ROOT, p)),
                                  cv2.COLOR_BGR2RGB) for p in r["images"]]
@@ -178,14 +180,13 @@ def main():
                                      "correct": correct, "views": views})
             rs = np.array([x["reward"] for x in rollouts])
             adv = (rs - rs.mean()) / (rs.std() + 1e-6)
-            if abs(rs.std()) < 1e-6:
-                stats["acc"] += [x["correct"] for x in rollouts]
-                stats["views"] += [x["views"] for x in rollouts]
-                continue
+            stats["acc"] += [x["correct"] for x in rollouts]
+            stats["views"] += [x["views"] for x in rollouts]
 
             # policy-gradient re-forward on sampled control tokens
             loss_total = 0.0
-            for x, a in zip(rollouts, adv):
+            pairs = [] if abs(rs.std()) < 1e-6 else list(zip(rollouts, adv))
+            for x, a in pairs:
                 if abs(a) < 1e-4:
                     continue
                 for k, act in x["decisions"]:
@@ -203,29 +204,30 @@ def main():
                     loss.backward()
                     loss_total += loss.item()
             stats["loss"] += loss_total
-            stats["acc"] += [x["correct"] for x in rollouts]
-            stats["views"] += [x["views"] for x in rollouts]
-            n_items += 1
-            if n_items % args.accum_items == 0:
-                if ddp:
-                    for p in model.parameters():
-                        if p.requires_grad and p.grad is not None:
-                            dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
-                torch.nn.utils.clip_grad_norm_(
-                    [p for p in model.parameters() if p.requires_grad], 1.0)
-                opt.step()
-                opt.zero_grad(set_to_none=True)
-                mv = float(np.mean(stats["views"][-200:]))
-                lam = max(0.0, lam + eta * (mv - args.view_budget))
-                if rank == 0 and (n_items // args.accum_items) % 5 == 0:
-                    print(f"items {n_items} acc {np.mean(stats['acc'][-200:]):.3f} "
-                          f"views {mv:.2f} lam {lam:.3f} "
-                          f"loss {stats['loss']:.4f}", flush=True)
-                stats["loss"] = 0.0
-                if rank == 0 and (n_items // args.accum_items) % 25 == 0:
-                    model.save_pretrained(args.out)
         except Exception as e:
             print("item failed", r["id"], repr(e)[:120], flush=True)
+        # sync boundary keyed to loop index — identical on every rank
+        if (idx + 1) % args.accum_items == 0:
+            if ddp:
+                for p in model.parameters():
+                    if p.requires_grad:
+                        if p.grad is None:
+                            p.grad = torch.zeros_like(p)
+                        dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in model.parameters() if p.requires_grad], 1.0)
+            opt.step()
+            opt.zero_grad(set_to_none=True)
+            n_steps += 1
+            mv = float(np.mean(stats["views"][-200:] or [0]))
+            lam = max(0.0, lam + eta * (mv - args.view_budget))
+            if rank == 0 and n_steps % 5 == 0:
+                print(f"idx {idx+1} acc {np.mean(stats['acc'][-200:] or [0]):.3f} "
+                      f"views {mv:.2f} lam {lam:.3f} "
+                      f"loss {stats['loss']:.4f}", flush=True)
+            stats["loss"] = 0.0
+            if rank == 0 and n_steps % 25 == 0:
+                model.save_pretrained(args.out)
     if rank == 0:
         model.save_pretrained(args.out)
         print("SAVED", args.out, flush=True)
