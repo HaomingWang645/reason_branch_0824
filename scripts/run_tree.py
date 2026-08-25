@@ -26,10 +26,15 @@ def main():
     ap.add_argument("--num-frames", type=int, default=32)
     ap.add_argument("--keep-k", type=int, default=2)
     ap.add_argument("--limit-scenes", type=int, default=0)
+    ap.add_argument("--parity", choices=["all", "even", "odd"], default="all")
     args = ap.parse_args()
 
     rows = load_questions()
     scenes = sorted({(r["dataset"], r["scene_name"]) for r in rows})
+    if args.parity == "even":
+        scenes = scenes[0::2]
+    elif args.parity == "odd":
+        scenes = scenes[1::2]
     scenes = scenes[args.shard::args.num_shards]
     if args.limit_scenes:
         scenes = scenes[:args.limit_scenes]
