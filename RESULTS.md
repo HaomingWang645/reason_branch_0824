@@ -130,6 +130,25 @@ correctness, group-level 80/10/10 split, temperature-calibrated (T=0.95):
 Oracle selection 0.820; fixed last-state 0.523. On-policy ladders flat across
 depth (~0.51) → labels not depth-confounded.
 
+### 4b. Head v2 — domain adaptation (the composition-failure smoking gun)
+
+Scoring the v1 (MindCube-only) head on 18,011 VSI tree states (collected from
+144 head-train scenes, disjoint from the 144 eval scenes) revealed **AUROC
+0.467 — worse than random**. In trees v2/v3 the confidence head was adding
+noise on VSI, fully explaining why in-domain-validated components failed to
+compose end-to-end. Head v2, retrained on MindCube + VSI states (VSI upweighted
+2×, T=1.45):
+
+| states | v1 head | v2 head |
+|---|---|---|
+| VSI (held-out scenes) | 0.467 | **0.672** |
+| VSI (all, incl. seen) | — | 0.811 |
+| MindCube (held-out groups) | 0.907 | 0.890 |
+
+Cross-domain adaptation costs only 1.7 AUROC points in-domain. Tree v4
+(Stage III adapter + head v2, evaluated only on the 144 untouched odd-indexed
+scenes) is running.
+
 ## 5. End-to-end systems
 
 | system | score | notes |
