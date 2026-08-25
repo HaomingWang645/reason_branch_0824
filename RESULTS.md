@@ -145,9 +145,23 @@ compose end-to-end. Head v2, retrained on MindCube + VSI states (VSI upweighted
 | VSI (all, incl. seen) | — | 0.811 |
 | MindCube (held-out groups) | 0.907 | 0.890 |
 
-Cross-domain adaptation costs only 1.7 AUROC points in-domain. Tree v4
-(Stage III adapter + head v2, evaluated only on the 144 untouched odd-indexed
-scenes) is running.
+Cross-domain adaptation costs only 1.7 AUROC points in-domain.
+
+**Tree v4 (Stage III adapter + head v2), paired on the 144 untouched odd
+scenes (2,557 questions):**
+
+| system (odd-scene subset) | score | 95% CI |
+|---|---|---|
+| frames16 | 0.313 | [0.291, 0.334] |
+| sft2_memory (best static) | 0.342 | [0.321, 0.365] |
+| tree v3 | 0.339 | [0.316, 0.361] |
+| **tree v4** | **0.356** | [0.335, 0.378] |
+
+tree4 − tree3 = **+1.8 [+0.7, +2.8]** (significant — fixing the head fixes the
+composition); tree4 − sft2_memory = +1.5 [−0.4, +3.4] — the adaptive tree's
+point estimate **leads static prompting for the first time** (not yet
+significant). All modes improved: fused 0.302 (was 0.231), fallback 0.345,
+direct 0.407, consensus 0.312. Best system in the study on its eval half.
 
 ## 5. End-to-end systems
 
