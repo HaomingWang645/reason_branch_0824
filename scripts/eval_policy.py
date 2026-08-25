@@ -41,6 +41,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--split", default="MindCube_tinybench")
     args = ap.parse_args()
 
     import torch
@@ -48,7 +49,7 @@ def main():
     from viewtree.render import overview_poses, render
 
     rows = [json.loads(l) for l in
-            open(os.path.join(MC_ROOT, "raw", "MindCube_tinybench.jsonl"))]
+            open(os.path.join(MC_ROOT, "raw", args.split + ".jsonl"))]
     rows = rows[args.shard::args.num_shards]
     vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct", adapter=args.adapter)
     fout = open(args.out, "w")
