@@ -163,6 +163,33 @@ point estimate **leads static prompting for the first time** (not yet
 significant). All modes improved: fused 0.302 (was 0.231), fallback 0.345,
 direct 0.407, consensus 0.312. Best system in the study on its eval half.
 
+## 4c. Stage IV — GRPO view-control policy (scaled §6.6)
+
+4,000 MindCube episodes × 6 rollouts, reward = correctness − λ·extra-views
+(λ dual toward a 2.3-view budget; λ stayed 0 — policy self-limited), policy
+gradient on STOP/MOVE/RENDER tokens only, LoRA continued from Stage III.
+
+**Greedy policy rollout on tinybench (accuracy vs views acquired):**
+
+| policy | accuracy | mean views |
+|---|---|---|
+| always 1 view (fixed) | 0.532 | 1.00 |
+| always all views (fixed) | 0.575 | 3.15 |
+| always all + render (fixed) | 0.557 | 4.15 |
+| **SFT-v2 adaptive policy** | **0.615** | **1.63** |
+| **GRPO adaptive policy** | **0.619** | 1.93 |
+
+**The adaptive controller dominates every fixed policy: +4.4 pts over
+best-fixed at roughly half the acquisition cost** — the doc's H2/H6 efficiency
+claim, demonstrated at ladder scale. Most of this emerges already from
+outcome-labeled SFT; GRPO's marginal effect is to front-load exploration
+(MOVE at 1 view: 34%→56%, monotone 56/33/15/0%) buying +0.4 acc for +0.3
+views. Answer-state accuracies are unchanged (±0.005 at every ladder state) —
+RL touched control only, no forgetting. RENDER stayed unused (1/1050 —
+rendered top-downs rarely flip MindCube outcomes, so reward never favored the
+action). VSI static transfer unchanged (0.341 vs 0.342) as expected for
+control-only RL.
+
 ## 5. End-to-end systems
 
 | system | score | notes |
@@ -221,10 +248,11 @@ valid while absolute numbers inherit backbone exposure.
 
 ## 7. Next milestones
 
-1. ~~Trained-tree VSI-Bench result~~ → §5 (done; fusion confirmed as critical path).
-2. **Stage III / SFT v2 (in progress):** rebuild SFT data from *on-policy*
-   ladders with fusion-specific examples (complementary sets where no single
-   view suffices), boosted RENDER share, redundant/distractor robustness;
-   retrain LoRA; re-eval ladder + VSI transfer + tree.
-3. Confidence-head domain adaptation (add VSI-style states to head training).
-4. Stage IV resource-constrained GRPO (doc §6.6) — after III.
+All four stages of the design doc's training pipeline (scaled) are now
+complete: SFT control+answers → confidence head → fusion training → GRPO.
+Remaining levers, in order of expected value:
+1. Multi-step branch trajectories (depth > 1) steered by the trained policy.
+2. On-VSI-domain fusion/control data (the tree's fused path still trails
+   its MindCube ladder level cross-domain).
+3. RENDER-specific reward shaping or better renders (action never earned use).
+4. Fresh never-touched benchmark (OpenEQA/ScanQA) for publication claims.
