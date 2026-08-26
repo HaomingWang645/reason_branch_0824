@@ -55,7 +55,9 @@ def load_ost():
         rs.sort(key=lambda r: r["turn_id"])
         imgs_so_far = []
         for r in rs:
-            new = ast.literal_eval(r["new_observations"])
+            new = r["new_observations"]
+            if isinstance(new, str):
+                new = ast.literal_eval(new)
             imgs_so_far = imgs_so_far + list(new)
             hist[(scan, r["turn_id"])] = list(imgs_so_far)
     for i, r in enumerate(rows):

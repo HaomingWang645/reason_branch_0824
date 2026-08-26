@@ -246,10 +246,32 @@ and GRPO leads SFT here (+1.5). Composition differs from tinybench (mostly
 among/around categories), so absolute levels are not comparable across splits;
 the base-vs-trained pairing is.
 
-**External benchmarks running** (paired base vs SFT-v2, ~36k inferences):
-ViewSpatial-Bench (5,712, perspective-taking on ScanNet/COCO), OST-Bench
-(10,165, online spatio-temporal exploration), OmniSpatial (1,533), BLINK
-spatial subsets (642). Results below when complete.
+**External benchmarks** — paired base vs SFT-v2 (Stage III adapter), zero
+gradient exposure to any of these datasets. Paired bootstrap 95% CI on Δ:
+
+| benchmark | n | base | SFT v2 | Δ (95% CI) |
+|---|---|---|---|---|
+| **ViewSpatial-Bench** (perspective-taking) | 5,712 | 0.370 | 0.388 | **+1.8 [+1.1, +2.6]** |
+| OmniSpatial (excl. Complex_Logic*) | 1,281 | 0.449 | 0.454 | +0.5 [−1.7, +2.8] |
+| BLINK Multi-view Reasoning | 133 | 0.556 | 0.556 | 0.0 |
+| BLINK Relative Depth | 124 | 0.790 | 0.798 | +0.8 [−1.6, +3.2] |
+| BLINK Counting | 120 | 0.683 | 0.717 | +3.3 [−0.8, +8.3] |
+| BLINK Object Localization | 122 | 0.566 | 0.516 | −4.9 [−12.3, +2.5] |
+| BLINK Spatial Relation | 143 | 0.916 | 0.839 | **−7.7 [−13.3, −2.8]** |
+| OST-Bench (online exploration) | 10,165 | *running* | | |
+
+\*Complex_Logic has no options for 229/252 items (open-ended) — excluded.
+
+**Reading.** The transfer is *skill-specific*, not universal: it is significant
+exactly where the trained skill applies — ViewSpatial (+1.8, improving all five
+perspective/direction sub-types by +1.0 to +2.6) and OmniSpatial's
+Perspective_Taking (+2.0) and Spatial_Interaction (+2.7) — while neutral on
+multi-view/depth/counting and **negative on single-image 2D spatial-relation
+(BLINK −7.7)** and OmniSpatial Dynamic_Reasoning (−2.9). Training on
+multi-view perspective-taking slightly erodes single-image "left-of/above"
+relation reading, a real cost to state. Combined with VSI-Bench (+2.9) and
+MindCube-rest (+39 at one view), the picture is consistent: gains on
+egocentric/perspective spatial reasoning, no free lunch on 2D layout tasks.
 
 ## 6b. Data-leakage audit (2026-08-24)
 
