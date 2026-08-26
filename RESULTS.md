@@ -8,7 +8,7 @@ teacher Qwen2.5-VL-32B · reconstruction frozen VGGT-1B · custom GPU point-spla
 renderer · benchmark VSI-Bench full test (5,130 questions, 288 scenes, paired) ·
 score = accuracy (MC) / MRA (numerical), headline = mean over 10 question types,
 scene-bootstrap 95% CIs (B=2000). Training data MindCube (10k items,
-scene-disjoint from all evaluation). Last updated: 2026-08-24 ~15:00.
+scene-disjoint from all evaluation). Last updated: 2026-08-25 (large-scale study complete: 7 benchmark families, ~28k questions).
 
 ---
 
@@ -258,9 +258,12 @@ gradient exposure to any of these datasets. Paired bootstrap 95% CI on Δ:
 | BLINK Counting | 120 | 0.683 | 0.717 | +3.3 [−0.8, +8.3] |
 | BLINK Object Localization | 122 | 0.566 | 0.516 | −4.9 [−12.3, +2.5] |
 | BLINK Spatial Relation | 143 | 0.916 | 0.839 | **−7.7 [−13.3, −2.8]** |
-| OST-Bench (online exploration) | 10,165 | *running* | | |
+| **OST-Bench** (online exploration, MC-answerable items) | 5,557 | 0.539 | 0.550 | **+1.1 [+0.1, +2.0]** |
 
 \*Complex_Logic has no options for 229/252 items (open-ended) — excluded.
+OST-Bench: 4,608 of 10,165 items are open-ended/numeric (answer not among
+options) and are excluded; per type: Agent_object_spatial +1.8 (n=2,803),
+Agent_visible_info +0.6, Agent_state −0.5.
 
 **Reading.** The transfer is *skill-specific*, not universal: it is significant
 exactly where the trained skill applies — ViewSpatial (+1.8, improving all five
