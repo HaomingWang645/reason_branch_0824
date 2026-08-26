@@ -19,7 +19,16 @@ import sys
 
 import cv2
 import numpy as np
+
+_lr = os.environ.get("LOCAL_RANK")
+if _lr is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
+    _gpus = os.environ.get("DSE_GPUS")  # optional explicit GPU list per rank
+    os.environ["CUDA_VISIBLE_DEVICES"] = (_gpus.split(",")[int(_lr)] if _gpus
+                                          else _lr)  # Exclusive_Process GPUs
+
 import torch
+import torch.distributed as dist
+from datetime import timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from viewtree.vlm import QwenVL
@@ -98,6 +107,12 @@ def main():
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     device = "cuda"
+    ddp = "RANK" in os.environ
+    rank = int(os.environ.get("RANK", 0))
+    world = int(os.environ.get("WORLD_SIZE", 1))
+    if ddp:
+        torch.cuda.set_device(0)
+        dist.init_process_group("nccl", timeout=timedelta(minutes=60))
 
     vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct", device=device,
                  adapter=os.path.join(REPO, "checkpoints", "sft_lora_v2"))
@@ -112,6 +127,8 @@ def main():
     random.Random(1).shuffle(rows)
     rows = [r for r in rows
             if os.path.exists(os.path.join(RENDER_DIR, f"{r['id']}.png"))][: args.items]
+    per = len(rows) // world
+    rows = rows[rank::world][:per]  # identical length on every rank
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
                             lr=args.lr)
     lam, eta = 0.0, 0.02
@@ -216,6 +233,12 @@ def main():
         except Exception as e:
             print("item failed", r["id"], repr(e)[:100], flush=True)
         if (idx + 1) % args.accum_items == 0:
+            if ddp:
+                for p in model.parameters():
+                    if p.requires_grad:
+                        if p.grad is None:
+                            p.grad = torch.zeros_like(p)
+                        dist.all_reduce(p.grad, op=dist.ReduceOp.AVG)
             torch.nn.utils.clip_grad_norm_(
                 [p for p in model.parameters() if p.requires_grad], 1.0)
             opt.step()
@@ -223,14 +246,17 @@ def main():
             n_steps += 1
             mv = float(np.mean(stats["views"][-200:] or [0]))
             lam = max(0.0, lam + eta * (mv - args.view_budget))
-            if n_steps % 5 == 0:
+            if n_steps % 5 == 0 and rank == 0:
                 print(f"idx {idx+1} acc {np.mean(stats['acc'][-200:] or [0]):.3f} "
                       f"views {mv:.2f} toks {np.mean(stats['toks'][-200:] or [0]):.1f} "
                       f"lam {lam:.3f}", flush=True)
-            if n_steps % 25 == 0:
+            if n_steps % 25 == 0 and rank == 0:
                 model.save_pretrained(args.out)
-    model.save_pretrained(args.out)
-    print("SAVED", args.out, flush=True)
+    if rank == 0:
+        model.save_pretrained(args.out)
+        print("SAVED", args.out, flush=True)
+    if ddp:
+        dist.destroy_process_group()
     print("DONE", flush=True)
 
 
