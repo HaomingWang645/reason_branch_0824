@@ -42,6 +42,8 @@ def table(split, base_paths, tag):
     runs = {"SFT-v2 (ref)": load(base_paths)}
     for v in VARIANTS:
         runs[v] = load([os.path.join(REPO, "results", "dse", f"{v}_{tag}.jsonl")])
+    for p in sorted(glob.glob(os.path.join(REPO, "results", "scale", f"*_{tag}.jsonl"))):
+        runs[os.path.basename(p)[: -len(f"_{tag}.jsonl")] + " (10k)"] = load([p])
     runs = {k: v for k, v in runs.items() if v}
     ids = set(md)
     for v in runs.values():

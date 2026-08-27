@@ -249,6 +249,38 @@ group-12 were **not** scaled — neither showed a per-task win that a 10× data
 increase could plausibly turn into a net gain. Evaluated on MindCube per-task,
 VSI-Bench held-out half (memory + tree with head v2).
 
+## 4e. Large-scale RL on the promising design (10k items, DDP) — in progress
+
+`D_highcost` (ladder, cost 0.2, view budget 1.5, group 6) retrained on the
+full 9,995-item MindCube train set (3-GPU DDP after 2 GPUs were released;
+λ converged ≈0.20). `A_baseline` 10k is training. Greedy rollout, paired on
+the same ids as §4d.
+
+| policy | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | 0_frame | 1_frame | 2_frame | 3_frame (rest) |
+|---|---|---|---|---|---|---|---|---|
+| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.720 | 0.714 | 0.756 | 0.636 |
+| D_highcost 1k | 0.602 @ 1.27 | 0.741 @ 1.24 | 0.658 | 0.876 | 0.730 | 0.667 | 0.733 | 0.533 |
+| **D_highcost 10k** | **0.632 @ 1.31** | **0.778 @ 1.30** | **0.720** | **0.878** | 0.730 | 0.741 | 0.756 | **0.690** |
+| A_baseline 10k | *training* | | | | | | | |
+
+**Findings:**
+- **Scaling turns the efficiency trade-off into a Pareto win.** At 1k items
+  the high-cost policy bought −33% views for −2.4 pts; at 10k it keeps the
+  view saving (1.30 vs 1.85, −30%) *and* gains +1.3 (rest) / +1.7 (tiny)
+  over SFT-v2, and +1.2/+1.5 over the 1k long-horizon ladder that used 65%
+  more views.
+- **The gain is where the 1k policy was losing: *among* and 3-frame
+  questions.** among 0.658→0.720 (rest), 3_frame 0.533→0.690 (rest),
+  0.600→0.752 (tiny). With more data the policy learns *which* items need
+  the extra view instead of stopping early everywhere — mean views barely
+  change (1.24→1.30) but they are spent on the multi-view questions.
+- Around / 0-frame / 1-frame stay at the SFT-v2 level (already saturated
+  for this policy family); rotation remains the unsolved category for every
+  policy (≈0.30, n=17/200) — a perception limit, not an acquisition one.
+- Pending: VSI-Bench held-out half (memory + tree w/ head v2) for
+  cross-benchmark transfer, and A_baseline 10k to separate "more RL data"
+  from "cost pressure" as the cause.
+
 ## 5. End-to-end systems
 
 | system | score | notes |
