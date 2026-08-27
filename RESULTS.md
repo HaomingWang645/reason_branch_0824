@@ -249,7 +249,7 @@ group-12 were **not** scaled — neither showed a per-task win that a 10× data
 increase could plausibly turn into a net gain. Evaluated on MindCube per-task,
 VSI-Bench held-out half (memory + tree with head v2).
 
-## 4e. Large-scale RL on the promising design (10k items, DDP) — in progress
+## 4e. Large-scale RL on the promising design (10k items, DDP) (A_baseline 10k pending)
 
 `D_highcost` (ladder, cost 0.2, view budget 1.5, group 6) retrained on the
 full 9,995-item MindCube train set (3-GPU DDP after 2 GPUs were released;
@@ -277,9 +277,33 @@ the same ids as §4d.
 - Around / 0-frame / 1-frame stay at the SFT-v2 level (already saturated
   for this policy family); rotation remains the unsolved category for every
   policy (≈0.30, n=17/200) — a perception limit, not an acquisition one.
-- Pending: VSI-Bench held-out half (memory + tree w/ head v2) for
-  cross-benchmark transfer, and A_baseline 10k to separate "more RL data"
-  from "cost pressure" as the cause.
+
+**Cross-benchmark transfer — VSI-Bench held-out odd half (2,557 q, paired,
+scene-bootstrap CIs; head v2 unchanged):**
+
+| system | mean of types | app_order | abs_dist | counting | rel_dir easy/med/hard | rel_dist | obj_size | room_size | route |
+|---|---|---|---|---|---|---|---|---|---|
+| SFT-v2 memory | 0.342 | 0.218 | 0.083 | 0.356 | 0.522 / 0.396 / 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
+| D_10k memory | 0.339 | 0.218 | 0.080 | 0.360 | 0.540 / 0.353 / 0.387 | 0.388 | 0.362 | 0.360 | 0.346 |
+| tree v4 (SFT-v2 + head v2) | 0.356 | 0.305 | 0.120 | 0.278 | 0.487 / 0.449 / 0.373 | 0.397 | 0.391 | 0.408 | 0.356 |
+| tree v4 w/ D_10k adapter | 0.357 | 0.293 | 0.115 | 0.299 | 0.496 / 0.386 / 0.382 | 0.397 | 0.411 | 0.412 | 0.375 |
+
+D_10k − SFT-v2: memory **−0.2 [−0.9, +0.5]**, tree **+0.0 [−0.9, +1.0]**.
+- **MindCube RL is VSI-neutral in accuracy** — the +1.3/+1.7 MindCube gain
+  does not transfer, but nothing regresses either (the CIs exclude any
+  effect larger than ±1 pt). Consistent with §6a: RL on one benchmark's
+  view-control problem is skill-specific.
+- **The efficiency behaviour *does* transfer.** Inside the tree, the D_10k
+  controller answers directly 597× vs 413× for SFT-v2 (+45% direct,
+  −10% EXPLORE gates) at identical accuracy — it has learned a
+  benchmark-agnostic "stop when sufficient" prior. Per-type this shows as
+  gains on size/room/route (+2 to +2 pts, the cheap-to-answer types) and a
+  loss on rel_direction_medium (−6.3, the one type that benefits from extra
+  branches).
+- Noise note: the RL adapter emits slightly more off-vocabulary gate tokens
+  (LEFT/TOILET/…: 21 vs 6 of 2,557), all handled by the fallback path.
+- Pending: A_baseline 10k to separate "more RL data" from "cost pressure"
+  as the cause of the MindCube gain.
 
 ## 5. End-to-end systems
 
