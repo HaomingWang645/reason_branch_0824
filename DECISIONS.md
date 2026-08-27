@@ -277,3 +277,58 @@ answers at the ladder's first-correct state; bf16, grad-accum 16, cosine LR
 1e-4, 1 epoch, multi-GPU data parallel. Scripts: `build_sft.py`,
 `render_train_views.py`, `train_sft.py`; post-SFT eval reuses `gen_traj.py
 --adapter` on tinybench.
+
+## 9. Human-camera constraint on the reasoning-path viewpoints (added 2026-08-27)
+
+**Request.** Camera movement along the reasoning path should mimic a person
+holding a camera: (1) camera positions must stay inside the room (bounded by
+walls, floor, ceiling; a bird's-eye view is allowed at the end); (2) the image
+horizontal must be parallel to the floor (roll = 0). Two implementation
+routes were offered: hard constraints that discard invalid views, or an RL
+reward that discourages them.
+
+**Audit of the legacy proposer (`overview_poses`).** The four "elevated
+oblique" views were placed at `center + 0.9·r·up + 1.1·r·side` — i.e.
+*outside* the room envelope and *above the ceiling* (measured: height
+1.7–1.8× room height, 1.1–1.25× half-diagonal from the centre, 39° pitch;
+0/4 inside the walked region on every audited scene). Roll was already 0
+(look-at with world up), so requirement (2) held for the side views; the
+violation was requirement (1).
+
+**Decision: hard constraints (route 1), because the views are not
+policy-sampled.** In both reasoning paths the *viewpoints* come from a
+deterministic proposer; the controller only chooses *whether/which* to use
+(gate, prune, fuse; STOP/MOVE/RENDER). A reward can only shape what the
+policy samples, so an "invalid-view penalty" would have nothing to act on
+unless the action space were extended to camera motion — a new
+controller/action space, out of scope for this iteration. Rejection at
+proposal time is exact, costs nothing at training time and applies to every
+existing checkpoint. Route 2 is recorded as future work: an RL view-selection
+policy over a large *valid* candidate set (e.g. the walked-hull grid) with
+the same validity mask applied as a hard action mask (the standard way to
+combine both routes).
+
+**`human_poses` (viewtree/render.py; `VIEWTREE_POSES=human`).**
+- *Where a person could stand*: candidate positions on a 25×25 grid inside
+  the convex hull of the recorded camera centres (the region the videographer
+  actually walked — guaranteed inside the room), at the median recorded
+  camera height (eye height).
+- *Not inside a wall/object*: reject cells with any reconstructed surface
+  within 4 % of the room diagonal in the eye-height band.
+- *Level camera*: roll = 0 (right axis ⟂ world up), pitch fixed at 10° down.
+- *Diverse*: farthest-point sampling of 4 positions (seed = farthest valid
+  cell from the room centre), each looking toward the room centre.
+- *Discard bad views*: render and reject views painting < 45 % of pixels
+  (holes); take the next candidate (up to 16). If fewer than 4 survive, the
+  best-coverage rejects fill in (flagged `human_lowcov`).
+- *Bird's-eye last*: the 5th view is the unchanged top-down render.
+- Branch descriptions in the prompts change accordingly ("eye-level view
+  taken from inside the room at standing position k, looking toward the room
+  centre"). Adapter and confidence head are NOT retrained (they were trained
+  with legacy renders), so the first experiment measures a pure
+  proposer swap; retraining on human views is the follow-up if it helps.
+
+**Experiment (all free GPUs).** VSI held-out odd half, paired: static memory
+(SFT-v2, 12 frames + 4 human views + top-down) vs legacy memory; tree v4 +
+D_highcost 10k with human branches vs legacy branches; plus a 40-scene
+geometric audit (`scripts/human_view_check.py`). Results in RESULTS.md §6c.

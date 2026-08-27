@@ -513,6 +513,16 @@ relation reading, a real cost to state. Combined with VSI-Bench (+2.9) and
 MindCube-rest (+39 at one view), the picture is consistent: gains on
 egocentric/perspective spatial reasoning, no free lunch on 2D layout tasks.
 
+## 6c. Human-camera viewpoint constraint (running, 2026-08-27)
+
+Design change (DECISIONS.md §9): reasoning-path viewpoints must be where a
+person holding a camera could stand — inside the room (walked region,
+eye height, clear of walls), roll = 0, mild pitch; low-coverage views
+discarded; top-down bird's-eye kept last. Implemented as hard constraints in
+`human_poses` (`VIEWTREE_POSES=human`). Running: 40-scene geometric audit,
+static memory (SFT-v2) and tree v4 + D_10k on the VSI held-out half with
+human views vs legacy views (paired).
+
 ## 6b. Data-leakage audit (2026-08-24)
 
 Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-

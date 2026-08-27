@@ -40,6 +40,11 @@ VIEW_DESCS = [
     "elevated view from side 3", "elevated view from side 4",
     "top-down overhead view",
 ]
+if __import__("os").environ.get("VIEWTREE_POSES", "").lower() == "human":
+    VIEW_DESCS = [
+        f"eye-level view taken from inside the room at standing position {i}, "
+        "looking toward the room centre" for i in (1, 2, 3, 4)
+    ] + ["top-down overhead view"]
 
 
 @torch.no_grad()
