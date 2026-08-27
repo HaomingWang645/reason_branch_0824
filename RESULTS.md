@@ -194,40 +194,59 @@ control-only RL.
 
 Eight GRPO variants from the Stage-III adapter, evaluated by greedy policy
 rollout with **per-task breakdown** (categories among/around/rotation; question
-types). Reference = SFT-v2 policy. 5/8 complete (CoT variants and group-12
-still training); full tables in `scripts/analyze_dse.py` output.
+types). Reference = SFT-v2 policy. **8/8 complete (2026-08-27).** Paired on
+tinybench n=1,050 and rest_clean n=1,330; full tables in
+`scripts/analyze_dse.py` output. "toks" = control tokens generated per decision.
 
-| variant (design axis) | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | 0_frame (rest) |
-|---|---|---|---|---|---|
-| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.720 |
-| A baseline ladder | 0.617 @ 2.10 | 0.766 @ 2.15 | 0.708 | 0.859 | **0.751** |
-| B short horizon (≤2 views) | 0.560 @ 1.75 | 0.705 @ 1.75 | 0.593 | 0.872 | 0.619 |
-| C cost-free | 0.612 @ 2.16 | 0.765 @ 2.19 | 0.702 | 0.865 | 0.735 |
-| **D high cost / budget 1.5** | 0.602 @ **1.27** | 0.741 @ **1.24** | 0.658 | **0.876** | 0.730 |
-| E learned view selection | 0.573 @ 1.63 | 0.705 @ 1.96 | 0.598 | 0.863 | 0.688 |
-| F CoT (free length) | *training* | | | | |
-| G CoT (length-penalised) | *training* | | | | |
-| H group 12 | *training* | | | | |
+| variant (design axis) | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | rotation (rest, n=17) | 0_frame (rest) | general (tiny) |
+|---|---|---|---|---|---|---|---|
+| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.412 | 0.720 | 0.308 |
+| A baseline ladder | **0.617** @ 2.10 | **0.766** @ 2.15 | **0.708** | 0.859 | 0.471 | **0.751** | 0.385 |
+| B short horizon (≤2 views) | 0.560 @ 1.75 | 0.705 @ 1.75 | 0.593 | 0.872 | 0.529 | 0.619 | **0.538** |
+| C cost-free | 0.612 @ 2.16 | 0.765 @ 2.19 | 0.702 | 0.865 | 0.529 | 0.735 | 0.385 |
+| **D high cost / budget 1.5** | 0.602 @ **1.27** | 0.741 @ **1.24** | 0.658 | **0.876** | 0.294 | 0.730 | **0.538** |
+| E learned view selection | 0.573 @ 1.63 | 0.705 @ 1.96 | 0.598 | 0.863 | 0.529 | 0.688 | 0.500 |
+| F CoT (free length, 32 tok) | 0.597 @ 2.03 | 0.730 @ 2.09 | 0.652 | 0.852 | 0.412 | 0.698 | 0.462 |
+| G CoT (length-penalised → 2 tok) | 0.611 @ 2.12 | 0.765 @ 2.18 | 0.695 | 0.870 | **0.588** | 0.735 | 0.346 |
+| H group 12 | 0.616 @ 2.07 | 0.765 @ 2.12 | 0.704 | 0.861 | 0.529 | 0.746 | 0.385 |
 
-**Preliminary findings (per-task, as requested):**
+**Findings (per-task, as requested):**
 - **Different designs win different tasks.** D (strong efficiency pressure)
-  is best on *around* (0.876) and near-best on 0-frame questions while using
-  ~33% fewer views than SFT-v2 — the efficiency frontier winner. B (short
-  horizon) is *worst* on *among* (needs ≥3 views: 0.593 vs 0.702) but *best*
-  on rotation (0.529/0.380) and "general" (0.538) — tasks where extra views
-  confuse. A/C (long horizon) win the multi-view *among* category.
-- **Learned view selection (E) underperforms the fixed ladder** at this
-  scale: order-free choice mostly hurts *among* (0.598) — the ladder order is
-  already informative (front→left→back→right) and 1k items is too little to
-  learn a better policy over subsets.
+  is best on *around* (0.876) and ties best on tiny "general" (0.538) while
+  using ~33% fewer views than SFT-v2 — the efficiency-frontier winner. B
+  (short horizon) is *worst* on *among* (needs ≥3 views: 0.593 vs 0.702) but
+  competitive on rotation and best on "general" — tasks where extra views
+  confuse. A/C/H (long-horizon ladder) win the multi-view *among* category
+  and 0-frame questions.
+- **Free-length CoT (F) hurts.** Letting the controller reason for 32 tokens
+  before each STOP/MOVE/RENDER decision costs −3.5 pts on rest (0.730) and is
+  worse on *every* category (among −5.0, around −0.7 vs A). With 1k items the
+  reasoning text is not grounded — it mostly adds sampling noise to the
+  control token. 16× the decode cost for a loss.
+- **Length-penalised CoT (G) collapses to the 2-token policy** (mean 2 toks
+  ≈ no reasoning) and lands exactly at baseline (0.765 / 0.611): the penalty
+  is doing the right thing given F's result, but it means "reasoning length"
+  is not a useful lever at this scale. G is nominally best on rest rotation
+  (0.588) but n=17 (±0.12), not significant.
+- **Group size 12 (H) ≈ group 6 (A)** on every category (max |Δ| 1.1 pt)
+  for 2× rollout cost — the group-relative baseline is already low-variance
+  at G=6 because rewards are near-binary.
+- **Learned view selection (E) underperforms the fixed ladder**: order-free
+  choice mostly hurts *among* (0.598) and 1/2-frame questions — the ladder
+  order (front→left→back→right) is already informative and 1k items is too
+  little to learn a better subset policy.
 - Cost-free (C) ≈ baseline: λ never activated in A either (views stayed
   under budget), so the dual variable is inert unless the budget binds (D).
-- No variant beats SFT-v2's *accuracy* at 1k items; RL's lever here is
-  **cost** (D: −33% views for −2 pts). Scaling to 10k items tests whether
-  accuracy also moves.
+- **No variant beats SFT-v2's accuracy at 1k items**; RL's lever here is
+  **cost** (D: −33% views for −2.4 pts) not accuracy. Design choices on the
+  reasoning path (CoT, group, selection) are neutral-to-harmful; the
+  acquisition *horizon/cost* axis (B vs A vs D) is the only one that
+  produces task-dependent trade-offs worth exploiting.
 
-**Large-scale stage (running):** D_highcost and A_baseline retrained on the
-full 9,995-item train set (DDP), then evaluated on MindCube per-task,
+**Promising choices carried to large scale (10k items, DDP):** D_highcost
+(efficiency) and A_baseline (accuracy ceiling of the ladder). CoT and
+group-12 were **not** scaled — neither showed a per-task win that a 10× data
+increase could plausibly turn into a net gain. Evaluated on MindCube per-task,
 VSI-Bench held-out half (memory + tree with head v2).
 
 ## 5. End-to-end systems
