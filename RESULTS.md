@@ -436,6 +436,13 @@ https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
 SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 (`figures/viewtree_traces.html` is the interactive version).
 
+**Tree diagrams (2026-08-27):** `figures/tree_schematic.png` draws the depth-1
+tree as a graph (gate → 5 render branches → keep-2 → consensus / fuse →
+arbitrate, with call counts); `figures/tree_d10k_{1129,2220,76,1409}.png`
+instantiate it with the real renders and head confidences for one example
+per mode (direct / branch_consensus / fused / fused_fallback_direct);
+`scripts/tree_diagram.py`.
+
 **Traces for the best system (tree v4 + D_highcost 10k adapter), 2026-08-27:**
 `figures/trace_d10k_{1129,2220,76,1409,79,836}.png` + `trace_d10k_summary.png`
 (scripts `trace_examples_v2.py` / `trace_figures_v2.py`; same layout as the
