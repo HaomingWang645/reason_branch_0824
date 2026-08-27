@@ -310,8 +310,8 @@ SFT-v2 adapter, scene-bootstrap 95% CI):**
 
 Baselines: zero-shot Qwen2.5-VL-7B (1 view / all views), SFT-v2 with all
 views (no policy), SFT-v2 policy. Paired ids throughout. External benchmarks
-(ViewSpatial, OST, OmniSpatial, BLINK) with the D_10k adapter are running
-and will be appended.
+(ViewSpatial, OST, OmniSpatial, BLINK) with the D_10k adapter are in the
+last block.
 
 ### MindCube tinybench (n=1,050)
 
@@ -358,6 +358,37 @@ and will be appended.
 | SFT-v2 memory | 0.342 | 0.218 | 0.083 | 0.356 | 0.522 | 0.396 | 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
 | tree v4 (SFT-v2 + head v2) | 0.356 | **0.305** | **0.120** | 0.278 | 0.487 | **0.449** | 0.373 | 0.397 | 0.391 | 0.408 | 0.356 |
 | **tree v4 + D_highcost 10k** | **0.357** | 0.293 | 0.115 | 0.299 | 0.496 | 0.386 | **0.382** | 0.397 | **0.411** | **0.412** | **0.375** |
+
+### External benchmarks (single-pass VLM with adapter; paired ids; Δ = D_10k − SFT-v2, bootstrap 95% CI)
+
+| benchmark (n) | class | base | SFT-v2 | **D_10k** |
+|---|---|---|---|---|
+| **ViewSpatial-Bench** (5,712) — Δ **+0.4 [+0.1, +0.7]** | overall | 0.370 | 0.388 | **0.392** |
+| | Camera: object view orientation (996) | 0.297 | 0.319 | **0.323** |
+| | Camera: relative direction (1,773) | 0.459 | 0.469 | **0.477** |
+| | Person: object view orientation (996) | 0.396 | 0.419 | **0.431** |
+| | Person: relative direction (842) | 0.355 | **0.369** | 0.365 |
+| | Person: scene-simulation rel. direction (1,105) | 0.279 | **0.305** | 0.303 |
+| **OST-Bench** (5,557) — Δ −0.1 [−0.5, +0.4] | overall | 0.539 | **0.550** | 0.549 |
+| | Agent_object_spatial (2,803) | 0.416 | **0.434** | 0.433 |
+| | Agent_state (748) | **0.503** | 0.497 | 0.499 |
+| | Agent_visible_info (2,006) | 0.724 | **0.731** | 0.730 |
+| **OmniSpatial** (691 paired, excl. Complex_Logic) — Δ +0.1 [−0.9, +1.2] | overall | 0.421 | 0.434 | **0.436** |
+| | Dynamic_Reasoning (111) | **0.432** | 0.405 | 0.396 |
+| | Perspective_Taking (561) | 0.419 | 0.439 | **0.442** |
+| | Spatial_Interaction (19) | 0.421 | **0.474** | **0.474** |
+| BLINK Multi-view (133) — Δ 0.0 | | 0.556 | 0.556 | 0.556 |
+| BLINK Spatial Relation (143) — Δ −1.4 [−4.6, +2.1] | | **0.916** | 0.839 | 0.825 |
+| BLINK Relative Depth (124) — Δ −0.8 [−2.4, 0.0] | | 0.790 | **0.798** | 0.790 |
+| BLINK Object Localization (122) — Δ −1.6 [−4.9, +1.6] | | **0.566** | 0.516 | 0.500 |
+| BLINK Counting (120) — Δ −0.8 [−2.5, 0.0] | | 0.683 | **0.717** | 0.708 |
+
+- **The RL adapter inherits SFT-v2's transfer profile almost exactly**: a
+  small, significant gain on ViewSpatial (+0.4 over SFT-v2, +2.2 over base,
+  driven by camera-perspective classes), OST/OmniSpatial unchanged, and the
+  same single-image BLINK regressions as SFT-v2 (spatial relation −9 vs
+  base; RL adds a further ≤1.6-pt, non-significant drift). RL on
+  multi-view control does not touch single-image skills in either direction.
 
 **Reading the tables:**
 - **Where the gain comes from (MindCube):** vs zero-shot Qwen the system
