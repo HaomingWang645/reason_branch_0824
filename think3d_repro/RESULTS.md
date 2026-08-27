@@ -13,7 +13,7 @@ https://github.com/zhangzaibin/spagent. Reproduced on GPUs 5/6 only (see README.
 | Decoding | temperature 1.0, ≤ 1024 response tokens, mean of 3 runs | same (3 runs, seeds differ) |
 | MindCube | 40 q / category (rotation, around, among) = 120 q | 40 q / category sampled (seed 42) from `MindCube_tinybench`, **excluding scenes that appear in the RL training set** |
 | BLINK | all Multi-view questions | BLINK val `Multi-view_Reasoning`, 133 q |
-| VSI-Bench | VSI-Bench-tiny, 4 MC tasks, 7 frames / video | 50 q / task sampled (seed 42) from the test split (rel-dir easy/medium/hard merged), 7 uniformly sampled frames |
+| VSI-Bench | VSI-Bench-tiny, 4 MC tasks, 7 frames / video | 50 q / task sampled (seed 42) from the test split (rel-dir easy/medium/hard merged), 7 uniformly sampled frames; a 32-frame ablation is reported in Table 1 |
 | Think3D-RL | GRPO, 977 MindCube samples, 1 epoch, 8 rollouts, lr 1e-6 cosine 5 % warm-up, max completion 1024, 8×H200 | same recipe on 976 samples (24 have images missing from the public MindCube release), 1×H100 with ZeRO-2 optimizer offload, 16 prompts (128 completions) / optimizer step |
 | Scoring | MC accuracy | option letter inside `<answer>` tags vs. GT (`scripts/score.py`) |
 
@@ -68,6 +68,8 @@ Table 1 (VSI-Bench-tiny):
 |---|---|---|---|---|---|
 | Qwen3-VL-4B | MindCube / BLINK / VSI | 100 % / 99 % / 59 % | 22 % / 95 % / 65 % | 100 % | 1.99 / 1.99 / 1.63 |
 | released SPAgent-4B (RL) | MindCube / BLINK / VSI | 61 % / 76 % / 24 % | 0 % / 2 % / 0 % | 90 % / 87 % / 62 % | 1.68 / 1.79 / 1.32 |
+| Qwen3-VL-4B, VSI with 32 frames | VSI | 15 % | 86 % | — | 1.26 |
+| released SPAgent-4B (RL), VSI with 32 frames | VSI | 1 % | 0 % | — | 1.09 |
 
 * **Scoring.** No LLM judge is available; the option letter inside `<answer>` tags is matched exactly
   (fallback: first `(X)`/`X.` pattern, as in the repo). Long chains of thought that hit the 1024-token limit
@@ -112,6 +114,10 @@ finishes (`Think3D-RL-4B`, see `outputs/results_tables.md` for the live version)
 | Qwen3-VL-4B-T3RL, released SPAgent-4B (no tool) | 32.67 ± 4.6 [27.89] | 41.33 ± 5.0 [30.67] | 44.67 ± 4.6 [32.00] | 32.67 ± 3.1 [42.86] | 37.83 [33.36] | 3 |
 | Think3D (released SPAgent-4B) | 36.00 ± 8.7 [36.73] | 32.67 ± 10.1 [39.00] | 34.00 ± 4.0 [44.67] | 34.00 ± 2.0 [61.22] | 34.17 [45.41] | 3 |
 | Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 34.00 ± 3.5 [36.73] | 37.33 ± 9.9 [39.00] | 36.00 ± 6.0 [44.67] | 32.00 ± 2.0 [61.22] | 34.83 [45.41] | 3 |
+| released SPAgent-4B (no tool), 32 video frames instead of 7 | 37.33 ± 3.1 [27.89] | 46.00 ± 5.3 [30.67] | 48.67 ± 1.2 [32.00] | 52.00 ± 2.0 [42.86] | 46.00 [33.36] | 3 |
+| Think3D (released SPAgent-4B), 32 video frames instead of 7 | 34.00 ± 3.5 [36.73] | 43.33 ± 3.1 [39.00] | 44.00 ± 3.5 [44.67] | 46.00 ± 7.2 [61.22] | 41.83 [45.41] | 3 |
+| Qwen3-VL-4B (no tool), 32 video frames instead of 7 | 42.00 ± 2.0 [34.69] | 44.67 ± 5.0 [40.67] | 45.33 ± 3.1 [35.33] | 49.33 ± 2.3 [42.44] | 45.33 [38.28] | 3 |
+| Think3D (Qwen3-VL-4B), 32 video frames instead of 7 | 34.00 ± 2.0 [30.61] | 44.00 ± 2.0 [44.00] | 39.33 ± 3.1 [29.33] | 45.33 ± 5.0 [52.38] | 40.67 [39.08] | 3 |
 
 ### Reading of the results
 
@@ -127,6 +133,17 @@ finishes (`Think3D-RL-4B`, see `outputs/results_tables.md` for the live version)
   questions (vs ~85 % on MindCube) and 7-frame video reconstructions are used as-is; the exact VSI-tiny
   question set, frame sampling and rendering settings of the paper could not be recovered from the paper
   or the repo, so this row is the one clear gap.
+* **Frame-coverage ablation (32 frames).** Several VSI-tiny questions refer to objects that are not
+  visible in any of the 7 uniformly sampled frames (e.g. a TV in a route-planning question), so the 7-frame
+  protocol makes them unanswerable. Sampling 32 frames per video (1 fps ≈ 90 frames does not fit in the
+  32 k context with 3 tool rounds) raises the **no-tool** rows by +8.5 (Qwen3-VL-4B 36.8 → 45.3) and +8.2
+  (RL checkpoint 37.8 → 46.0) — both above the paper's no-tool numbers and the RL no-tool row even reaches
+  the paper's RL + Think3D number (45.4). The tool still does not add anything: with 32 input frames the
+  models almost never call Pi3X (RL checkpoint: 1 % of questions vs 23 % with 7 frames; base: 15 %, of which
+  86 % are the wasted (0°, 0°) view), so the "Think3D, 32 frames" rows are effectively no-tool runs with a
+  longer spatial prompt and land 4–5 points lower. Conclusion: on VSI-Bench-tiny the frame coverage of the
+  input video, not the 3D tool, is the limiting factor in this reproduction; the paper's +12 tool gain on
+  VSI is not reproduced under either frame budget.
 * **Resolution ablation (px256k).** Capping eval images at the RL training resolution (256 visual tokens
   per image) lowers the RL checkpoint's Think3D scores (38.4 vs 42.8 on Table 2, unchanged on VSI), so the
   default full-resolution renders are kept for the main tables.

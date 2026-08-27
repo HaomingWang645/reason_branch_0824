@@ -102,6 +102,14 @@ PAPER = {
         [53.39, 42.50, 37.47, 42.50, 43.97], [36.73, 39.00, 44.67, 61.22, 45.41]),
     'Qwen3_VL_4B_Instruct_px256k_pi3x_spatial': ('Think3D (Qwen3-VL-4B), eval images capped at 262144 px',
         [48.62, 35.83, 28.33, 33.33, 36.53], [30.61, 44.00, 29.33, 52.38, 39.08]),
+    'SPAgent_4B_f32_no_tools_general': ('released SPAgent-4B (no tool), 32 video frames instead of 7',
+        [46.11, 30.83, 25.83, 35.83, 34.65], [27.89, 30.67, 32.00, 42.86, 33.36]),
+    'SPAgent_4B_f32_pi3x_spatial': ('Think3D (released SPAgent-4B), 32 video frames instead of 7',
+        [53.39, 42.50, 37.47, 42.50, 43.97], [36.73, 39.00, 44.67, 61.22, 45.41]),
+    'Qwen3_VL_4B_f32_no_tools_general': ('Qwen3-VL-4B (no tool), 32 video frames instead of 7',
+        [47.87, 34.17, 20.00, 41.67, 35.92], [34.69, 40.67, 35.33, 42.44, 38.28]),
+    'Qwen3_VL_4B_f32_pi3x_spatial': ('Think3D (Qwen3-VL-4B), 32 video frames instead of 7',
+        [48.62, 35.83, 28.33, 33.33, 36.53], [30.61, 44.00, 29.33, 52.38, 39.08]),
     'Think3D_RL_4B_no_tools_general': ('Qwen3-VL-4B-T3RL, our GRPO run (no tool)',
         [46.11, 30.83, 25.83, 35.83, 34.65], [27.89, 30.67, 32.00, 42.86, 33.36]),
     'Think3D_RL_4B_pi3x_spatial': ('Think3D (our GRPO run)',
@@ -150,6 +158,8 @@ def md_tables():
                 else:
                     cells.append(f'— [{paper[i]:.2f}]')
             avg = f'{statistics.mean(means):.2f} [{paper[4]:.2f}]' if len(means) == len(cols) else f'— [{paper[4]:.2f}]'
+            if nruns == 0:
+                continue
             out.append('| ' + ' | '.join([label] + cells + [avg, str(nruns)]) + ' |')
     text = '\n'.join(out)
     with open(os.path.join(ROOT, 'results_tables.md'), 'w') as f:
