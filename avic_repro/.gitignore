@@ -1,0 +1,10 @@
+# upstream clones, weights, per-question media are not committed
+avic/
+mindjourney/
+checkpoints/
+logs/
+results/**/step_0/
+results/**/*.png
+results/**/*.mp4
+results/**/*.pkl
+__pycache__/

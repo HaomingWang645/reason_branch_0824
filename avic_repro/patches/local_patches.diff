@@ -1,0 +1,235 @@
+diff --git a/visual_spatial_reasoning/stable_virtual_camera/seva/modules/autoencoder.py b/visual_spatial_reasoning/stable_virtual_camera/seva/modules/autoencoder.py
+index 8ce486c..2193f89 100644
+--- a/visual_spatial_reasoning/stable_virtual_camera/seva/modules/autoencoder.py
++++ b/visual_spatial_reasoning/stable_virtual_camera/seva/modules/autoencoder.py
+@@ -1,53 +1,56 @@
+-import torch
+-from diffusers.models import AutoencoderKL  # type: ignore
+-from torch import nn
+-
+-
+-class AutoEncoder(nn.Module):
+-    scale_factor: float = 0.18215
+-    downsample: int = 8
+-
+-    def __init__(self, chunk_size: int | None = None):
+-        super().__init__()
+-        self.module = AutoencoderKL.from_pretrained(
+-            # "stabilityai/stable-diffusion-2-1-base",
+-            # '/home/shoubin/.cache/modelscope/hub/models/stabilityai/stable-diffusion-2-1-base',
+-            '/nas-ssd2/shoubin/pretrained_models/stable-diffusion-2-1-base',
+-            subfolder="vae",
+-            force_download=False,
+-            low_cpu_mem_usage=False,
+-        )
+-        self.module.eval().requires_grad_(False)  # type: ignore
+-        self.chunk_size = chunk_size
+-
+-    def _encode(self, x: torch.Tensor) -> torch.Tensor:
+-        return (
+-            self.module.encode(x).latent_dist.mean  # type: ignore
+-            * self.scale_factor
+-        )
+-
+-    def encode(self, x: torch.Tensor, chunk_size: int | None = None) -> torch.Tensor:
+-        chunk_size = chunk_size or self.chunk_size
+-        if chunk_size is not None:
+-            return torch.cat(
+-                [self._encode(x_chunk) for x_chunk in x.split(chunk_size)],
+-                dim=0,
+-            )
+-        else:
+-            return self._encode(x)
+-
+-    def _decode(self, z: torch.Tensor) -> torch.Tensor:
+-        return self.module.decode(z / self.scale_factor).sample  # type: ignore
+-
+-    def decode(self, z: torch.Tensor, chunk_size: int | None = None) -> torch.Tensor:
+-        chunk_size = chunk_size or self.chunk_size
+-        if chunk_size is not None:
+-            return torch.cat(
+-                [self._decode(z_chunk) for z_chunk in z.split(chunk_size)],
+-                dim=0,
+-            )
+-        else:
+-            return self._decode(z)
+-
+-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+-        return self.decode(self.encode(x))
++import torch
++from diffusers.models import AutoencoderKL  # type: ignore
++from torch import nn
++
++
++class AutoEncoder(nn.Module):
++    scale_factor: float = 0.18215
++    downsample: int = 8
++
++    def __init__(self, chunk_size: int | None = None):
++        super().__init__()
++        # REPRO PATCH: stabilityai/stable-diffusion-2-1-base is no longer on the HF hub (404, 2026-08).
++        # Use an SD-2.1 checkpoint whose vae/ is an unmodified copy of the original SD-2.1 VAE
++        # (config `_name_or_path: stabilityai/stable-diffusion-2-1`). Override with SVC_VAE_PATH.
++        import os
++        _vae_root = os.environ.get("SVC_VAE_PATH", '/home/haoming/.cache/huggingface/hub/models--friedrichor--stable-diffusion-2-1-realistic/snapshots/62cc582044fd762a1e2db3ee7c24309f1646f8c4')
++        self.module = AutoencoderKL.from_pretrained(
++            _vae_root,
++            subfolder="vae",
++            force_download=False,
++            low_cpu_mem_usage=False,
++        )
++        self.module.eval().requires_grad_(False)  # type: ignore
++        self.chunk_size = chunk_size
++
++    def _encode(self, x: torch.Tensor) -> torch.Tensor:
++        return (
++            self.module.encode(x).latent_dist.mean  # type: ignore
++            * self.scale_factor
++        )
++
++    def encode(self, x: torch.Tensor, chunk_size: int | None = None) -> torch.Tensor:
++        chunk_size = chunk_size or self.chunk_size
++        if chunk_size is not None:
++            return torch.cat(
++                [self._encode(x_chunk) for x_chunk in x.split(chunk_size)],
++                dim=0,
++            )
++        else:
++            return self._encode(x)
++
++    def _decode(self, z: torch.Tensor) -> torch.Tensor:
++        return self.module.decode(z / self.scale_factor).sample  # type: ignore
++
++    def decode(self, z: torch.Tensor, chunk_size: int | None = None) -> torch.Tensor:
++        chunk_size = chunk_size or self.chunk_size
++        if chunk_size is not None:
++            return torch.cat(
++                [self._decode(z_chunk) for z_chunk in z.split(chunk_size)],
++                dim=0,
++            )
++        else:
++            return self._decode(z)
++
++    def forward(self, x: torch.Tensor) -> torch.Tensor:
++        return self.decode(self.encode(x))
+diff --git a/visual_spatial_reasoning/tools/aggregate_chunks.py b/visual_spatial_reasoning/tools/aggregate_chunks.py
+index 5f22e38..b1d6cad 100644
+--- a/visual_spatial_reasoning/tools/aggregate_chunks.py
++++ b/visual_spatial_reasoning/tools/aggregate_chunks.py
+@@ -56,7 +56,11 @@ def aggregate(root: str) -> Tuple[dict, int, int, list]:
+             continue
+         with open(p) as f:
+             d = json.load(f)
+-        a, b = (int(x.strip()) for x in d["current"].split("/"))
++        if d.get("current"):
++            a, b = (int(x.strip()) for x in d["current"].split("/"))
++        else:  # REPRO PATCH: pipeline_baseline never sets `current`
++            a = sum(len(p["correct"]) + len(p["wrong"]) for p in d["progress"].values()) + len(d.get("skip_indices", []))
++            b = a
+         done += a
+         total += b
+         per_chunk.append((c, a, b, d["accuracy"]["all"]))
+diff --git a/visual_spatial_reasoning/utils/api.py b/visual_spatial_reasoning/utils/api.py
+index 0e28557..0e1962c 100644
+--- a/visual_spatial_reasoning/utils/api.py
++++ b/visual_spatial_reasoning/utils/api.py
+@@ -36,15 +36,22 @@ class ChatAPI:
+         self.messages: List[Dict[str, str]] = []
+         self.history: List[Dict[str, str]] = []
+ 
+-        self.client = AzureOpenAI(
+-            # api_key=config.api_key,
+-            api_key = '',
+-            api_version=config.api_version,
+-            # azure_endpoint=config.azure_endpoint,
+-            azure_endpoint = ''
+-        )
+-
+-        # self.client = OpenAI(api_key=config.api_key)
++        # --- REPRO PATCH: pick backend from env. Plain OpenAI if OPENAI_API_KEY is set
++        # and no Azure endpoint is configured; otherwise Azure (original behaviour).
++        azure_key = os.environ.get("AZURE_OPENAI_API_KEY", "")
++        azure_ep = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
++        openai_key = os.environ.get("OPENAI_API_KEY", "")
++        if openai_key and not azure_ep:
++            self.client = OpenAI(api_key=openai_key, max_retries=5, timeout=120)
++            self.backend = "openai"
++        else:
++            self.client = AzureOpenAI(
++                api_key=azure_key,
++                api_version=config.api_version,
++                azure_endpoint=azure_ep,
++            )
++            self.backend = "azure"
++        print(f"[ChatAPI] backend={self.backend} model={config.model}")
+ 
+         self.model = config.model
+         self.max_limit = min(config.limit - 2000, 20000)
+@@ -83,7 +90,6 @@ class ChatAPI:
+         self.history.append(self.messages[-1])
+ 
+     def get_system_response(self) -> str:
+-        return "understanding:\n\nAction: turn-right 40"
+         try:
+             self.do_truncation = False
+ 
+@@ -171,6 +177,7 @@ class ChatAPI:
+ 
+         except Exception as e:
+             logger.warning(f"[ChatGPT] Error: {e}")
++            print(f"[ChatGPT] API ERROR: {e}")
+             return "Sorry, I am not able to respond to that."
+ 
+ 
+diff --git a/visual_spatial_reasoning/utils/data_process.py b/visual_spatial_reasoning/utils/data_process.py
+index 7f2d4b6..9c73d9d 100644
+--- a/visual_spatial_reasoning/utils/data_process.py
++++ b/visual_spatial_reasoning/utils/data_process.py
+@@ -16,7 +16,6 @@ def process(output_dir, max_per_type = None, split = 'val'):
+     os.makedirs(f"./data/{split}", exist_ok=True)
+     resolutions = []
+     for i in range(len(dataset[split])):
+-        print(i)
+         example = dataset[split][i]
+         question_type = example['question_type']
+ 
+@@ -31,12 +30,12 @@ def process(output_dir, max_per_type = None, split = 'val'):
+         question_count[question_type] += 1
+ 
+         filename_list = []
+-        print(resolutions, all_question_types)
+         for idx, im_bytes in enumerate(example['image_bytes']):
+-        #     # img = Image.open(io.BytesIO(im_bytes))
+-        #     img = im_bytes
++            img = im_bytes if isinstance(im_bytes, Image.Image) else Image.open(io.BytesIO(im_bytes))
+             filename = f"./data/{split}/image_{i}_{idx}.png"
+             filename_list.append(filename)
++            if not os.path.exists(filename):
++                img.save(filename, format="PNG")
+         #     resolution = img.size
+             # if resolution not in resolutions:
+             #     resolutions.append(resolution)
+diff --git a/visual_spatial_reasoning/utils/vlm_wrapper.py b/visual_spatial_reasoning/utils/vlm_wrapper.py
+index c7a0b9d..548c1ba 100644
+--- a/visual_spatial_reasoning/utils/vlm_wrapper.py
++++ b/visual_spatial_reasoning/utils/vlm_wrapper.py
+@@ -38,8 +38,8 @@ class VLMWrapper:
+         elif model_name in ['OpenGVLab/InternVL3-8B', 'OpenGVLab/InternVL3-14B']:
+             assert qa_model_name in (None, "None") or qa_model_name == model_name, "Separate Score/QA model is not supported for InternVL3."
+             # device_map = split_model(model_name)
+-            device_map = "cuda:1"
+-            device_map = split_model(model_name)
++            # REPRO PATCH: single visible GPU -> put everything on cuda:0
++            device_map = "cuda:0" if torch.cuda.device_count() == 1 else split_model(model_name)
+             self.model = AutoModel.from_pretrained(
+                 model_name,
+                 torch_dtype=torch.bfloat16,
+@@ -124,7 +124,7 @@ class VLMWrapper:
+              
+             return response
+         elif self.prompt_style == 'internvl3':
+-            content = format_internvl3_content(content, "cuda:1")
++            content = format_internvl3_content(content, "cuda:0")
+             # content = format_internvl3_content(content, None)
+             # content = format_internvl3_content(content)
+             question = content['question']
