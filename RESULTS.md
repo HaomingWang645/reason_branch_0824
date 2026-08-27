@@ -8,7 +8,7 @@ teacher Qwen2.5-VL-32B · reconstruction frozen VGGT-1B · custom GPU point-spla
 renderer · benchmark VSI-Bench full test (5,130 questions, 288 scenes, paired) ·
 score = accuracy (MC) / MRA (numerical), headline = mean over 10 question types,
 scene-bootstrap 95% CIs (B=2000). Training data MindCube (10k items,
-scene-disjoint from all evaluation). Last updated: 2026-08-25 (large-scale study complete: 7 benchmark families, ~28k questions).
+scene-disjoint from all evaluation). Last updated: 2026-08-27 (RL design sweep + 10k-scale A/B/D runs complete, §4d–4e).
 
 ---
 
@@ -249,61 +249,62 @@ group-12 were **not** scaled — neither showed a per-task win that a 10× data
 increase could plausibly turn into a net gain. Evaluated on MindCube per-task,
 VSI-Bench held-out half (memory + tree with head v2).
 
-## 4e. Large-scale RL on the promising design (10k items, DDP) (A_baseline 10k pending)
+## 4e. Large-scale RL on the promising designs (10k items, 3-GPU DDP each) — complete 2026-08-27
 
-`D_highcost` (ladder, cost 0.2, view budget 1.5, group 6) retrained on the
-full 9,995-item MindCube train set (3-GPU DDP after 2 GPUs were released;
-λ converged ≈0.20). `A_baseline` 10k is training. Greedy rollout, paired on
-the same ids as §4d.
+The three points of the acquisition-horizon/cost axis — the only design axis
+that produced task-dependent trade-offs in §4d — retrained on the full
+9,995-item MindCube train set: **A** baseline ladder (cost 0.05, budget 2.3,
+λ stayed 0), **B** short horizon (≤2 views), **D** high cost (0.2, budget 1.5,
+λ→0.20). Greedy rollout, paired on the same ids as §4d; VSI = held-out odd
+half with head v2 unchanged.
 
-| policy | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | 0_frame | 1_frame | 2_frame | 3_frame (rest) |
-|---|---|---|---|---|---|---|---|---|
-| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.720 | 0.714 | 0.756 | 0.636 |
-| D_highcost 1k | 0.602 @ 1.27 | 0.741 @ 1.24 | 0.658 | 0.876 | 0.730 | 0.667 | 0.733 | 0.533 |
-| **D_highcost 10k** | **0.632 @ 1.31** | **0.778 @ 1.30** | **0.720** | **0.878** | 0.730 | 0.741 | 0.756 | **0.690** |
-| A_baseline 10k | *training* | | | | | | | |
+**MindCube (per category / question type):**
+
+| policy | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | rotation (tiny) | 3_frame (rest) | general (tiny) |
+|---|---|---|---|---|---|---|---|
+| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.355 | 0.636 | 0.308 |
+| **A_baseline 10k** | **0.650 @ 1.93** | 0.771 @ 2.10 | 0.705 | 0.876 | **0.390** | 0.679 | 0.423 |
+| B_depth2 10k | 0.591 @ 1.92 | 0.708 @ 1.91 | 0.597 | 0.876 | 0.380 | 0.625 | **0.500** |
+| **D_highcost 10k** | 0.632 @ **1.31** | **0.778 @ 1.30** | **0.720** | **0.878** | 0.315 | **0.690** | **0.500** |
+| (1k versions, §4d) A / B / D | 0.617 / 0.560 / 0.602 | 0.766 / 0.705 / 0.741 | | | | | |
+
+**VSI-Bench held-out half (2,557 q, mean of 10 types; Δ vs same system with
+SFT-v2 adapter, scene-bootstrap 95% CI):**
+
+| adapter | memory (static) | tree v4 (head v2) | tree gates direct / explore |
+|---|---|---|---|
+| SFT-v2 | 0.342 | 0.356 | 413 / 2087 |
+| A_baseline 10k | 0.340 (−0.2 [−0.9, +0.5]) | 0.350 (−0.7 [−1.9, +0.4]) | 435 / 2033 |
+| B_depth2 10k | 0.342 (+0.0 [−0.8, +0.8]) | **0.361** (+0.5 [−0.5, +1.5]) | 317 / 2168 |
+| D_highcost 10k | 0.339 (−0.2 [−0.9, +0.4]) | 0.357 (+0.0 [−1.0, +1.1]) | **597 / 1870** |
 
 **Findings:**
-- **Scaling turns the efficiency trade-off into a Pareto win.** At 1k items
-  the high-cost policy bought −33% views for −2.4 pts; at 10k it keeps the
-  view saving (1.30 vs 1.85, −30%) *and* gains +1.3 (rest) / +1.7 (tiny)
-  over SFT-v2, and +1.2/+1.5 over the 1k long-horizon ladder that used 65%
-  more views.
-- **The gain is where the 1k policy was losing: *among* and 3-frame
-  questions.** among 0.658→0.720 (rest), 3_frame 0.533→0.690 (rest),
-  0.600→0.752 (tiny). With more data the policy learns *which* items need
-  the extra view instead of stopping early everywhere — mean views barely
-  change (1.24→1.30) but they are spent on the multi-view questions.
-- Around / 0-frame / 1-frame stay at the SFT-v2 level (already saturated
-  for this policy family); rotation remains the unsolved category for every
-  policy (≈0.30, n=17/200) — a perception limit, not an acquisition one.
-
-**Cross-benchmark transfer — VSI-Bench held-out odd half (2,557 q, paired,
-scene-bootstrap CIs; head v2 unchanged):**
-
-| system | mean of types | app_order | abs_dist | counting | rel_dir easy/med/hard | rel_dist | obj_size | room_size | route |
-|---|---|---|---|---|---|---|---|---|---|
-| SFT-v2 memory | 0.342 | 0.218 | 0.083 | 0.356 | 0.522 / 0.396 / 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
-| D_10k memory | 0.339 | 0.218 | 0.080 | 0.360 | 0.540 / 0.353 / 0.387 | 0.388 | 0.362 | 0.360 | 0.346 |
-| tree v4 (SFT-v2 + head v2) | 0.356 | 0.305 | 0.120 | 0.278 | 0.487 / 0.449 / 0.373 | 0.397 | 0.391 | 0.408 | 0.356 |
-| tree v4 w/ D_10k adapter | 0.357 | 0.293 | 0.115 | 0.299 | 0.496 / 0.386 / 0.382 | 0.397 | 0.411 | 0.412 | 0.375 |
-
-D_10k − SFT-v2: memory **−0.2 [−0.9, +0.5]**, tree **+0.0 [−0.9, +1.0]**.
-- **MindCube RL is VSI-neutral in accuracy** — the +1.3/+1.7 MindCube gain
-  does not transfer, but nothing regresses either (the CIs exclude any
-  effect larger than ±1 pt). Consistent with §6a: RL on one benchmark's
-  view-control problem is skill-specific.
-- **The efficiency behaviour *does* transfer.** Inside the tree, the D_10k
-  controller answers directly 597× vs 413× for SFT-v2 (+45% direct,
-  −10% EXPLORE gates) at identical accuracy — it has learned a
-  benchmark-agnostic "stop when sufficient" prior. Per-type this shows as
-  gains on size/room/route (+2 to +2 pts, the cheap-to-answer types) and a
-  loss on rel_direction_medium (−6.3, the one type that benefits from extra
-  branches).
-- Noise note: the RL adapter emits slightly more off-vocabulary gate tokens
-  (LEFT/TOILET/…: 21 vs 6 of 2,557), all handled by the fallback path.
-- Pending: A_baseline 10k to separate "more RL data" from "cost pressure"
-  as the cause of the MindCube gain.
+- **More RL data helps accuracy on its own.** A_baseline goes 0.617→0.650
+  (tiny) and 0.766→0.771 (rest) from 1k→10k with the view count barely
+  changing (2.10→1.93 / 2.15→2.10). It is the best tiny policy (+3.5 over
+  SFT-v2) and the only one that lifts *rotation* (0.355→0.390).
+- **Cost pressure is (almost) free at scale.** D_highcost matches or beats
+  A on rest (0.778 vs 0.771, *among* 0.720 vs 0.705, 3_frame 0.690 vs
+  0.679) with **38% fewer views** (1.30 vs 2.10); on tiny it gives up 1.8
+  pts, all of it on rotation (0.315 vs 0.390) — the one category where the
+  cheap first view is never enough. At 1k the same cost setting cost 2.4
+  pts *everywhere*; the data, not the penalty, taught it *where* to spend.
+- **Short horizon (B) does not recover with data**: 0.591/0.708, *among*
+  0.597 (−10.5 vs SFT-v2) — the ≤2-view cap is a hard ceiling for
+  three-view questions and no amount of RL fixes an acquisition limit.
+  It keeps its niche wins (general 0.500, type-3 0.759) but they are small
+  categories (n=26/112).
+- **VSI transfer: all three are accuracy-neutral** (every CI contains 0;
+  widest effect ±1.9 pt). The MindCube-specific gains do not move VSI, and
+  nothing regresses. What *does* transfer is behaviour: the D controller
+  answers directly 45% more often inside the tree at equal score; the
+  short-horizon B controller explores slightly *more* (317 direct) and has
+  the highest tree point estimate (0.361), consistent with its policy
+  deferring more to the head-gated branch/fuse machinery.
+- **Recommendation:** ship **D_highcost 10k** as the default controller
+  (best rest accuracy, best *among*, −30–38% views, VSI-neutral); use
+  **A_baseline 10k** when rotation-type questions dominate. Do not cap the
+  horizon.
 
 ## 5. End-to-end systems
 
@@ -413,6 +414,8 @@ valid while absolute numbers inherit backbone exposure.
 
 All four stages of the design doc's training pipeline (scaled) are now
 complete: SFT control+answers → confidence head → fusion training → GRPO.
+RL design space (§4d) and 10k-scale runs of the three horizon/cost points
+(§4e) are also complete; D_highcost 10k is the recommended controller.
 Remaining levers, in order of expected value:
 1. Multi-step branch trajectories (depth > 1) steered by the trained policy.
 2. On-VSI-domain fusion/control data (the tree's fused path still trails
