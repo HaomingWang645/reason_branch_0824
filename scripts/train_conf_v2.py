@@ -25,10 +25,10 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def load_vsi():
     qmeta = {r["id"]: r for r in load_questions()}
     X, y, gid = [], [], []
-    for f in sorted(glob.glob(os.path.join(REPO, "results", "vsi_states_s*.jsonl"))):
+    for f in sorted(glob.glob(os.path.join(REPO, os.environ.get("VSI_STATES_GLOB", "results/vsi_states_s*.jsonl")))):
         for l in open(f):
             r = json.loads(l)
-            fp = os.path.join(REPO, "data", "feats_vsi", f"{r['id']}.pt")
+            fp = os.path.join(REPO, os.environ.get("FEATS_VSI_DIR", "data/feats_vsi"), f"{r['id']}.pt")
             if not os.path.exists(fp):
                 continue
             feats = torch.load(fp)
@@ -107,9 +107,9 @@ def main():
           f"Brier {np.mean((p[vte]-yt[vte])**2):.3f} ECE {ece(p[vte], yt[vte]):.3f} "
           f"(n={vte.sum()})")
     print(f"MC   test: AUROC {auroc(p[~vte], yt[~vte]):.3f} (n={(~vte).sum()})")
-    torch.save({"head": head.state_dict(), "T": best_T},
-               os.path.join(REPO, "checkpoints", "conf_head_v2.pt"))
-    print("SAVED checkpoints/conf_head_v2.pt")
+    out = os.environ.get("CONF_HEAD_OUT", os.path.join(REPO, "checkpoints", "conf_head_v2.pt"))
+    torch.save({"head": head.state_dict(), "T": best_T}, out)
+    print("SAVED", out)
 
 
 if __name__ == "__main__":
