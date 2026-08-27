@@ -18,11 +18,15 @@ avic_repro/
 ├── checkpoints/AVIC-Qwen2.5-VL-7B-policy/   # released AVIC-R LoRA adapter (HF: Shoubin/AVIC-Qwen2.5-VL-7B-policy)
 ├── scripts/
 │   ├── env.sh          # conda env `avic`, PYTHONPATH, CUDA_DEVICE_ORDER, OpenAI key
-│   ├── run_avic.sh     # one Table-1 configuration: MODE={baseline,avic,avic_qwen,avic_r} × BACKBONE
-│   ├── run_matrix.sh   # sequential queue of configurations
+│   ├── run_avic2.sh    # one Table-1 configuration: MODE={baseline,avic,avic_qwen,avic_r} × BACKBONE; one chunk per GPU slot in GPUS
+│   ├── run_matrix2.sh  # sequential queue of configurations (+ automatic re-run of crashed chunks)
+│   ├── run_mindjourney.sh, mj_chunk.sh   # "+ MindJourney" always-on rows (blocked on API credits, see RESULTS.md)
 │   ├── fix_chunks.sh   # re-run crashed chunks (pipeline resumes from results.json)
 │   ├── status.sh       # per-chunk progress of every run
-│   └── summarize.py    # Table-1-style markdown table incl. tokens / WM-call rate / views
+│   ├── summarize.py    # Table-1-style markdown table incl. tokens / WM-call rate / views
+│   ├── paired_diag.py  # per-question wrong→right / right→wrong comparison of a WM run vs. its baseline
+│   ├── viz_traces.py   # self-contained HTML with the full reasoning path of sample questions (results/traces.html)
+│   └── run_avic.sh, run_matrix.sh, phase*.sh   # earlier drivers / the exact queue that was executed
 ├── results/<backbone>_<mode>[_spatial_beam_search]_qc<N>/question_chunk_i/   # per-question logs + results.json
 ├── results/summary.csv, results/RESULTS_TABLE.md
 └── logs/
@@ -49,6 +53,8 @@ huggingface-cli download Shoubin/AVIC-Qwen2.5-VL-7B-policy --local-dir checkpoin
 | `utils/vlm_wrapper.py` | InternVL3 device map hard-coded to `cuda:1` / multi-GPU split; use `cuda:0` when one GPU is visible. |
 | `stable_virtual_camera/seva/modules/autoencoder.py` | VAE path was a hard-coded `/nas-ssd2/...` path; and `stabilityai/stable-diffusion-2-1-base` is no longer on the HF hub (404). We use the unmodified `vae/` sub-folder of the cached `friedrichor/stable-diffusion-2-1-realistic` checkpoint (its config says `_name_or_path: stabilityai/stable-diffusion-2-1`, i.e. the original SD-2.1 VAE). Override with `SVC_VAE_PATH`. |
 | `tools/aggregate_chunks.py` | `pipeline_baseline.py` never fills `results["current"]`; aggregator now derives it from `progress`. |
+| `pipelines/pipeline_avic.py` | world-model renders are run in-process when `max_inference_batch_size == 1` instead of spawning a fresh worker process per render (the spawn re-imported torch and duplicated the CUDA context: ~2× slower and ~9 GB extra per chunk, and impossible on the exclusive-mode GPU 5). SVC globals are reset before every call so the result is identical. `AVIC_WM_INPROCESS=0` restores the upstream behaviour. |
+| `mindjourney/utils/api.py` (MindJourney copy) | same OpenAI backend patch, plus a fix for an upstream bug: `ChatAPI.truncate()` raised `AttributeError: init_length` whenever a scoring prompt with 18 imagined views exceeded 20k tokens, silently replacing the (valid) response with "Sorry, I am not able to respond to that." (`patches/mindjourney_patches.diff`). |
 
 ## Protocol
 
@@ -56,7 +62,7 @@ Exactly the README "Eval setting" of the upstream repo (= paper Table 1):
 SAT-Real test split, all 150 questions, `max_images 2`, `spatial_beam_search`, `num_policy_samples 5`,
 `max_wm_candidates 5`, `max_action_ids_cap 6`, thresholds 8/8, SVC `img2trajvid_s-prob`, `cfg 4.0`, `L_short 576`,
 `num_targets 8`, `frame_interval 3`, `num_frames 9`; policy sampling T=0.7, top-p 1.0; API VLMs at temperature≈0, seed 44.
-Questions are split into 6 chunks (3 per GPU on two H100s) and merged with `tools/aggregate_chunks.py`.
+Questions are split into 2–6 chunks over H100 GPUs 5/6/7 and merged with `tools/aggregate_chunks.py`.
 
 * **baseline**: `pipelines/pipeline_baseline.py` — direct QA, no world model.
 * **AVIC**: `pipelines/pipeline_avic.py --policy_model_type gpt` — the backbone is policy, verifier and QA model.
@@ -69,8 +75,11 @@ Closed-source backbones (`gpt-4o`, `gpt-4.1`) are called through the OpenAI API 
 ## Reproduce
 
 ```bash
-source scripts/env.sh
-MODE=baseline BACKBONE=gpt-4o GPUS="6" CHUNKS_PER_GPU=2 bash scripts/run_avic.sh
-CONFIGS="avic_r:gpt-4o avic:gpt-4o avic_qwen:gpt-4o" GPUS="6 7" CHUNKS_PER_GPU=3 bash scripts/run_matrix.sh
+MODE=baseline BACKBONE=gpt-4o GPUS="6 6" bash scripts/run_avic2.sh              # 2 chunks on GPU 6
+CONFIGS="avic_r:gpt-4o avic:gpt-4o avic_qwen:gpt-4o" GPUS="6 7 7" bash scripts/run_matrix2.sh
+CONFIGS="avic_r:OpenGVLab/InternVL3-14B" GPUS="5 7" bash scripts/run_matrix2.sh   # InternVL+SVC+Qwen ≈ 60 GB → 1 chunk/GPU
+BACKBONE=gpt-4.1 GPUS="6 6 7" bash scripts/run_mindjourney.sh                      # always-on baseline (needs API credits)
 python scripts/summarize.py --md results/RESULTS_TABLE.md
+python scripts/viz_traces.py --runs gpt-41_avic_r_spatial_beam_search_qc3 --per-type 2 --out results/traces.html
 ```
+Note: GPU 5 on this box is in `Exclusive_Process` mode (one process per GPU), GPU 6 was shared with another job.
