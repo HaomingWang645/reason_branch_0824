@@ -439,7 +439,8 @@ SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 **Tree diagrams (2026-08-27):** `figures/tree_schematic.png` draws the depth-1
 tree as a graph (gate → 5 render branches → keep-2 → consensus / fuse →
 arbitrate, with call counts); `figures/tree_d10k_{1129,2220,76,1409}.png`
-instantiate it with the real renders and head confidences for one example
+instantiate it with image-bearing nodes (each node shows the frames/renders the
+controller sees there) and head confidences for one example
 per mode (direct / branch_consensus / fused / fused_fallback_direct);
 `scripts/tree_diagram.py`.
 

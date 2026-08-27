@@ -63,43 +63,65 @@ def img(ax, path, cx, cy, w, alpha=1.0, ec=GRID, lw=1, max_h=None):
     ax.add_patch(plt.Rectangle((cx - w/2, cy - h/2), w, h, fc="none", ec=ec, lw=lw, zorder=4))
     return h
 
+def strip(ax, TR, qid, x0, y, n=4, w=0.42, gap=0.05, alpha=1.0):
+    """Row of n frame thumbnails starting at x0 (left edge), vertically centred on y. Returns width."""
+    for i in range(n): img(ax, f"{TR}/{qid}_frame{i}.jpg", x0 + w/2 + i*(w+gap), y, w, max_h=w*0.75, alpha=alpha)
+    return n*(w+gap) - gap
+
+def card(ax, x, y, w, h, title, fc="white", ec=GRID, lw=1.2):
+    ax.add_patch(FancyBboxPatch((x - w/2, y - h/2), w, h, boxstyle="round,pad=0.02,rounding_size=0.12", fc=fc, ec=ec, lw=lw, zorder=1))
+    ax.text(x - w/2 + 0.08, y + h/2 - 0.08, title, fontsize=7.5, color=ec if ec != GRID else MUT, va="top", ha="left", fontweight="bold", zorder=5)
+
 def instance(t, tag, label):
     TR = f"{R}/results/traces/{tag}"; qid = t["id"]; mode = t["mode"]; executed = mode != "direct"
-    fig, ax = plt.subplots(figsize=(13, 9.2), dpi=170); ax.set_xlim(0, 13); ax.set_ylim(0, 9.2); ax.axis("off")
+    fig, ax = plt.subplots(figsize=(14, 11), dpi=170); ax.set_xlim(0, 14); ax.set_ylim(0, 11); ax.axis("off")
     ok = t["score"] > .5
-    ax.text(0.2, 9.05, f"{label}  ·  #{qid}  ·  {t['qtype'].replace('_',' ')}  ·  {t['scene']}", fontsize=9, color=MUT, va="top")
-    ax.text(0.2, 8.75, textwrap.fill(t["question"].split("\n")[0], 150), fontsize=10, fontweight="bold", va="top")
-    ax.text(0.2, 8.4, f"path taken: {mode}   →   final {t['final'].strip()}   (GT {t['gt']})   {'CORRECT' if ok else 'WRONG'}", fontsize=10, color=OK if ok else BAD, fontweight="bold", va="top")
-    # root frames (data coords)
-    for i in range(4): img(ax, f"{TR}/{qid}_frame{i}.jpg", 0.75 + i*0.95, 7.0, 0.9, max_h=0.85)
-    ax.text(2.2, 7.65, "ROOT: 8 video frames (4 shown) + question", fontsize=8, color=BLUE, ha="center", va="center")
-    d = t["direct"]; gate_yes = "YES" in t["gate"].upper()
-    box(ax, 6.0, 7.05, 2.3, 0.7, f"GATE → {t['gate']}", fc="#fff6e8", ec=ORANGE, lw=1.6, weight="bold")
-    arrow(ax, (3.7, 7.05), (4.85, 7.05))
-    dwin = mode in ("direct", "fused_fallback_direct")
-    box(ax, 10.6, 7.05, 2.8, 0.7, f"DIRECT: {d['pred'].strip()}   [{d['conf']:.3f}]", fc="#e9f7f1" if dwin else "white", ec=OK if dwin else BLUE, lw=2 if dwin else 1.2)
-    arrow(ax, (7.15, 7.05), (9.2, 7.05), color=OK if gate_yes else MUT, lw=2 if gate_yes else 1, label="YES: answer directly" if gate_yes else "(direct answer scored for arbitration)")
-    xs = [1.3, 3.65, 6.0, 8.35, 10.7]; W = 2.15
-    for b in t["branches"]:
-        i = b["view"]; x = xs[i]; kept = executed and i in t["kept"]
-        h = img(ax, f"{TR}/{qid}_view{i}.jpg", x, 4.85, W, alpha=1 if executed else 0.3, ec=ORANGE if kept else GRID, lw=3 if kept else 1)
-        arrow(ax, (6.0, 6.7), (x, 4.85 + h/2 + 0.05), color=(ORANGE if kept else MUT), lw=(1.8 if kept else 0.9), dashed=not executed)
-        ax.text(x, 4.85 - h/2 - 0.12, f"{VIEW_NAMES[i]}: {b['pred'].strip()[:10]}  [{b['conf']:.3f}]" + ("  KEPT" if kept else ""), fontsize=8, ha="center", va="top", color=ORANGE if kept else MUT, fontweight="bold" if kept else "normal")
-    ybot = 4.85 - (W * 0.75) / 2 - 0.35
+    ax.text(0.2, 10.85, f"{label}  ·  #{qid}  ·  {t['qtype'].replace('_',' ')}  ·  {t['scene']}", fontsize=9, color=MUT, va="top")
+    ax.text(0.2, 10.55, textwrap.fill(t["question"].split("\n")[0], 160), fontsize=10, fontweight="bold", va="top")
+    ax.text(0.2, 10.2, f"path taken: {mode}   →   final {t['final'].strip()}   (GT {t['gt']})   {'CORRECT' if ok else 'WRONG'}", fontsize=10, color=OK if ok else BAD, fontweight="bold", va="top")
+    ax.text(0.2, 9.9, "each node shows the images the controller sees at that node; [ ] = confidence-head v2 score", fontsize=8, color=MUT, va="top", style="italic")
+    d = t["direct"]; gate_yes = "YES" in t["gate"].upper(); dwin = mode in ("direct", "fused_fallback_direct")
+    # ROOT card: 4 of 8 frames
+    card(ax, 2.2, 8.75, 4.1, 1.5, "ROOT STATE: 8 video frames (4 shown) + question", fc="#eef3fb", ec=BLUE, lw=1.6)
+    strip(ax, TR, qid, 0.35, 8.55, w=0.85, gap=0.08)
+    # GATE
+    box(ax, 6.4, 8.75, 2.0, 0.7, f"GATE → {t['gate']}", fc="#fff6e8", ec=ORANGE, lw=1.6, weight="bold")
+    arrow(ax, (4.3, 8.75), (5.4, 8.75))
+    # DIRECT card: frames only
+    card(ax, 11.2, 8.75, 4.9, 1.5, f"DIRECT (frames only): answer {d['pred'].strip()}   [{d['conf']:.3f}]", fc="#e9f7f1" if dwin else "white", ec=OK if dwin else BLUE, lw=2 if dwin else 1.2)
+    strip(ax, TR, qid, 8.9, 8.55, w=0.85, gap=0.08)
+    arrow(ax, (7.4, 8.75), (8.75, 8.75), color=OK if gate_yes else MUT, lw=2 if gate_yes else 1, label="YES: answer directly" if gate_yes else "(scored for arbitration)")
+    # BRANCH cards: frames strip + one render
+    xs = [1.45, 4.05, 6.65, 9.25, 11.85]; CW, CH = 2.5, 3.2; ytop = 7.6; yc = ytop - CH/2
+    for bch in t["branches"]:
+        i = bch["view"]; x = xs[i]; kept = executed and i in t["kept"]; al = 1 if executed else 0.3
+        card(ax, x, yc, CW, CH, f"BRANCH {i+1}: frames + {VIEW_NAMES[i]}", fc="#fff6e8" if kept else "white", ec=ORANGE if kept else GRID, lw=2.2 if kept else 1)
+        strip(ax, TR, qid, x - CW/2 + 0.12, ytop - 0.55, w=0.52, gap=0.05, alpha=al)
+        img(ax, f"{TR}/{qid}_view{i}.jpg", x, ytop - 1.85, CW - 0.3, alpha=al, ec=ORANGE if kept else GRID, lw=2 if kept else 1, max_h=1.55)
+        ax.text(x, ytop - CH + 0.12, f"answer {bch['pred'].strip()[:10]}   [{bch['conf']:.3f}]" + ("   KEPT" if kept else ""), fontsize=8, ha="center", va="bottom", color=ORANGE if kept else INK, fontweight="bold" if kept else "normal", zorder=5)
+        arrow(ax, (6.4, 8.4), (x, ytop + 0.02), color=(ORANGE if kept else MUT), lw=(1.8 if kept else 0.9), dashed=not executed)
+    ybot = ytop - CH
     if not executed:
-        ax.text(6.0, 2.6, "gate said YES → branches were NOT executed (shown faded for reference)", fontsize=9, color=MUT, ha="center", style="italic")
+        ax.text(7.0, 3.6, "gate said YES → branches were NOT executed (shown faded for reference)", fontsize=9, color=MUT, ha="center", style="italic")
     else:
         f = t["fuse"]; kc = [t["branches"][i]["conf"] for i in t["kept"]]; kp = {t["branches"][i]["pred"].strip() for i in t["kept"]}
         if mode == "branch_consensus":
-            box(ax, 6.0, 2.4, 7.0, 0.7, f"CONSENSUS: kept branches agree on '{list(kp)[0]}', conf {max(kc):.3f} > direct {d['conf']:.3f} → stop (fusion not executed)", fc="#e9f7f1", ec=OK, lw=2, fs=8.5)
-            for i in t["kept"]: arrow(ax, (xs[i], ybot), (6.0, 2.8), color=ORANGE, lw=1.8)
+            card(ax, 4.8, 2.9, 6.6, 2.4, f"CONSENSUS: kept branches agree on '{list(kp)[0]}', conf {max(kc):.3f} > direct {d['conf']:.3f} → stop, fusion NOT executed", fc="#e9f7f1", ec=OK, lw=2)
+            for j, i in enumerate(t["kept"]):
+                img(ax, f"{TR}/{qid}_view{i}.jpg", 3.3 + j*2.6, 2.75, 2.3, ec=ORANGE, lw=2, max_h=1.6)
+                ax.text(3.3 + j*2.6, 1.85, f"{VIEW_NAMES[i]}: {t['branches'][i]['pred'].strip()[:10]} [{t['branches'][i]['conf']:.3f}]", fontsize=7.5, ha="center", color=ORANGE)
+                arrow(ax, (xs[i], ybot - 0.02), (3.3 + j*2.6, 3.6), color=ORANGE, lw=1.8)
         else:
-            box(ax, 3.6, 2.4, 4.6, 0.7, f"FUSE (frames + 2 kept renders): {f['pred'].strip()}   [{f['conf']:.3f}]", fc="#fff6e8", ec=ORANGE, lw=1.8, fs=8.5)
-            for i in t["kept"]: arrow(ax, (xs[i], ybot), (3.6, 2.8), color=ORANGE, lw=1.8)
+            card(ax, 4.3, 2.9, 7.6, 2.4, f"FUSE: frames + 2 kept renders (pose-tagged) → answer {f['pred'].strip()}   [{f['conf']:.3f}]", fc="#fff6e8", ec=ORANGE, lw=1.8)
+            strip(ax, TR, qid, 0.65, 2.75, w=0.62, gap=0.05)
+            for j, i in enumerate(t["kept"]):
+                img(ax, f"{TR}/{qid}_view{i}.jpg", 4.7 + j*2.2, 2.75, 2.0, ec=ORANGE, lw=2, max_h=1.5)
+                ax.text(4.7 + j*2.2, 1.85, f"{VIEW_NAMES[i]}: {t['branches'][i]['pred'].strip()[:10]} [{t['branches'][i]['conf']:.3f}]", fontsize=7.5, ha="center", color=ORANGE)
+                arrow(ax, (xs[i], ybot - 0.02), (4.7 + j*2.2, 3.6), color=ORANGE, lw=1.8)
             win_direct = mode == "fused_fallback_direct"
-            box(ax, 9.7, 2.4, 5.9, 0.8, f"ARBITRATE: direct {d['conf']:.3f} vs fused {f['conf']:.3f} vs kept {max(kc):.3f}\n→ " + ("DIRECT wins (fallback)" if win_direct else "FUSED wins"), fc="white", ec=INK, lw=1.2, fs=8.2)
-            arrow(ax, (5.95, 2.4), (6.75, 2.4)); arrow(ax, (10.6, 6.7), (10.6, 2.8), color=BLUE, dashed=True)
-    box(ax, 6.5, 1.0, 5.6, 0.7, f"FINAL ({mode}): {t['final'].strip()}    GT: {t['gt']}", fc="#e9f7f1" if ok else "#fdecea", ec=OK if ok else BAD, lw=2, fs=10, weight="bold")
+            box(ax, 11.2, 2.9, 4.9, 1.0, f"ARBITRATE\ndirect {d['conf']:.3f} vs fused {f['conf']:.3f} vs kept {max(kc):.3f}\n→ " + ("DIRECT wins (fallback)" if win_direct else "FUSED wins"), fc="white", ec=INK, lw=1.2, fs=8.2)
+            arrow(ax, (8.15, 2.9), (8.7, 2.9)); arrow(ax, (13.4, 8.0), (13.4, 3.4), color=BLUE, dashed=True, label="c_direct", lpos=0.5)
+    box(ax, 7.0, 0.7, 6.0, 0.7, f"FINAL ({mode}): {t['final'].strip()}    GT: {t['gt']}", fc="#e9f7f1" if ok else "#fdecea", ec=OK if ok else BAD, lw=2, fs=10, weight="bold")
     fig.savefig(f"{FIG}/tree_{tag}_{qid}.png", bbox_inches="tight"); plt.close(fig)
 
 def main():
