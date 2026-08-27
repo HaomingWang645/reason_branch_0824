@@ -1,0 +1,14 @@
+*.mp4
+*.npz
+*.safetensors
+spagent/
+spagent/checkpoints/
+spagent/dataset/
+spagent/logs/
+spagent/output/
+spagent/outputs/
+spagent/**/__pycache__/
+*.zip
+outputs/*/spagent_traces/
+outputs/runsmoke/
+*_errors.jsonl

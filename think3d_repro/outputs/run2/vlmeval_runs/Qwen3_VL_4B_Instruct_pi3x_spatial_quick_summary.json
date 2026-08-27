@@ -1,0 +1,14 @@
+{
+  "VSIBench": {
+    "dataset": "VSIBench",
+    "n_samples": 200,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/Qwen3_VL_4B_Instruct_pi3x_spatial/VSIBench/Qwen3_VL_4B_Instruct_pi3x_spatial_VSIBench.xlsx",
+    "scores": {
+      "Overall": 0.32,
+      "route_planning": 0.34,
+      "object_rel_direction": 0.28,
+      "object_rel_distance": 0.34,
+      "obj_appearance_order": 0.32
+    }
+  }
+}

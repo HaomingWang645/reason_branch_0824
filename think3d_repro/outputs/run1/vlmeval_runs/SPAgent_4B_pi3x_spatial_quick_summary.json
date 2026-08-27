@@ -1,0 +1,18 @@
+{
+  "BLINK": {
+    "dataset": "BLINK",
+    "n_samples": 133,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx",
+    "scores": {
+      "split": [
+        "none"
+      ],
+      "Overall": [
+        0.3383458646616541
+      ],
+      "Multi-view_Reasoning": [
+        0.3383458646616541
+      ]
+    }
+  }
+}

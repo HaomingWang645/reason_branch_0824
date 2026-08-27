@@ -1,0 +1,95 @@
+diff --git a/spagent/external_experts/Pi3/pi3x_client.py b/spagent/external_experts/Pi3/pi3x_client.py
+index d175bd9..094012a 100644
+--- a/spagent/external_experts/Pi3/pi3x_client.py
++++ b/spagent/external_experts/Pi3/pi3x_client.py
+@@ -65,8 +65,15 @@ class Pi3XClient:
+             # 使用cv2读取图片，确保格式一致（BGR格式）
+             image_bgr = cv2.imread(image_path, cv2.IMREAD_COLOR)
+             if image_bgr is None:
+-                logger.error(f"无法读取图片：{image_path}")
+-                return None
++                # Fallback: some PNGs fail in cv2 ("bad parameters to zlib" when another
++                # zlib is loaded in-process); decode with PIL instead.
++                try:
++                    from PIL import Image as _PILImage
++                    import numpy as _np
++                    image_bgr = cv2.cvtColor(_np.array(_PILImage.open(image_path).convert('RGB')), cv2.COLOR_RGB2BGR)
++                except Exception as _e:
++                    logger.error(f"无法读取图片：{image_path} ({_e})")
++                    return None
+             
+             # 编码为JPEG格式（与视频处理保持一致）
+             _, buffer = cv2.imencode('.jpg', image_bgr)
+diff --git a/spagent/models/qwen_vllm_model.py b/spagent/models/qwen_vllm_model.py
+index 7bb229f..b1ce54b 100644
+--- a/spagent/models/qwen_vllm_model.py
++++ b/spagent/models/qwen_vllm_model.py
+@@ -35,6 +35,9 @@ class QwenVLLMModel(Model):
+             temperature: Sampling temperature
+             max_tokens: Maximum tokens to generate
+         """
++        if max_tokens is None:
++            import os as _os
++            max_tokens = int(_os.environ.get('SPAGENT_MAX_TOKENS', '1024'))  # paper: 1024 response tokens
+         super().__init__(model_name, temperature, max_tokens)
+         
+         # Import Qwen VLLM functions
+diff --git a/spagent/tools/pi3x_offline_tool.py b/spagent/tools/pi3x_offline_tool.py
+index 42b7979..3d28a88 100644
+--- a/spagent/tools/pi3x_offline_tool.py
++++ b/spagent/tools/pi3x_offline_tool.py
+@@ -65,7 +65,7 @@ class Pi3XOfflineTool(Pi3XTool):
+     def __init__(
+         self,
+         cache_dir: Optional[str] = None,
+-        max_points: int = 1_500_000,
++        max_points: Optional[int] = None,
+     ):
+         # Initialise as mock (no client needed) so the base class doesn't
+         # try to connect to a server.
+@@ -74,7 +74,11 @@ class Pi3XOfflineTool(Pi3XTool):
+             cache_dir
+             or os.environ.get("PI3X_CACHE_DIR", "dataset/pi3x_cache")
+         )
+-        self.max_points = max_points
++        # Render budget: env PI3X_OFFLINE_MAX_POINTS (default 1.5M). Rendering cost is ~linear in
++        # the point count (1.5M pts = ~17 s, 150k pts = ~2 s per global view); the online Pi3X
++        # server used at eval time renders ~100-200k filtered points.
++        self.max_points = int(max_points if max_points is not None
++                              else os.environ.get('PI3X_OFFLINE_MAX_POINTS', 1_500_000))
+         # Override use_mock flag so _validate_and_fix_tool_calls in the
+         # scheduler can distinguish offline vs mock for logging purposes.
+         self.use_mock = False
+diff --git a/spagent/vllm_models/qwen.py b/spagent/vllm_models/qwen.py
+index 0cfdf08..8a5a750 100644
+--- a/spagent/vllm_models/qwen.py
++++ b/spagent/vllm_models/qwen.py
+@@ -6,7 +6,7 @@ from typing import List, Optional, Union
+ 
+ # Initialize Qwen client with DashScope configuration
+ client = OpenAI(
+-    api_key=os.getenv("DASHSCOPE_API_KEY"),
++    api_key=os.getenv("DASHSCOPE_API_KEY", "dummy"),
+     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+ )
+ 
+diff --git a/spagent/vllm_models/qwen_vllm.py b/spagent/vllm_models/qwen_vllm.py
+index dffef96..18a0f87 100644
+--- a/spagent/vllm_models/qwen_vllm.py
++++ b/spagent/vllm_models/qwen_vllm.py
+@@ -6,12 +6,14 @@ from openai import OpenAI
+ from pathlib import Path
+ from typing import List, Optional, Union
+ 
++import sys as _sys
++_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+ from qwen import encode_image, create_message_with_image
+ 
+ # Initialize Qwen client with vLLM configuration
+ client = OpenAI(
+     api_key="dummy",  # vLLM doesn't require a real API key
+-    base_url="http://10.8.131.51:30058/v1",
++    base_url=os.environ.get("VLLM_BASE_URL", "http://localhost:30058/v1"),
+ )
+ 
+ def qwen_single_image_inference(
