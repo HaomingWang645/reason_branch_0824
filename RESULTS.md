@@ -306,6 +306,77 @@ SFT-v2 adapter, scene-bootstrap 95% CI):**
   **A_baseline 10k** when rotation-type questions dominate. Do not cap the
   horizon.
 
+## 4f. Best system (D_highcost 10k) — per-class accuracy vs baselines, all datasets
+
+Baselines: zero-shot Qwen2.5-VL-7B (1 view / all views), SFT-v2 with all
+views (no policy), SFT-v2 policy. Paired ids throughout. External benchmarks
+(ViewSpatial, OST, OmniSpatial, BLINK) with the D_10k adapter are running
+and will be appended.
+
+### MindCube tinybench (n=1,050)
+
+| system | overall | views | among (600) | around (250) | rotation (200) |
+|---|---|---|---|---|---|
+| Qwen2.5-VL-7B, 1 view | 0.343 | 1 | 0.300 | 0.440 | 0.350 |
+| Qwen2.5-VL-7B, all views | 0.346 | 3.4 | 0.303 | 0.412 | **0.390** |
+| SFT-v2, all views | 0.532 | 3.4 | 0.540 | 0.656 | 0.355 |
+| SFT-v2 policy | 0.615 | 1.63 | 0.658 | 0.720 | 0.355 |
+| **D_highcost 10k policy** | **0.632** | **1.31** | **0.695** | **0.736** | 0.315 |
+
+| system | 0_frame (140) | 1_frame (140) | 2_frame (149) | 3_frame (145) | type 1 (13) | type 2 (125) | type 3 (112) | general (26) | three_view (200) |
+|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B, 1 view | 0.307 | 0.300 | 0.322 | 0.255 | 0.308 | 0.408 | 0.491 | 0.385 | 0.350 |
+| Qwen2.5-VL-7B, all views | 0.279 | 0.314 | 0.369 | 0.234 | 0.231 | 0.448 | 0.393 | 0.385 | **0.390** |
+| SFT-v2, all views | 0.514 | 0.643 | 0.557 | 0.483 | 0.462 | **0.784** | 0.536 | 0.346 | 0.355 |
+| SFT-v2 policy | **0.629** | 0.686 | **0.718** | 0.662 | **0.538** | 0.760 | 0.696 | 0.308 | 0.355 |
+| **D_highcost 10k policy** | **0.629** | **0.714** | **0.718** | **0.752** | **0.538** | 0.752 | **0.741** | **0.500** | 0.315 |
+
+### MindCube rest_clean (n=1,330)
+
+| system | overall | views | among (774) | around (539) | rotation (17) |
+|---|---|---|---|---|---|
+| Qwen2.5-VL-7B, 1 view | 0.286 | 1 | 0.333 | 0.215 | 0.353 |
+| Qwen2.5-VL-7B, all views | 0.267 | 3.4 | 0.329 | 0.176 | 0.294 |
+| SFT-v2, all views | 0.688 | 3.4 | 0.588 | 0.839 | **0.471** |
+| SFT-v2 policy | 0.765 | 1.85 | 0.702 | 0.866 | 0.412 |
+| **D_highcost 10k policy** | **0.778** | **1.30** | **0.720** | **0.878** | 0.294 |
+
+| system | 0_frame (189) | 1_frame (189) | 2_frame (180) | 3_frame (184) | type 1 (41) | type 2 (359) | type 3 (139) | general (32) | three_view (7) | two_view_cw (10) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B, 1 view | 0.286 | 0.339 | 0.350 | 0.326 | 0.122 | 0.214 | 0.245 | 0.531 | 0.143 | 0.500 |
+| Qwen2.5-VL-7B, all views | 0.344 | 0.275 | 0.367 | 0.310 | 0.073 | 0.184 | 0.187 | 0.469 | 0.143 | 0.400 |
+| SFT-v2, all views | 0.646 | 0.608 | 0.583 | 0.522 | 0.707 | 0.861 | 0.820 | 0.531 | 0.286 | **0.600** |
+| SFT-v2 policy | 0.720 | 0.714 | **0.756** | 0.636 | 0.707 | 0.883 | **0.871** | **0.594** | **0.429** | 0.400 |
+| **D_highcost 10k policy** | **0.730** | **0.741** | **0.756** | **0.690** | **0.780** | **0.891** | **0.871** | 0.500 | 0.143 | 0.400 |
+
+### VSI-Bench held-out odd half (2,557 q; score = acc / MRA)
+
+| system | mean | app_order | abs_dist | counting | rel_dir easy | rel_dir med | rel_dir hard | rel_dist | obj_size | room_size | route |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B frames16 | 0.313 | 0.289 | 0.088 | 0.254 | 0.478 | 0.420 | 0.203 | 0.391 | 0.340 | 0.357 | 0.308 |
+| Qwen2.5-VL-7B memory (frames+renders) | 0.326 | 0.255 | 0.090 | **0.367** | **0.549** | 0.420 | 0.245 | 0.388 | 0.282 | 0.371 | 0.288 |
+| SFT-v2 memory | 0.342 | 0.218 | 0.083 | 0.356 | 0.522 | 0.396 | 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
+| tree v4 (SFT-v2 + head v2) | 0.356 | **0.305** | **0.120** | 0.278 | 0.487 | **0.449** | 0.373 | 0.397 | 0.391 | 0.408 | 0.356 |
+| **tree v4 + D_highcost 10k** | **0.357** | 0.293 | 0.115 | 0.299 | 0.496 | 0.386 | **0.382** | 0.397 | **0.411** | **0.412** | **0.375** |
+
+**Reading the tables:**
+- **Where the gain comes from (MindCube):** vs zero-shot Qwen the system
+  roughly doubles accuracy on *among* (0.30→0.70) and *around* (0.44→0.74 /
+  0.22→0.88); vs the SFT-v2 policy, D_10k adds most on the multi-view
+  questions (3_frame +9.0 tiny / +5.4 rest, type-3 +4.5) while spending
+  **fewer** views (1.31 vs 1.63) — the RL policy learned which items need
+  the extra view.
+- **Where it loses:** *rotation* (tiny 0.315; zero-shot all-views 0.390 is
+  the best) — every trained policy is at or below chance-level here, and
+  the cheap-first-view prior of D makes it worst. Small categories (general
+  n=26/32, three_view n=7) swing ±0.2 on a handful of items.
+- **VSI:** the tree with head v2 is what lifts VSI (+1.4 over static
+  memory, +4.4 over frames16); the D_10k adapter is neutral (0.357 vs
+  0.356), gaining on size/room/route and losing on rel_direction_medium,
+  and answers directly 45% more often. counting is the one type where the
+  tree hurts (0.278–0.299 vs 0.356–0.367 static) — fused renders lose
+  object instances.
+
 ## 5. End-to-end systems
 
 | system | score | notes |

@@ -1,39 +1,0 @@
-[run_eval] model=SPAgent-4B setting=think3d run=viz dataset=BLINK extra=--rl-trained --limit 4 --debug
-[2026-08-27 01:27:02] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
-/home/haoming/reason_branch_0824/think3d_repro/spagent/scripts/quick_eval.py:428: FutureWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
-  .apply(lambda g: g.head(per_cat))
-
-=================================================================
-  SPAgent Quick Eval
-  Model    : SPAgent-4B  (backend=qwen-vllm)
-  Tools    : ['pi3x']
-  Datasets : ['BLINK']
-  Limit    : 4
-  Per-cat  : (none)
-  Prompt   : spatial
-  RL-tuned : True
-  Tag      : SPAgent_4B_pi3x_spatial
-=================================================================
-
-Tools: ['pi3x_tool']
-
-
-───────────────────────────────────────────────────────
-  BLINK
-  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
-  4 rows loaded
-  Running 4 samples ...
-  BLINK:   0%|          | 0/4 [00:00<?, ?it/s]  BLINK:  25%|██▌       | 1/4 [00:05<00:16,  5.62s/it]  BLINK:  50%|█████     | 2/4 [00:11<00:11,  5.97s/it]  BLINK:  75%|███████▌  | 3/4 [00:14<00:04,  4.58s/it]  BLINK: 100%|██████████| 4/4 [00:16<00:00,  3.59s/it]  BLINK: 100%|██████████| 4/4 [00:16<00:00,  4.21s/it]
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_3_0_azim0.0_elev30.0_camview.png
-  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx
-  Scoring (judge=exact_matching) ...
-  Judge API base: (default openai.com)
-  0%|          | 0/4 [00:00<?, ?it/s]100%|██████████| 4/4 [00:00<00:00, 7685.39it/s]
-  Error log (1 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK_errors.jsonl
-
-  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.5], 'Multi-view_Reasoning': [0.5]}
-
-
-Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
-Done.
-

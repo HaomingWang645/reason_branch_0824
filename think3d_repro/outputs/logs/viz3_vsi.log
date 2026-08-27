@@ -1,40 +1,0 @@
-[run_eval] model=SPAgent-4B setting=think3d run=viz3 dataset=VSIBench extra=--rl-trained --per-category 4 --debug
-[2026-08-27 02:23:55] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
-
-=================================================================
-  SPAgent Quick Eval
-  Model    : SPAgent-4B  (backend=qwen-vllm)
-  Tools    : ['pi3x']
-  Datasets : ['VSIBench']
-  Limit    : defaults
-  Per-cat  : 4
-  Prompt   : spatial
-  RL-tuned : True
-  Tag      : SPAgent_4B_pi3x_spatial
-=================================================================
-
-Tools: ['pi3x_tool']
-
-
-───────────────────────────────────────────────────────
-  VSIBench
-  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
-  Per-category sampling (4/cat): {'route_planning': 4, 'object_rel_direction': 4, 'object_rel_distance': 4, 'obj_appearance_order': 4} → 16 total
-  16 rows loaded
-  Running 16 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
-  VSIBench:   0%|          | 0/16 [00:00<?, ?it/s]  VSIBench:   6%|▋         | 1/16 [00:29<07:23, 29.55s/it]  VSIBench:  12%|█▎        | 2/16 [00:32<03:13, 13.81s/it]  VSIBench:  19%|█▉        | 3/16 [00:35<01:53,  8.75s/it]  VSIBench:  25%|██▌       | 4/16 [00:40<01:27,  7.26s/it]  VSIBench:  31%|███▏      | 5/16 [00:43<01:05,  5.98s/it]  VSIBench:  38%|███▊      | 6/16 [00:45<00:46,  4.69s/it]  VSIBench:  44%|████▍     | 7/16 [00:49<00:37,  4.18s/it]  VSIBench:  50%|█████     | 8/16 [00:55<00:39,  4.99s/it]  VSIBench:  56%|█████▋    | 9/16 [00:59<00:32,  4.62s/it]  VSIBench:  62%|██████▎   | 10/16 [01:02<00:24,  4.16s/it]  VSIBench:  69%|██████▉   | 11/16 [01:05<00:19,  3.82s/it]  VSIBench:  75%|███████▌  | 12/16 [01:08<00:13,  3.39s/it]  VSIBench:  81%|████████▏ | 13/16 [01:11<00:10,  3.45s/it]  VSIBench:  88%|████████▊ | 14/16 [01:14<00:06,  3.27s/it]  VSIBench:  94%|█████████▍| 15/16 [01:23<00:04,  5.00s/it]  VSIBench: 100%|██████████| 16/16 [01:28<00:00,  5.10s/it]  VSIBench: 100%|██████████| 16/16 [01:28<00:00,  5.56s/it]
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_47430023_frame_0_azim0.0_elev60.0.png
-  Overall accuracy: 31.25%  (5.0/16)
-    obj_appearance_order     : 0.00% (0.0/4)
-    object_rel_direction     : 75.00% (3.0/4)
-    object_rel_distance      : 0.00% (0.0/4)
-    route_planning           : 50.00% (2.0/4)
-  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz3/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx
-  Error log (11 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz3/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench_errors.jsonl
-
-  ✓ VSIBench scores: {'Overall': 0.3125, 'route_planning': 0.5, 'object_rel_direction': 0.75, 'object_rel_distance': 0.0, 'obj_appearance_order': 0.0}
-
-
-Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/runviz3/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
-Done.
-
