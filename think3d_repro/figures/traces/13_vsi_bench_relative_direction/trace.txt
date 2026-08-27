@@ -1,0 +1,40 @@
+VSI-Bench · relative direction  (VSIBench #00004)
+
+QUESTION: If I am standing by the clock and facing the window, is the trash bin to my front-left, front-right, back-left, or back-right?
+The directions refer to the quadrants of a Cartesian plane (if I am standing at the origin and facing along the positive y-axis).
+Select from the following choices.
+(A) A. front-right
+(B) B. back-right
+(C) C. back-left
+(D) D. front-left
+
+
+MODEL TURN 1:
+To answer the question, we need to determine the relative position of the trash bin with respect to the clock and the window. The question specifies that the person is standing by the clock and facing the window. We must interpret the directions in the context of a Cartesian plane where the person is at the origin and facing along the positive y-axis (i.e., front).
+
+Step 1: Identify the positions of the clock, window, and trash bin in the scene.
+
+From the images, we can observe:
+- The clock is mounted on the wall, typically above a desk or shelf.
+- The window is located on the wall, usually above or next to the clock.
+- The trash bin is typically located near the desk or on the floor, often to the side of the desk.
+
+Step 2: Determine the orientation.
+
+The person is standing by the clock and facing the window. In the context of the room, the clock is typically on the wall, and the window is often to the side or behind the clock. However, in most office setups, the clock is on the wall, and the window is on the opposite side of the room, so facing the window would mean the person is facing away from the clock.
+
+Step 3: Determine the position of the trash bin.
+
+From the images, we can see that the trash bin is located near the desk, which is typically to the side of the clock and window. However, in the context of the room, the trash bin is typically located to the side of the desk, which is to the left or right of the clock and window.
+
+Step 4: Determine the relative position of the trash bin with respect to the clock and window.
+
+From the images, we can see that the trash bin is located to the left of the desk, which is to the left of the clock and window. Therefore, the trash bin is located to the front-left of the clock and window.
+
+Step 5: Select the correct option.
+
+The correct option is (D) front-left.
+
+[answer: D]
+
+VERDICT: CORRECT  model=D  ground_truth=D

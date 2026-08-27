@@ -1,0 +1,35 @@
+MindCube · rotation  (MindCube #00000)
+
+QUESTION: These three images (image 1, 2, and 3) show the same scene from three different viewpoints. The image 2 was taken after turning the camera 90 degrees to the right (clockwise) from the position of image 1. For image 3, the camera was turned another 90 degrees right, so it's basically facing the opposite direction of image 1. Based on these three images: If I am standing at the same spot and facing the same direction as shown in image 1, what is to my right? A. sink B. wooden frame mirror C. door
+
+MODEL TURN 1:
+To answer the question, I need to determine what is to my right when I am standing at the same spot and facing the same direction as shown in image 1. The key is to use the information provided about the camera movements between the images.
+
+First, I need to understand the spatial relationship between the three images. According to the question, image 2 was taken after turning the camera 90 degrees to the right (clockwise) from image 1, and image 3 was taken after turning another 90 degrees right from image 2, so it's facing the opposite direction of image 1.
+
+To solve this, I can use solver B (Exact heading composition), which is appropriate for questions that involve exact turns and directional reasoning.
+
+Let me break down the steps:
+
+1. Start at image 1 (facing forward). Let's assume the forward direction is the direction of the camera in image 1.
+2. Turn 90 degrees right to get image 2.
+3. Turn another 90 degrees right to get image 3 (which is facing opposite to image 1).
+
+Now, I need to determine what is to my right when facing the direction of image 1. This means I need to look at image 1 and identify what is to the right of the viewer in that image.
+
+Looking at image 1, I can see a sink on the left side of the image (from the viewer's perspective), a mirror on the right side, and a door on the far right side. However, I need to confirm the exact position of these objects relative to the viewer in image 1.
+
+To verify the spatial relationships, I will use Pi3X to render the scene from a viewpoint that is aligned with image 1's camera position and then check what is to the right.
+
+I will use Pi3X to render the scene from the camera position of image 1 (azimuth=0, elevation=0) to verify the spatial layout. However, since the question asks for what is to the right when facing the direction of image 1, I should render a view that is 90 degrees to the right of image 1 (which is image 2) to confirm the relative positions.
+
+Let me use Pi3X to render a view that is 90 degrees to the right of image 1 (azimuth=90, elevation=0) to see what is to the right of the viewer in image 1.
+
+TOOL CALL: pi3x_tool -> azimuth 90°, elevation 0° · ego view from cam 1 · 1 image(s) reconstructed
+
+RENDERED 3D VIEW: 44,875 points
+
+MODEL TURN 2:
+[answer: B]
+
+VERDICT: CORRECT  model=B  ground_truth=B

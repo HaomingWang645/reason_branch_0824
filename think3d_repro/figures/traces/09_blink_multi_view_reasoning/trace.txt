@@ -1,0 +1,23 @@
+BLINK · multi-view reasoning  (BLINK #00002)
+
+QUESTION: The images are frames from a video. The video is shooting a static scene. The camera is either moving clockwise (left) or counter-clockwise (right) around the object. The first image is from the beginning of the video and the second image is from the end. Is the camera moving left or right when shooting the video? Select from the following options.
+(A) left
+(B) right
+
+MODEL TURN 1:
+To determine whether the camera is moving left or right around the object, we need to analyze the relative positions of the camera in the two images. The first image is from the beginning of the video, and the second image is from the end. The key is to understand the direction of camera motion based on the change in perspective.
+
+We can use the Pi3X tool to reconstruct the 3D scene and analyze the camera's movement. We'll start by rendering the scene from the first image's perspective and then from the second image's perspective to compare the relative positions.
+
+First, we'll render the scene from the first image's perspective (image1) at an azimuth of 0 degrees and elevation of 30 degrees to get a clear view of the object. Then, we'll render the scene from the second image's perspective (image2) at an azimuth of 90 degrees and elevation of 30 degrees to see how the camera has moved.
+
+Let's start with the first image.
+
+TOOL CALL: pi3x_tool -> azimuth 0°, elevation 30° · ego view from cam 1 · 1 image(s) reconstructed
+
+RENDERED 3D VIEW: 291,391 points
+
+MODEL TURN 2:
+[answer: (B) right]
+
+VERDICT: WRONG  model=B  ground_truth=

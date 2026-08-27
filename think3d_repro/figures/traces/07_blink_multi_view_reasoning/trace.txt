@@ -1,0 +1,29 @@
+BLINK · multi-view reasoning  (BLINK #00000)
+
+QUESTION: The images are frames from a video. The video is shooting a static scene. The camera is either moving clockwise (left) or counter-clockwise (right) around the object. The first image is from the beginning of the video and the second image is from the end. Is the camera moving left or right when shooting the video? Select from the following options.
+(A) left
+(B) right
+
+MODEL TURN 1:
+To determine whether the camera is moving left or right around the object, we need to analyze the relative positions of the camera views. The question specifies that the first image is from the beginning of the video and the second image is from the end. This implies that we are observing the camera's movement as it orbits around the static scene.
+
+We can use the Pi3X tool to reconstruct the scene from a new viewpoint and analyze the relative orientation. Since the camera is orbiting around the object, we can infer the direction of movement by comparing the relative positions of the objects in the two images.
+
+Let's start by rendering the scene from a top-down view to get a better understanding of the spatial layout.
+
+TOOL CALL: pi3x_tool -> azimuth 0°, elevation 60° · global view around cam 1 · 2 image(s) reconstructed
+
+RENDERED 3D VIEW: 
+
+MODEL TURN 2:
+The 3D reconstruction shows two camera positions: Cam1* (first image, beginning of video) and Cam2 (second image, end of video). The scene is static, and the camera orbits around the object.
+
+In the 3D view:
+- Cam1* is positioned at the front (ego-right → left → back → right) and is closer to the scene.
+- Cam2 is positioned behind Cam1*, indicating a counter-clockwise (right) orbit around the object.
+
+This matches the definition: “ego-right follows front-position → left-position → back-position → right-position.” Since Cam2 is behind Cam1*, and the orbit is counter-clockwise (right), the camera is moving right.
+
+[answer: B]
+
+VERDICT: WRONG  model=B  ground_truth=

@@ -1,0 +1,27 @@
+BLINK · multi-view reasoning  (BLINK #00003)
+
+QUESTION: The images are frames from a video. The video is shooting a static scene. The camera is either moving clockwise (left) or counter-clockwise (right) around the object. The first image is from the beginning of the video and the second image is from the end. Is the camera moving left or right when shooting the video? Select from the following options.
+(A) left
+(B) right
+
+MODEL TURN 1:
+To determine whether the camera is moving left or right around the object, we need to analyze the relative positions of the objects in the two images. The first image is from the beginning of the video, and the second image is from the end. We will use the solver "B. Exact heading composition" because the question explicitly states that the camera is moving in a specific direction (clockwise or counter-clockwise) around the object.
+
+### Step 1: Identify the camera's starting position and movement
+The first image is from the beginning of the video, and the second image is from the end. We need to determine the direction of movement based on the relative positions of the objects in the two images.
+
+### Step 2: Use the solver "B. Exact heading composition"
+We will use the solver "B. Exact heading composition" to calculate the direction of movement. The camera is moving either clockwise (left) or counter-clockwise (right) around the object. We will calculate the heading difference between the two images.
+
+### Step 3: Determine the direction of movement
+If the camera is moving clockwise (left), the object will appear to move to the right in the image. If the camera is moving counter-clockwise (right), the object will appear to move to the left in the image.
+
+### Step 4: Analyze the images
+In the first image, the object (the bowl) is positioned to the left of the can. In the second image, the object (the bowl) is positioned to the right of the can. This indicates that the camera is moving clockwise (left) around the object.
+
+### Step 5: Confirm the direction of movement
+The camera is moving clockwise (left) around the object, as the object appears to move to the right in the image.
+
+[answer: (A) left]
+
+VERDICT: WRONG  model=A  ground_truth=

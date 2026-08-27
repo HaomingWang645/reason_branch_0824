@@ -1,0 +1,29 @@
+BLINK · multi-view reasoning  (BLINK #00001)
+
+QUESTION: The images are frames from a video. The video is shooting a static scene. The camera is either moving clockwise (left) or counter-clockwise (right) around the object. The first image is from the beginning of the video and the second image is from the end. Is the camera moving left or right when shooting the video? Select from the following options.
+(A) left
+(B) right
+
+MODEL TURN 1:
+To determine whether the camera is moving left or right around the object, we need to analyze the spatial relationship between the two images. The first image is from the beginning of the video, and the second image is from the end. The camera is orbiting around the object (the bottle of soy sauce), and we need to figure out the direction of rotation.
+
+We will use the "Orbit views named front/left/back/right" solver (Solver A) because the question explicitly states that the camera is orbiting around the object, and we are to determine the direction of the orbit. The key is to understand the camera positions relative to the object.
+
+First, we will analyze the first image. In the first image, the camera is positioned such that the bottle is centered, and the background (the pink package) is to the left. In the second image, the camera has moved, and the bottle is still centered, but now the background is to the right. This suggests that the camera has rotated clockwise (i.e., to the right) around the object.
+
+To confirm this, we will use the Pi3X tool to render the scene from a viewpoint that would correspond to a left or right orbit. We will render the scene from a viewpoint that is 90 degrees to the right of the first image's viewpoint, and compare it to the second image. This will help us verify whether the rotation is clockwise or counter-clockwise.
+
+Let's start by rendering the scene from a viewpoint that is 90 degrees to the right of the first image's viewpoint.
+
+TOOL CALL: pi3x_tool -> azimuth 90°, elevation 0° · global view around cam 1 · 1 image(s) reconstructed
+
+RENDERED 3D VIEW: 
+
+MODEL TURN 2:
+The 3D reconstruction confirms the camera orbit direction. In the diagram, Cam1* (first image) is positioned to the left of the object (bottle), and Cam2 (second image) is positioned to the right. The object (bottle) remains centered in both views, and the background (pink package) moves from left to right as the camera orbits clockwise (i.e., to the right). The camera’s rotation is consistent with a counter-clockwise orbit in the global frame, meaning the camera moves left (clockwise) around the object.
+
+This aligns with the initial observation: in the first image, the pink package is on the left; in the second image, it is on the right. Therefore, the camera is moving clockwise (left).
+
+[answer: (A) left]
+
+VERDICT: WRONG  model=A  ground_truth=
