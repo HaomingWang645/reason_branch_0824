@@ -45,7 +45,7 @@ for k, (label, ds, idx, steps, ok, el) in enumerate(cards, 1):
             ims = []
             for i, p in enumerate(imgs):
                 dst = os.path.join(d, 'inputs', f'cam{i+1}{os.path.splitext(p)[1]}'); shutil.copy(p if os.path.isabs(p) else os.path.join(SP, p), dst)
-                ims.append(load(p, 360))
+                ims.append(load(p, 300 if len(imgs) <= 4 else 210))
             q = html.unescape(content); txt += ['QUESTION: ' + q, '']
             blocks.append(('text', 'QUESTION', wrap(q, 110), INK)); blocks.append(('images', ims, [f'cam {i+1}' for i in range(len(ims))]))
         elif kind == 'model':
@@ -59,19 +59,14 @@ for k, (label, ds, idx, steps, ok, el) in enumerate(cards, 1):
             for j, p in enumerate(imgs):
                 shutil.copy(p if os.path.isabs(p) else os.path.join(SP, p), os.path.join(d, f'render_{j+1}.png')); ims.append(load(p, 700))
             txt += [f'RENDERED 3D VIEW: {content}', '']
-            blocks.append(('text', 'RENDERED 3D VIEW  (' + content + ')', [], ACC)); blocks.append(('images', ims, ['' for _ in ims]))
+            blocks.append(('text', 'RENDERED 3D VIEW' + (f'  ({content})' if content else ''), [], ACC)); blocks.append(('images', ims, ['' for _ in ims]))
         elif kind == 'verdict':
             pred, gt, ok = content; txt += [f'VERDICT: {"CORRECT" if ok else "WRONG"}  model={pred}  ground_truth={gt}']
             blocks.append(('text', f'VERDICT: {"CORRECT" if ok else "WRONG"}   model answer {pred}   ground truth {gt}', [], OK if ok else BAD))
     open(os.path.join(d, 'trace.txt'), 'w').write('\n'.join(txt))
-    # ---- compose ----
-    H = PAD + 40
-    for b in blocks:
-        if b[0] == 'text': H += 30 + 26 * len(b[2]) + 12
-        else: H += max(im.height for im in b[1]) + 44 if b[1] else 30
-    H += PAD
+    # ---- compose: draw on a tall canvas, then crop to the used height ----
+    H = 20000
     canvas = Image.new('RGB', (W, H), (247, 249, 251)); dr = ImageDraw.Draw(canvas)
-    dr.rectangle([0, 0, 8, H], fill=OK if ok else BAD)
     y = PAD; dr.text((PAD, y), label + f'   ·   {ds} #{idx:05d}', font=FB, fill=INK); y += 40
     for b in blocks:
         if b[0] == 'text':
@@ -80,12 +75,16 @@ for k, (label, ds, idx, steps, ok, el) in enumerate(cards, 1):
             for ln in lines: dr.text((PAD, y), ln, font=F, fill=INK); y += 26
             y += 12
         else:
-            ims, caps = b[1], b[2]; x = PAD; mh = max(im.height for im in ims) if ims else 0
+            ims, caps = b[1], b[2]; x = PAD; row_h = 0
             for im, cap in zip(ims, caps):
-                if x + im.width > W - PAD: x = PAD; y += mh + 30
+                if x + im.width > W - PAD and x > PAD:
+                    x = PAD; y += row_h + 30; row_h = 0
                 if cap: dr.text((x, y), cap, font=FM, fill=MUTED)
-                canvas.paste(im, (x, y + 22)); x += im.width + 14
-            y += mh + 44
+                canvas.paste(im, (x, y + 22)); x += im.width + 14; row_h = max(row_h, im.height)
+            y += row_h + 44
+    y += PAD
+    canvas = canvas.crop((0, 0, W, y)); dr = ImageDraw.Draw(canvas)
+    dr.rectangle([0, 0, 8, y], fill=OK if ok else BAD)
     canvas.save(os.path.join(OUT, slug + '.png'))
-    print('saved', slug + '.png', f'{W}x{H}')
+    print('saved', slug + '.png', canvas.size)
 print('done ->', OUT)

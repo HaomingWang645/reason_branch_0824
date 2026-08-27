@@ -77,6 +77,10 @@ Table 1 (VSI-Bench-tiny):
   ~130 k filtered points anyway), rollouts moved to vLLM colocate mode, and the likely viewpoints were
   pre-rendered in parallel on CPU; the optimization itself (data, rewards, rollouts / prompt, lr schedule,
   epochs) is unchanged.
+* **Empty renders.** Occasionally the Pi3X server returns an empty plot (a blank 6000×5000 px image, e.g.
+  when the requested global view leaves the reconstructed points outside the frame): 14 of 196 VSI-Bench
+  global renders (7 %), 33 / 440 on BLINK, 20 / ~10 k on MindCube. The model receives the blank image as-is
+  (visible in some cards of `figures/traces/` and the trace page).
 * **Infra.** vLLM 0.11.2's multimodal processor cache crashed one engine core (`AssertionError: Expected a
   cached item for mm_hash=...`); servers are now started with `--mm-processor-cache-gb 0`.
 
