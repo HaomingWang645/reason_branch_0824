@@ -190,6 +190,46 @@ rendered top-downs rarely flip MindCube outcomes, so reward never favored the
 action). VSI static transfer unchanged (0.341 vs 0.342) as expected for
 control-only RL.
 
+## 4d. RL reasoning-path design space (sweep: 1k items/variant, 1 GPU each)
+
+Eight GRPO variants from the Stage-III adapter, evaluated by greedy policy
+rollout with **per-task breakdown** (categories among/around/rotation; question
+types). Reference = SFT-v2 policy. 5/8 complete (CoT variants and group-12
+still training); full tables in `scripts/analyze_dse.py` output.
+
+| variant (design axis) | tiny acc @ views | rest acc @ views | among (rest) | around (rest) | 0_frame (rest) |
+|---|---|---|---|---|---|
+| SFT-v2 reference | 0.615 @ 1.63 | 0.765 @ 1.85 | 0.702 | 0.866 | 0.720 |
+| A baseline ladder | 0.617 @ 2.10 | 0.766 @ 2.15 | 0.708 | 0.859 | **0.751** |
+| B short horizon (≤2 views) | 0.560 @ 1.75 | 0.705 @ 1.75 | 0.593 | 0.872 | 0.619 |
+| C cost-free | 0.612 @ 2.16 | 0.765 @ 2.19 | 0.702 | 0.865 | 0.735 |
+| **D high cost / budget 1.5** | 0.602 @ **1.27** | 0.741 @ **1.24** | 0.658 | **0.876** | 0.730 |
+| E learned view selection | 0.573 @ 1.63 | 0.705 @ 1.96 | 0.598 | 0.863 | 0.688 |
+| F CoT (free length) | *training* | | | | |
+| G CoT (length-penalised) | *training* | | | | |
+| H group 12 | *training* | | | | |
+
+**Preliminary findings (per-task, as requested):**
+- **Different designs win different tasks.** D (strong efficiency pressure)
+  is best on *around* (0.876) and near-best on 0-frame questions while using
+  ~33% fewer views than SFT-v2 — the efficiency frontier winner. B (short
+  horizon) is *worst* on *among* (needs ≥3 views: 0.593 vs 0.702) but *best*
+  on rotation (0.529/0.380) and "general" (0.538) — tasks where extra views
+  confuse. A/C (long horizon) win the multi-view *among* category.
+- **Learned view selection (E) underperforms the fixed ladder** at this
+  scale: order-free choice mostly hurts *among* (0.598) — the ladder order is
+  already informative (front→left→back→right) and 1k items is too little to
+  learn a better policy over subsets.
+- Cost-free (C) ≈ baseline: λ never activated in A either (views stayed
+  under budget), so the dual variable is inert unless the budget binds (D).
+- No variant beats SFT-v2's *accuracy* at 1k items; RL's lever here is
+  **cost** (D: −33% views for −2 pts). Scaling to 10k items tests whether
+  accuracy also moves.
+
+**Large-scale stage (running):** D_highcost and A_baseline retrained on the
+full 9,995-item train set (DDP), then evaluated on MindCube per-task,
+VSI-Bench held-out half (memory + tree with head v2).
+
 ## 5. End-to-end systems
 
 | system | score | notes |

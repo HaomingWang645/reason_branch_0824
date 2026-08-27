@@ -22,7 +22,7 @@ def meta(split):
     m = {}
     for l in open(os.path.join(MC, split + ".jsonl")):
         r = json.loads(l)
-        m[r["id"]] = {"cat": r["id"].split("_")[0], "type": r.get("type", "?"),
+        m[r["id"]] = {"cat": r["id"].split("_")[0], "type": str(r.get("type", "?")),
                       "n": len(r["images"])}
     return m
 
