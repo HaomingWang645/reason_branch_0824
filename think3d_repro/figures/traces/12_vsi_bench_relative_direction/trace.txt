@@ -1,0 +1,25 @@
+VSI-Bench · relative direction  (VSIBench #00007)
+
+QUESTION: If I am standing by the window and facing the table, is the towel to the left or the right of the table?
+Select from the following choices.
+(A) A. left
+(B) B. right
+
+
+MODEL TURN 1:
+To answer the question, we need to determine the spatial relationship between the towel and the table from the perspective of someone standing by the window and facing the table. The key is to identify the table and the towel in the scene and then determine their relative positions.
+
+The provided images show a cluttered room with various objects. The table is visible in multiple frames, and the towel is also visible in some of them. However, the exact positioning of the towel relative to the table from the specified viewpoint is not immediately clear from the images alone.
+
+To better understand the spatial relationship, we can use the Pi3X tool to reconstruct the scene from a viewpoint that matches the description in the question. Specifically, we need to render the scene from the perspective of someone standing by the window and facing the table. This requires setting the camera to face the table, which is likely to be in the center of the scene, and then determining the position of the towel relative to the table.
+
+Let's start by rendering the scene from the camera's perspective that is facing the table. We will use the first frame as a reference and render it from a viewpoint that matches the description.
+
+TOOL CALL: pi3x_tool -> azimuth 0°, elevation 30° · ego view from cam 1 · 1 image(s) reconstructed
+
+RENDERED 3D VIEW: 
+
+MODEL TURN 2:
+[answer: A]
+
+VERDICT: CORRECT  model=A  ground_truth=A

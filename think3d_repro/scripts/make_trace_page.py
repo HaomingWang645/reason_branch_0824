@@ -29,13 +29,14 @@ vsi_task = {json.loads(l)['id']: json.loads(l)['task'] for l in open(os.path.joi
 blink = pd.read_excel(os.path.join(R, 'outputs/runviz/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx'))
 blink_gt = dict(zip(blink['index'].astype(str), blink['answer']))
 
-SAMPLES = [  # (dataset, idx, label)
+SAMPLES = [  # (dataset, idx, label[, run dir]) — VSI samples drawn from three viz passes so that each task shows a tool-using trace where one occurred
     ('MindCube', 0, 'MindCube · rotation'), ('MindCube', 2, 'MindCube · rotation'),
     ('MindCube', 8, 'MindCube · among'), ('MindCube', 6, 'MindCube · among'),
     ('MindCube', 3, 'MindCube · around'), ('MindCube', 5, 'MindCube · around'),
     ('BLINK', 0, 'BLINK · multi-view reasoning'), ('BLINK', 1, 'BLINK · multi-view reasoning'),
     ('BLINK', 2, 'BLINK · multi-view reasoning'), ('BLINK', 3, 'BLINK · multi-view reasoning'),
-    ('VSIBench', 0, None), ('VSIBench', 7, None), ('VSIBench', 4, None), ('VSIBench', 10, None), ('VSIBench', 3, None),
+    ('VSIBench', 0, None, 'runviz3'), ('VSIBench', 7, None, 'runviz2'), ('VSIBench', 6, None, 'runviz2'),
+    ('VSIBench', 7, None, 'runviz'), ('VSIBench', 10, None, 'runviz2'), ('VSIBench', 4, None, 'runviz'),
 ]
 TASKN = {'route_planning': 'route planning', 'object_rel_direction': 'relative direction',
          'object_rel_distance': 'relative distance', 'obj_appearance_order': 'appearance order'}
@@ -48,9 +49,10 @@ def fmt_text(t):
     return t.strip().replace('\n', '<br>')
 
 cards = []
-for ds, idx, label in SAMPLES:
-    conv = json.load(open(os.path.join(T, ds, f'{idx:05d}_conv.json')))['conversation']
-    tr = json.load(open(os.path.join(T, ds, f'{idx:05d}.json')))
+for smp in SAMPLES:
+    ds, idx, label = smp[:3]; TD = T if len(smp) < 4 else T.replace('runviz', smp[3])
+    conv = json.load(open(os.path.join(TD, ds, f'{idx:05d}_conv.json')))['conversation']
+    tr = json.load(open(os.path.join(TD, ds, f'{idx:05d}.json')))
     if ds == 'BLINK':
         gt = str(blink_gt.get(str(tr['index']), '')); label = label
     elif ds == 'VSIBench':
