@@ -513,15 +513,59 @@ relation reading, a real cost to state. Combined with VSI-Bench (+2.9) and
 MindCube-rest (+39 at one view), the picture is consistent: gains on
 egocentric/perspective spatial reasoning, no free lunch on 2D layout tasks.
 
-## 6c. Human-camera viewpoint constraint (running, 2026-08-27)
+## 6c. Human-camera viewpoint constraint (2026-08-27)
 
 Design change (DECISIONS.md §9): reasoning-path viewpoints must be where a
-person holding a camera could stand — inside the room (walked region,
-eye height, clear of walls), roll = 0, mild pitch; low-coverage views
-discarded; top-down bird's-eye kept last. Implemented as hard constraints in
-`human_poses` (`VIEWTREE_POSES=human`). Running: 40-scene geometric audit,
-static memory (SFT-v2) and tree v4 + D_10k on the VSI held-out half with
-human views vs legacy views (paired).
+person holding a camera could stand — inside the room (the region the
+video camera actually walked), at eye height, clear of walls, roll = 0,
+mild pitch; low-coverage views discarded; top-down bird's-eye kept last.
+Implemented as **hard constraints** in `human_poses` (`VIEWTREE_POSES=human`);
+the controller/head were not retrained (they were trained on MindCube
+top-down renders, never on the legacy elevated VSI views, so the swap is a
+clean test-time comparison). Figure: `figures/human_views_examples.png`.
+
+**Geometric audit (40 held-out scenes × 4 side views):**
+
+| proposer | inside walked region | inside room extent | height / room height | dist. to centre / half-diag | pitch | \|roll\| | render coverage |
+|---|---|---|---|---|---|---|---|
+| legacy (elevated oblique) | **0 %** | **0 %** | 1.67 (above ceiling) | 1.22 (outside) | 39.3° | 0.00° | 0.741 |
+| **human (constrained)** | **100 %** | 86 %* | 0.66 | 0.52 | 10.0° | 0.00° | 0.764 |
+
+\*inside the 5–95 % point-cloud extent; the rest sit at the hull boundary
+(doorways / alcoves the videographer walked through). 0/160 human views
+fell below the 45 % coverage threshold — the interior views paint *more*
+pixels than the outside views did, because nothing is occluded by the
+room's own outer walls.
+
+**VSI-Bench held-out odd half (2,557 q, paired; Δ vs legacy, scene-bootstrap 95 % CI):**
+
+| system | mean of types | app_order | abs_dist | counting | dir easy | dir med | dir hard | rel_dist | obj_size | room_size | route |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| memory legacy (SFT-v2) | 0.342 | 0.218 | 0.083 | 0.356 | 0.522 | 0.396 | 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
+| memory **human** (SFT-v2) | 0.343 (+0.2 [−1.0, +1.3]) | 0.209 | 0.092 | 0.342 | 0.513 | 0.406 | 0.382 | **0.421** | **0.364** | 0.375 | 0.327 |
+| tree v4 legacy (D_10k) | 0.357 | 0.293 | 0.115 | 0.299 | 0.496 | 0.386 | 0.382 | 0.397 | **0.411** | **0.412** | 0.375 |
+| tree v4 **human** (D_10k) | **0.361** (+0.4 [−0.7, +1.5]) | 0.301 | **0.131** | 0.312 | 0.513 | 0.396 | **0.406** | 0.380 | 0.397 | 0.394 | 0.375 |
+
+Tree mode mix with human views: direct 599 · consensus 846 · fused 571 ·
+fallback 541 (legacy: 597 / 820 / 546 / 594) — the head trusts the human
+branches slightly more (more consensus, fewer fallbacks).
+
+**Findings:**
+- **The constraint costs nothing.** Restricting the camera to physically
+  plausible positions is accuracy-neutral-to-positive (both CIs contain 0,
+  point estimates up), so the system can be made human-like for free —
+  and 0.361 is the best held-out tree number in the study.
+- **Where it helps / hurts is interpretable.** Eye-level interior views
+  improve metric and directional types (abs_distance +1.6, rel_direction
+  easy/hard +1.7/+2.4, counting +1.3): objects are seen at natural scale and
+  perspective, like the training images. They lose on object/room *size*
+  (−1.4/−1.8): the overhead cutaway from outside showed the whole room's
+  footprint at once, which is exactly what a size estimate wants — and the
+  allowed top-down view remains available for that.
+- Route 2 (RL reward) was not needed for validity — hard rejection gives
+  100 % compliance by construction. The remaining use for RL is *which*
+  valid position to stand at (view selection over the walked-hull grid with
+  the validity mask as an action mask), left as follow-up.
 
 ## 6b. Data-leakage audit (2026-08-24)
 
