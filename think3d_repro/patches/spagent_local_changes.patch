@@ -20,6 +20,68 @@ index d175bd9..094012a 100644
              
              # 编码为JPEG格式（与视频处理保持一致）
              _, buffer = cv2.imencode('.jpg', image_bgr)
+diff --git a/spagent/external_experts/Pi3/pi3x_render.py b/spagent/external_experts/Pi3/pi3x_render.py
+index 26429d8..020e197 100644
+--- a/spagent/external_experts/Pi3/pi3x_render.py
++++ b/spagent/external_experts/Pi3/pi3x_render.py
+@@ -26,6 +26,8 @@ from typing import Optional, Tuple
+ import matplotlib
+ matplotlib.use('Agg')
+ import matplotlib.pyplot as plt
++import threading
++_RENDER_LOCK = threading.Lock()  # pyplot is not thread-safe; tool calls run in a ThreadPool
+ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 – registers 3d projection
+ 
+ import numpy as np
+@@ -142,7 +144,12 @@ def _draw_cameras_visualization(
+ # SfM-style first-person rendering
+ # ---------------------------------------------------------------------------
+ 
+-def _render_point_cloud_sfm(
++def _render_point_cloud_sfm(*args, **kwargs):
++    with _RENDER_LOCK:
++        return _render_point_cloud_sfm_unlocked(*args, **kwargs)
++
++
++def _render_point_cloud_sfm_unlocked(
+     points_world: np.ndarray,
+     colors: np.ndarray,
+     camera_poses: np.ndarray,
+diff --git a/spagent/external_experts/Pi3/pi3x_server.py b/spagent/external_experts/Pi3/pi3x_server.py
+index 573f7c7..bba38a6 100644
+--- a/spagent/external_experts/Pi3/pi3x_server.py
++++ b/spagent/external_experts/Pi3/pi3x_server.py
+@@ -10,6 +10,10 @@ from flask import Flask, request, jsonify
+ from PIL import Image
+ import traceback
+ import matplotlib
++import threading
++# matplotlib.pyplot keeps global state; Flask serves requests in threads -> serialize rendering,
++# otherwise a thread can save another thread's empty figure (blank 6000x5000 renders).
++_RENDER_LOCK = threading.Lock()
+ matplotlib.use('Agg')  # 使用非交互后端
+ import matplotlib.pyplot as plt
+ # 设置matplotlib兼容模式以避免3D投影问题
+@@ -523,7 +527,8 @@ def infer():
+                     # 使用自定义角度生成图片
+                     view_mode = "相机视角" if camera_view else "全局视角"
+                     logger.info(f"使用自定义角度生成视角图片: 方位角={azimuth_angle}°, 仰角={elevation_angle}°, 参考相机={rotation_reference_camera}, 模式={view_mode}")
+-                    view_images = generate_custom_angle_views(
++                    with _RENDER_LOCK:
++                      view_images = generate_custom_angle_views(
+                         results, masks, imgs_rgb_tensor, azimuth_angle, elevation_angle,
+                         points_filtered, colors_filtered, rotation_reference_camera=rotation_reference_camera,
+                         camera_view=camera_view
+@@ -532,7 +537,8 @@ def infer():
+                     # 使用默认的多视角生成
+                     view_mode = "相机视角" if camera_view else "全局视角"
+                     logger.info(f"使用默认多视角生成图片，参考相机={rotation_reference_camera}, 模式={view_mode}")
+-                    view_images = generate_camera_views(
++                    with _RENDER_LOCK:
++                      view_images = generate_camera_views(
+                         results, masks, imgs_rgb_tensor, max_views_per_camera,
+                         points_filtered, colors_filtered, rotation_reference_camera=rotation_reference_camera,
+                         camera_view=camera_view
 diff --git a/spagent/models/qwen_vllm_model.py b/spagent/models/qwen_vllm_model.py
 index 7bb229f..b1ce54b 100644
 --- a/spagent/models/qwen_vllm_model.py
