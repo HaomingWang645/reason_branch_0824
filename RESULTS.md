@@ -8,7 +8,7 @@ teacher Qwen2.5-VL-32B · reconstruction frozen VGGT-1B · custom GPU point-spla
 renderer · benchmark VSI-Bench full test (5,130 questions, 288 scenes, paired) ·
 score = accuracy (MC) / MRA (numerical), headline = mean over 10 question types,
 scene-bootstrap 95% CIs (B=2000). Training data MindCube (10k items,
-scene-disjoint from all evaluation). Last updated: 2026-08-27 (RL design sweep + 10k-scale A/B/D runs complete, §4d–4e).
+scene-disjoint from all evaluation). Last updated: 2026-08-27 (human-camera viewpoint constraint §6c: best system 0.367).
 
 ---
 
@@ -156,6 +156,7 @@ scenes (2,557 questions):**
 | sft2_memory (best static) | 0.342 | [0.321, 0.365] |
 | tree v3 | 0.339 | [0.316, 0.361] |
 | **tree v4** | **0.356** | [0.335, 0.378] |
+| **tree v4 + D_10k, human views + matched head (§6c)** | **0.367** | — |
 
 tree4 − tree3 = **+1.8 [+0.7, +2.8]** (significant — fixing the head fixes the
 composition); tree4 − sft2_memory = +1.5 [−0.4, +3.4] — the adaptive tree's
@@ -562,6 +563,32 @@ branches slightly more (more consensus, fewer fallbacks).
   (−1.4/−1.8): the overhead cutaway from outside showed the whole room's
   footprint at once, which is exactly what a size estimate wants — and the
   allowed top-down view remains available for that.
+**Follow-up — confidence head retrained on human-view states (5 GPUs, ~2 h):**
+head-v2 recipe re-run with tree states collected on the even half using
+human views (`conf_head_v2_human.pt`; VSI held-out AUROC **0.710** vs 0.672
+for head v2 on legacy states; MindCube unchanged 0.891). Odd-half tree with
+human views + matched head:
+
+| tree v4 + D_10k | mean | Δ vs legacy tree (95 % CI) | Δ vs sft2_memory (static) |
+|---|---|---|---|
+| legacy views + head v2 | 0.357 | — | +1.5 [−0.4, +3.4] |
+| human views + head v2 | 0.361 | +0.4 [−0.7, +1.5] | |
+| **human views + head v2-human** | **0.367** | **+1.1 [−0.0, +2.3]** | **+2.6 [+0.5, +4.7]** |
+
+Per type (human + matched head): app_order 0.314 · abs_dist 0.131 ·
+counting 0.313 · dir easy/med/hard 0.522/0.406/0.387 · rel_dist 0.402 ·
+obj_size 0.432 · room_size 0.410 · route 0.356. Mode mix 598 / 839 / 576 /
+544 (direct / consensus / fused / fallback).
+
+- **This is the first significant win of the adaptive tree over static
+  prompting** (+2.6 over sft2_memory, CI excludes 0) and the best held-out
+  number in the study (0.367). The human-camera constraint contributes in
+  two ways: the views themselves (+0.4) and, more importantly, a head that
+  can *read* them (+0.7 more): correctness of an eye-level branch is more
+  predictable (AUROC +3.8) than that of an outside cutaway, so pruning and
+  arbitration improve. The obj_size loss seen with the old head is gone
+  (0.432, best of all systems) — the retrained head now routes size
+  questions to the top-down/fused path.
 - Route 2 (RL reward) was not needed for validity — hard rejection gives
   100 % compliance by construction. The remaining use for RL is *which*
   valid position to stand at (view selection over the walked-hull grid with
@@ -591,6 +618,8 @@ All four stages of the design doc's training pipeline (scaled) are now
 complete: SFT control+answers → confidence head → fusion training → GRPO.
 RL design space (§4d) and 10k-scale runs of the three horizon/cost points
 (§4e) are also complete; D_highcost 10k is the recommended controller.
+Human-camera viewpoint constraint (§6c) + matched head gives the best
+held-out system, 0.367, the first significant tree-over-static result.
 Remaining levers, in order of expected value:
 1. Multi-step branch trajectories (depth > 1) steered by the trained policy.
 2. On-VSI-domain fusion/control data (the tree's fused path still trails
