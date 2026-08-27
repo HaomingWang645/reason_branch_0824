@@ -8,18 +8,20 @@ MODEL="$1"; PORT="$2"; shift 2
 EXTRA=()
 if [ "${1:-}" = "--rl-trained" ]; then EXTRA=(--rl-trained); shift; fi
 SETTINGS="${1:-base think3d}"; RUNS="${2:-1 2 3}"
+DATASETS="${DATASETS:-MindCube BLINK VSIBench}"        # env override, e.g. DATASETS=VSIBench
+EXTRA_EVAL_ARGS="${EXTRA_EVAL_ARGS:-}"                 # env override, appended to every quick_eval call
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$ROOT/outputs/logs"
 for SETTING in $SETTINGS; do
-  for DS in MindCube BLINK VSIBench; do
+  for DS in $DATASETS; do
     (
       for RUN in $RUNS; do
         LOG="$ROOT/outputs/logs/${MODEL}_${SETTING}_run${RUN}_${DS}.log"
         echo "[matrix] start $MODEL $SETTING run$RUN $DS -> $LOG"
         if [ "$SETTING" = "think3d" ]; then
-          bash "$ROOT/scripts/run_eval.sh" "$MODEL" "$PORT" "$SETTING" "$RUN" "$DS" "${EXTRA[@]}" > "$LOG" 2>&1
+          bash "$ROOT/scripts/run_eval.sh" "$MODEL" "$PORT" "$SETTING" "$RUN" "$DS" "${EXTRA[@]}" $EXTRA_EVAL_ARGS > "$LOG" 2>&1
         else
-          bash "$ROOT/scripts/run_eval.sh" "$MODEL" "$PORT" "$SETTING" "$RUN" "$DS" > "$LOG" 2>&1
+          bash "$ROOT/scripts/run_eval.sh" "$MODEL" "$PORT" "$SETTING" "$RUN" "$DS" $EXTRA_EVAL_ARGS > "$LOG" 2>&1
         fi
         echo "[matrix] done  $MODEL $SETTING run$RUN $DS (exit $?)"
       done

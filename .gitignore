@@ -1,3 +1,18 @@
 data/
 results/
 checkpoints/
+
+# logs
+*.log
+logs/
+
+# python
+__pycache__/
+*.pyc
+
+# data dumps / patches
+*.json
+*.diff
+*.xlsx
+*.csv
+*.pkl

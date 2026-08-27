@@ -405,6 +405,17 @@ https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
 SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 (`figures/viewtree_traces.html` is the interactive version).
 
+**Traces for the best system (tree v4 + D_highcost 10k adapter), 2026-08-27:**
+`figures/trace_d10k_{1129,2220,76,1409,79,836}.png` + `trace_d10k_summary.png`
+(scripts `trace_examples_v2.py` / `trace_figures_v2.py`; same layout as the
+six SFT-v2 traces above, plus a bottom line giving tree v4 with the SFT-v2
+adapter's decision on the same question). What they show: the D_10k gate
+says YES (answer from video, branches faded = not executed) on #1129 and
+#836 where SFT-v2 explored and got them wrong — the "stop when sufficient"
+behaviour learned on MindCube; on #1409 the head overrules a wrong fused
+answer (fallback to direct, correct); #79 is a shared failure — both
+adapters fuse to "1 table" where GT is 2 (renders drop an instance).
+
 ## 6. Renderer study (held-out novel views, fixed eval poses, 30 scenes)
 
 | source frames | splat | coverage | covered-pixel PSNR | overall PSNR |

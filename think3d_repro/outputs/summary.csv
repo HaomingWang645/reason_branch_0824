@@ -1,3 +1,0 @@
-model_tag,dataset,runs,Multi-view,avg_over_tasks,rotation
-Qwen3_VL_4B_Instruct_no_tools_general,BLINK,1,50.00 (n=2),50.00,
-Qwen3_VL_4B_Instruct_pi3x_spatial,MindCube,1,,50.00,50.00 (n=2)
