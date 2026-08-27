@@ -1,0 +1,427 @@
+[run_eval] model=SPAgent-4B setting=think3d run=1 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:23:06] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 196 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  59%|█████▉    | 118/200 [00:04<00:02, 28.29it/s]  VSIBench:  61%|██████    | 122/200 [00:06<00:04, 16.09it/s]  VSIBench:  64%|██████▍   | 129/200 [00:08<00:05, 12.69it/s]  VSIBench:  69%|██████▉   | 138/200 [00:31<00:30,  2.05it/s]  VSIBench: 100%|██████████| 200/200 [00:31<00:00,  6.26it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannet_scene0088_01_frame_6_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannetpp_5f99900f09_frame_0_azim0.0_elev60.0.png
+  Overall accuracy: 29.50%  (59.0/200)
+    obj_appearance_order     : 36.00% (18.0/50)
+    object_rel_direction     : 22.00% (11.0/50)
+    object_rel_distance      : 34.00% (17.0/50)
+    route_planning           : 26.00% (13.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx
+  Error log (141 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.295, 'route_planning': 0.26, 'object_rel_direction': 0.22, 'object_rel_distance': 0.34, 'obj_appearance_order': 0.36}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B setting=think3d run=1 dataset=BLINK extra=--rl-trained
+[2026-08-27 02:23:46] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  Resuming: 130 prior predictions loaded
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:  60%|██████    | 80/133 [00:08<00:05,  9.35it/s]  BLINK:  71%|███████   | 94/133 [00:42<00:22,  1.75it/s]  BLINK: 100%|██████████| 133/133 [00:46<00:00,  2.77it/s]  BLINK: 100%|██████████| 133/133 [00:46<00:00,  2.87it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_94_0_azim90.0_elev0.0.png
+  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx
+  Scoring (judge=exact_matching) ...
+  Judge API base: (default openai.com)
+  Error log (65 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK_errors.jsonl
+
+  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.3383458646616541], 'Multi-view_Reasoning': [0.3383458646616541]}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B setting=think3d run=1 dataset=MindCube extra=--rl-trained
+[2026-08-27 02:24:55] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['MindCube']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  MindCube
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/MindCube_eval120.jsonl
+  120 rows loaded
+  Resuming: 119 prior predictions loaded
+  Running 120 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  MindCube:   0%|          | 0/120 [00:00<?, ?it/s]  MindCube: 100%|██████████| 120/120 [00:04<00:00, 26.62it/s]  MindCube: 100%|██████████| 120/120 [00:04<00:00, 26.62it/s]
+  Overall accuracy: 38.33%  (46.0/120)
+    among                    : 37.50% (15.0/40)
+    around                   : 47.50% (19.0/40)
+    rotation                 : 30.00% (12.0/40)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/MindCube/SPAgent_4B_pi3x_spatial_MindCube.xlsx
+  Error log (74 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial/MindCube/SPAgent_4B_pi3x_spatial_MindCube_errors.jsonl
+
+  ✓ MindCube scores: {'Overall': 0.3833, 'rotation': 0.3, 'around': 0.475, 'among': 0.375}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=1 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:25:07] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 194 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  52%|█████▎    | 105/200 [00:11<00:10,  9.07it/s]  VSIBench:  59%|█████▉    | 118/200 [00:16<00:12,  6.75it/s]  VSIBench:  60%|██████    | 120/200 [00:39<00:41,  1.91it/s]  VSIBench:  61%|██████    | 122/200 [00:45<00:49,  1.59it/s]  VSIBench:  72%|███████▏  | 143/200 [00:48<00:24,  2.33it/s]  VSIBench:  76%|███████▌  | 151/200 [00:52<00:21,  2.23it/s]  VSIBench: 100%|██████████| 200/200 [00:52<00:00,  3.79it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannet_scene0474_04_frame_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannetpp_ac48a9b736_frame_0_azim0.0_elev60.0.png
+  Overall accuracy: 32.50%  (65.0/200)
+    obj_appearance_order     : 30.00% (15.0/50)
+    object_rel_direction     : 26.00% (13.0/50)
+    object_rel_distance      : 36.00% (18.0/50)
+    route_planning           : 38.00% (19.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench.xlsx
+  Error log (135 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.325, 'route_planning': 0.38, 'object_rel_direction': 0.26, 'object_rel_distance': 0.36, 'obj_appearance_order': 0.3}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B setting=think3d run=2 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:26:08] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 199 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  52%|█████▎    | 105/200 [00:03<00:03, 26.89it/s]  VSIBench: 100%|██████████| 200/200 [00:03<00:00, 51.22it/s]
+  Overall accuracy: 35.00%  (70.0/200)
+    obj_appearance_order     : 34.00% (17.0/50)
+    object_rel_direction     : 34.00% (17.0/50)
+    object_rel_distance      : 30.00% (15.0/50)
+    route_planning           : 42.00% (21.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx
+  Error log (130 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.35, 'route_planning': 0.42, 'object_rel_direction': 0.34, 'object_rel_distance': 0.3, 'obj_appearance_order': 0.34}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B setting=think3d run=2 dataset=BLINK extra=--rl-trained
+[2026-08-27 02:26:20] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  Resuming: 130 prior predictions loaded
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:  36%|███▌      | 48/133 [00:11<00:20,  4.14it/s]  BLINK:  44%|████▍     | 59/133 [00:15<00:20,  3.68it/s]  BLINK:  85%|████████▍ | 113/133 [00:24<00:04,  4.87it/s]  BLINK: 100%|██████████| 133/133 [00:24<00:00,  5.40it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_48_0_azim-90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_113_0_azim0.0_elev30.0_camview.png
+  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx
+  Scoring (judge=exact_matching) ...
+  Judge API base: (default openai.com)
+  Error log (72 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK_errors.jsonl
+
+  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.2706766917293233], 'Multi-view_Reasoning': [0.2706766917293233]}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=2 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:27:06] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 199 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  72%|███████▏  | 143/200 [00:03<00:01, 43.98it/s]  VSIBench: 100%|██████████| 200/200 [00:03<00:00, 61.51it/s]
+  Overall accuracy: 34.50%  (69.0/200)
+    obj_appearance_order     : 34.00% (17.0/50)
+    object_rel_direction     : 42.00% (21.0/50)
+    object_rel_distance      : 30.00% (15.0/50)
+    route_planning           : 32.00% (16.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench.xlsx
+  Error log (131 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.345, 'route_planning': 0.32, 'object_rel_direction': 0.42, 'object_rel_distance': 0.3, 'obj_appearance_order': 0.34}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=2 dataset=BLINK extra=--rl-trained
+[2026-08-27 02:27:17] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  Resuming: 132 prior predictions loaded
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:  71%|███████   | 94/133 [00:04<00:02, 19.11it/s]  BLINK: 100%|██████████| 133/133 [00:04<00:00, 27.04it/s]
+  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK.xlsx
+  Scoring (judge=exact_matching) ...
+  Judge API base: (default openai.com)
+  Error log (75 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK_errors.jsonl
+
+  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.2781954887218045], 'Multi-view_Reasoning': [0.2781954887218045]}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B setting=think3d run=3 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:27:41] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 198 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  30%|███       | 60/200 [00:02<00:05, 27.40it/s]  VSIBench:  30%|███       | 60/200 [00:20<00:05, 27.40it/s]  VSIBench:  59%|█████▉    | 118/200 [00:25<00:20,  3.95it/s]  VSIBench: 100%|██████████| 200/200 [00:25<00:00,  7.70it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannet_scene0088_01_frame_0_azim0.0_elev60.0.png
+  Overall accuracy: 38.00%  (76.0/200)
+    obj_appearance_order     : 32.00% (16.0/50)
+    object_rel_direction     : 42.00% (21.0/50)
+    object_rel_distance      : 38.00% (19.0/50)
+    route_planning           : 40.00% (20.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx
+  Error log (124 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.38, 'route_planning': 0.4, 'object_rel_direction': 0.42, 'object_rel_distance': 0.38, 'obj_appearance_order': 0.32}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=3 dataset=VSIBench extra=--rl-trained
+[2026-08-27 02:28:14] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['VSIBench']
+  Limit    : defaults
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  VSIBench
+  Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/VSI_Bench_tiny.jsonl
+  200 rows loaded
+  Resuming: 197 prior predictions loaded
+  Running 200 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
+  VSIBench:   0%|          | 0/200 [00:00<?, ?it/s]  VSIBench:  34%|███▍      | 69/200 [00:26<00:49,  2.62it/s]  VSIBench:  59%|█████▉    | 118/200 [00:32<00:21,  3.89it/s]  VSIBench:  72%|███████▏  | 143/200 [00:35<00:12,  4.69it/s]  VSIBench: 100%|██████████| 200/200 [00:35<00:00,  5.67it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_45662924_frame_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_scannet_scene0088_01_frame_6_azim0.0_elev60.0.png
+  Overall accuracy: 37.50%  (75.0/200)
+    obj_appearance_order     : 32.00% (16.0/50)
+    object_rel_direction     : 44.00% (22.0/50)
+    object_rel_distance      : 42.00% (21.0/50)
+    route_planning           : 32.00% (16.0/50)
+  Saved results → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench.xlsx
+  Error log (125 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/VSIBench/SPAgent_4B_px256k_pi3x_spatial_VSIBench_errors.jsonl
+
+  ✓ VSIBench scores: {'Overall': 0.375, 'route_planning': 0.32, 'object_rel_direction': 0.44, 'object_rel_distance': 0.42, 'obj_appearance_order': 0.32}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=3 dataset=BLINK extra=--rl-trained
+[2026-08-27 02:28:57] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  Resuming: 132 prior predictions loaded
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:   8%|▊         | 10/133 [00:15<03:07,  1.53s/it]  BLINK: 100%|██████████| 133/133 [00:15<00:00,  8.71it/s]
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_10_0_azim90.0_elev0.0.png
+  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK.xlsx
+  Scoring (judge=exact_matching) ...
+  Judge API base: (default openai.com)
+  Error log (73 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK_errors.jsonl
+
+  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.2857142857142857], 'Multi-view_Reasoning': [0.2857142857142857]}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+

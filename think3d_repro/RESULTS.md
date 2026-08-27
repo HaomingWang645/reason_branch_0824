@@ -77,10 +77,12 @@ Table 1 (VSI-Bench-tiny):
   ~130 k filtered points anyway), rollouts moved to vLLM colocate mode, and the likely viewpoints were
   pre-rendered in parallel on CPU; the optimization itself (data, rewards, rollouts / prompt, lr schedule,
   epochs) is unchanged.
-* **Empty renders.** Occasionally the Pi3X server returns an empty plot (a blank 6000×5000 px image, e.g.
-  when the requested global view leaves the reconstructed points outside the frame): 14 of 196 VSI-Bench
-  global renders (7 %), 33 / 440 on BLINK, 20 / ~10 k on MindCube. The model receives the blank image as-is
-  (visible in some cards of `figures/traces/` and the trace page).
+* **Empty renders (fixed).** During the 12-process evaluation matrix the Pi3X server occasionally returned an
+  empty plot (blank 6000×5000 px canvas): the server renders with matplotlib's global `pyplot` state inside
+  multi-threaded Flask, so concurrent requests could save each other's undrawn figures (67 of ~10 k cached
+  renders; 7 % of VSI-Bench global views). Fix: a render lock in `pi3x_server.py` (and in the offline
+  `pi3x_render.py` used by RL rollouts); blank cache entries were quarantined and the 26 affected
+  evaluation answers (all released-checkpoint Think3D runs) were re-run — table changes ≤ 0.3 points.
 * **Infra.** vLLM 0.11.2's multimodal processor cache crashed one engine core (`AssertionError: Expected a
   cached item for mm_hash=...`); servers are now started with `--mm-processor-cache-gb 0`.
 
@@ -98,8 +100,8 @@ finishes (`Think3D-RL-4B`, see `outputs/results_tables.md` for the live version)
 | Qwen3-VL-4B (no tool) | 45.36 ± 1.1 [47.87] | 37.50 ± 6.6 [34.17] | 31.67 ± 5.2 [20.00] | 40.83 ± 1.4 [41.67] | 38.84 [35.92] | 3 |
 | Think3D (Qwen3-VL-4B) | 48.62 ± 4.5 [48.62] | 40.83 ± 5.2 [35.83] | 44.17 ± 8.0 [28.33] | 35.00 ± 0.0 [33.33] | 42.16 [36.53] | 3 |
 | Qwen3-VL-4B-T3RL, released SPAgent-4B (no tool) | 46.12 ± 2.6 [46.11] | 26.67 ± 3.8 [30.83] | 35.83 ± 3.8 [25.83] | 39.17 ± 6.3 [35.83] | 36.95 [34.65] | 3 |
-| Think3D (released SPAgent-4B) | 49.62 ± 2.6 [53.39] | 35.83 ± 5.2 [42.50] | 41.67 ± 2.9 [37.47] | 44.17 ± 2.9 [42.50] | 42.82 [43.97] | 3 |
-| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 45.11 ± 3.8 [53.39] | 33.33 ± 8.0 [42.50] | 40.00 ± 6.6 [37.47] | 35.00 ± 2.5 [42.50] | 38.36 [43.97] | 3 |
+| Think3D (released SPAgent-4B) | 49.37 ± 3.0 [53.39] | 35.83 ± 5.2 [42.50] | 40.83 ± 3.8 [37.47] | 44.17 ± 2.9 [42.50] | 42.55 [43.97] | 3 |
+| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 45.36 ± 3.4 [53.39] | 33.33 ± 8.0 [42.50] | 40.00 ± 6.6 [37.47] | 35.00 ± 2.5 [42.50] | 38.42 [43.97] | 3 |
 
 ### Table 1 — VSI-Bench-tiny, 4 MC tasks (accuracy %, mean ± std over runs; paper value in brackets)
 
@@ -109,7 +111,7 @@ finishes (`Think3D-RL-4B`, see `outputs/results_tables.md` for the live version)
 | Think3D (Qwen3-VL-4B) | 33.33 ± 5.0 [30.61] | 33.33 ± 12.9 [44.00] | 32.67 ± 4.2 [29.33] | 33.33 ± 6.1 [52.38] | 33.17 [39.08] | 3 |
 | Qwen3-VL-4B-T3RL, released SPAgent-4B (no tool) | 32.67 ± 4.6 [27.89] | 41.33 ± 5.0 [30.67] | 44.67 ± 4.6 [32.00] | 32.67 ± 3.1 [42.86] | 37.83 [33.36] | 3 |
 | Think3D (released SPAgent-4B) | 36.00 ± 8.7 [36.73] | 32.67 ± 10.1 [39.00] | 34.00 ± 4.0 [44.67] | 34.00 ± 2.0 [61.22] | 34.17 [45.41] | 3 |
-| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 34.00 ± 3.5 [36.73] | 37.33 ± 9.9 [39.00] | 35.33 ± 4.6 [44.67] | 32.67 ± 1.2 [61.22] | 34.83 [45.41] | 3 |
+| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 34.00 ± 3.5 [36.73] | 37.33 ± 9.9 [39.00] | 36.00 ± 6.0 [44.67] | 32.00 ± 2.0 [61.22] | 34.83 [45.41] | 3 |
 
 ### Reading of the results
 

@@ -1,0 +1,14 @@
+{
+  "VSIBench": {
+    "dataset": "VSIBench",
+    "n_samples": 16,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/runviz2/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx",
+    "scores": {
+      "Overall": 0.375,
+      "route_planning": 0.75,
+      "object_rel_direction": 0.75,
+      "object_rel_distance": 0.0,
+      "obj_appearance_order": 0.0
+    }
+  }
+}

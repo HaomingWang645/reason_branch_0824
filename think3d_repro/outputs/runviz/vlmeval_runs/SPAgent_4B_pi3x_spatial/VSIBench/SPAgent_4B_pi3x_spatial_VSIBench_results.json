@@ -1,0 +1,184 @@
+{
+  "dataset": "VSIBench",
+  "total_samples": 12,
+  "successful": 12,
+  "failed": 0,
+  "overall_accuracy": 0.25,
+  "score_sum": 3.0,
+  "task_statistics": {
+    "route_planning": {
+      "score_sum": 1.0,
+      "total": 3,
+      "accuracy": 0.3333
+    },
+    "object_rel_direction": {
+      "score_sum": 1.0,
+      "total": 3,
+      "accuracy": 0.3333
+    },
+    "object_rel_distance": {
+      "score_sum": 0.0,
+      "total": 3,
+      "accuracy": 0.0
+    },
+    "obj_appearance_order": {
+      "score_sum": 1.0,
+      "total": 3,
+      "accuracy": 0.3333
+    }
+  },
+  "scores": {
+    "Overall": 0.25,
+    "route_planning": 0.3333,
+    "object_rel_direction": 0.3333,
+    "object_rel_distance": 0.0,
+    "obj_appearance_order": 0.3333
+  },
+  "detailed_results": [
+    {
+      "id": "VSIBench_5066",
+      "success": true,
+      "prediction": "To solve this problem, we need to analyze the sequence of frames to determine the robot's path from the door to the table, given that it starts facing the sofa. The robot must perform two turns (at steps 1 and 3) to reach the table after going forward to the TV.\n\n### Step 1: Determine the starting orientation\nThe robot starts at the door and faces the sofa. From the frames, we can infer that the sofa is likely to be on the left side of the robot as it exits the door. The first frame shows a poster on the floor, which might indicate the robot's starting position. The second frame shows a ceiling and a TV, suggesting the robot is moving toward the TV. The third frame shows a TV on a stand, confirming the TV is in the room. The fourth frame shows a window, indicating the robot is moving through the room. The fifth frame shows a table with chairs, indicating the robot is approaching the table.\n\n### Step 2: Determine the path to the TV\nThe robot must go forward until it reaches the TV. From the frames, we can see that the robot is moving from the door toward the TV. The TV is on the left side of the robot as it moves forward. Therefore, the robot must turn left to face the TV.\n\n### Step 3: Determine the path to the table\nThe robot must go forward until it reaches the table. From the frames, we can see that the table is on the right side of the robot as it moves forward. Therefore, the robot must turn right to face the table.\n\n### Step 4: Determine the correct sequence of turns\nThe robot must turn left to face the TV, then turn right to face the table. Therefore, the correct sequence of turns is \"turn left, turn right.\"\n\n### Step 5: Select the correct option\nThe correct option is (A) A. Turn Left, Turn Left.\n\n<answer>A</answer>",
+      "answer": "C",
+      "task": "route_planning",
+      "elapsed": 2.9181058406829834,
+      "error": null,
+      "normalized_prediction": "A",
+      "normalized_ground_truth": "C",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_5052",
+      "success": true,
+      "prediction": "To solve this problem, we need to analyze the sequence of frames to determine the correct sequence of turns the robot should make to navigate from the toilet to the shower head. The robot starts at the toilet and faces the toilet. The goal is to reach the shower head.\n\n### Step 1: Understand the initial position and orientation\n- The robot starts at the toilet and faces the toilet. This means the robot is facing away from the shower head initially.\n- The robot will need to turn to face the direction towards the shower head.\n\n### Step 2: Analyze the frames to determine the path\n- The frames show the robot moving from the toilet to the shower head.\n- We need to determine the turns the robot makes at each step.\n\n### Step 3: Determine the turns\n- The robot starts at the toilet and faces the toilet. The first action is to turn left or turn right to face the direction towards the shower head.\n- The robot then goes forward until it reaches the wall.\n- The robot then turns again to face the shower head.\n\n### Step 4: Use the frames to determine the correct sequence\n- From the frames, we can see that the robot turns left to face the direction towards the shower head.\n- The robot then goes forward until it reaches the wall.\n- The robot then turns left again to face the shower head.\n\n### Step 5: Select the correct option\n- The correct sequence is: Turn Left, Turn Left.\n\n### Final Answer\n<answer>A</answer>",
+      "answer": "B",
+      "task": "route_planning",
+      "skipped": true,
+      "normalized_prediction": "A",
+      "normalized_ground_truth": "B",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_4962",
+      "success": true,
+      "prediction": "To solve this problem, we need to analyze the sequence of actions required to navigate from the doorframe to the bookshelf, given the robot's starting position and the layout of the room. The robot starts facing the table and needs to reach the bookshelf. We are given a sequence of actions, and we need to determine the correct turns at each step.\n\nLet's break down the steps:\n\n1. **Go forward until the table**: This is the starting point. The robot is already facing the table, so no turn is needed here.\n\n2. **[please fill in]**: After reaching the table, the robot needs to turn to go to the chair beside the screen. Looking at the images, we can see that the chair beside the screen is located to the right of the table. Therefore, the robot needs to turn right.\n\n3. **Go forward until the chair beside the screen**: This is the next step, and we have already determined that the robot needs to turn right to reach the chair.\n\n4. **[please fill in]**: After reaching the chair beside the screen, the robot needs to turn to go to the bookshelf. Looking at the images, we can see that the bookshelf is located to the left of the chair. Therefore, the robot needs to turn left.\n\n5. **Go forward until the bookshelf**: This is the final step, and we have already determined that the robot needs to turn left to reach the bookshelf.\n\nBased on the above analysis, the correct sequence of turns is: turn right, then turn left.\n\nTherefore, the correct answer is (A) A. Turn Left, Turn Right.\n\n<answer>A</answer>",
+      "answer": "A",
+      "task": "route_planning",
+      "skipped": true,
+      "normalized_prediction": "A",
+      "normalized_ground_truth": "A",
+      "is_correct": true,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_1875",
+      "success": true,
+      "prediction": "<answer>B</answer>",
+      "answer": "A",
+      "task": "object_rel_direction",
+      "skipped": true,
+      "normalized_prediction": "B",
+      "normalized_ground_truth": "A",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_3587",
+      "success": true,
+      "prediction": "To answer the question, we need to determine the relative position of the trash bin with respect to the clock and the window. The question specifies that the person is standing by the clock and facing the window. We must interpret the directions in the context of a Cartesian plane where the person is at the origin and facing along the positive y-axis (i.e., front).\n\nStep 1: Identify the positions of the clock, window, and trash bin in the scene.\n\nFrom the images, we can observe:\n- The clock is mounted on the wall, typically above a desk or shelf.\n- The window is located on the wall, usually above or next to the clock.\n- The trash bin is typically located near the desk or on the floor, often to the side of the desk.\n\nStep 2: Determine the orientation.\n\nThe person is standing by the clock and facing the window. In the context of the room, the clock is typically on the wall, and the window is often to the side or behind the clock. However, in most office setups, the clock is on the wall, and the window is on the opposite side of the room, so facing the window would mean the person is facing away from the clock.\n\nStep 3: Determine the position of the trash bin.\n\nFrom the images, we can see that the trash bin is located near the desk, which is typically to the side of the clock and window. However, in the context of the room, the trash bin is typically located to the side of the desk, which is to the left or right of the clock and window.\n\nStep 4: Determine the relative position of the trash bin with respect to the clock and window.\n\nFrom the images, we can see that the trash bin is located to the left of the desk, which is to the left of the clock and window. Therefore, the trash bin is located to the front-left of the clock and window.\n\nStep 5: Select the correct option.\n\nThe correct option is (D) front-left.\n\n<answer>D</answer>",
+      "answer": "D",
+      "task": "object_rel_direction",
+      "skipped": true,
+      "normalized_prediction": "D",
+      "normalized_ground_truth": "D",
+      "is_correct": true,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_983",
+      "success": true,
+      "prediction": "To solve this question, we need to determine the relative position of the toilet with respect to the bed and TV, assuming the person is standing by the bed and facing the TV. The directions are defined in a Cartesian plane where the person is at the origin and facing along the positive y-axis (front). Therefore, front-left would be the negative x-axis, front-right would be the positive x-axis, back-left would be the negative y-axis, and back-right would be the positive y-axis.\n\nStep 1: Identify the positions of the bed, TV, and toilet in the room based on the images.\n\n- The bed is visible in multiple frames, positioned on the right side of the room.\n- The TV is not directly visible in the provided frames, but we can infer its location based on the context. The TV is likely in the room, and given that the person is facing the TV while standing by the bed, the TV is likely on the opposite side of the room from the bed.\n- The toilet is not directly visible in the provided frames, but we can infer its location based on the context. The toilet is likely in the room, and given that the person is standing by the bed and facing the TV, the toilet is likely on the opposite side of the room from the TV.\n\nStep 2: Determine the relative position of the toilet with respect to the bed and TV.\n\n- If the person is standing by the bed and facing the TV, the TV is likely on the opposite side of the room from the bed.\n- The toilet is likely on the opposite side of the room from the TV.\n- Therefore, the toilet is likely on the opposite side of the room from the bed.\n\nStep 3: Determine the direction of the toilet with respect to the person.\n\n- If the person is standing by the bed and facing the TV, the toilet is likely on the opposite side of the room from the bed.\n- Therefore, the toilet is likely on the opposite side of the room from the person.\n- Therefore, the toilet is likely on the opposite side of the room from the person.\n\nStep 4: Select the correct option.\n\n- The toilet is likely on the opposite side of the room from the person.\n- Therefore, the toilet is likely on the opposite side of the room from the person.\n- Therefore, the toilet is likely on the opposite side of the room from the person.\n\n<answer>(A) A. back-right</answer>",
+      "answer": "D",
+      "task": "object_rel_direction",
+      "skipped": true,
+      "normalized_prediction": "A",
+      "normalized_ground_truth": "D",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_1476",
+      "success": true,
+      "prediction": "The question asks to determine which of the objects (table, tv, refrigerator, stool) is closest to the stove, based on 7 video frames. However, none of the provided images contain the stove or any clear view of the kitchen layout that would allow us to determine the spatial relationships between the stove and the listed objects.\n\nThe images show:\n- A poster on a floor.\n- A ceiling corner.\n- A chair at a table.\n- A bookshelf.\n- A couch.\n- A yellow stool.\n- A blurry view of a kitchen appliance (possibly the stove or oven) with a wooden countertop.\n\nNone of these images provide enough context to identify the stove and its relative positions to the table, tv, refrigerator, or stool.\n\nGiven the lack of clear spatial information, and the fact that the stove is not visible in any of the provided images, we cannot determine which of the listed objects is closest to the stove.\n\nTherefore, the correct answer cannot be determined from the provided information.\n\n<answer></answer>",
+      "answer": "C",
+      "task": "object_rel_distance",
+      "skipped": true,
+      "normalized_prediction": "",
+      "normalized_ground_truth": "C",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_1334",
+      "success": true,
+      "prediction": "<answer>C</answer>",
+      "answer": "A",
+      "task": "object_rel_distance",
+      "skipped": true,
+      "normalized_prediction": "C",
+      "normalized_ground_truth": "A",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_2013",
+      "success": true,
+      "prediction": "To determine which object (trash can, chair, coat rack, heater) is closest to the telephone, we need to analyze the spatial relationships between these objects based on the provided images. Since the telephone is not visible in any of the images, we must infer its location based on contextual clues and the arrangement of objects.\n\n### Step 1: Identify the telephone's location\nThe telephone is likely located in a position that is commonly found in such environments — for example, near a wall or in a corner where it is accessible. In many classrooms or offices, telephones are mounted on walls near doors, windows, or in a central location.\n\nLooking at the images, the telephone is not visible. However, we can infer its location by considering the arrangement of objects and the typical placement of telephones. In the first image, we see a blue trash can near a wall. In the second image, we see a coat rack near a sink. In the third image, we see a chair near a table. In the fourth image, we see a door with a telephone mounted on the wall. In the fifth image, we see a chair near a table. In the sixth image, we see a coat rack near a sink.\n\n### Step 2: Determine the proximity of each object to the telephone\n- The trash can is located near a wall in the first image.\n- The chair is located near a table in the third and fifth images.\n- The coat rack is located near a sink in the second image.\n- The heater is not visible in any of the images.\n\nBased on the arrangement of objects and the typical placement of telephones, the telephone is likely located near the door in the fourth image. The chair in the fifth image is located near the door, and the coat rack in the second image is located near the sink. The trash can in the first image is located near a wall, and the heater is not visible in any of the images.\n\n### Step 3: Compare the proximity of each object to the telephone\n- The chair in the fifth image is located near the door, which is likely where the telephone is located.\n- The coat rack in the second image is located near the sink, which is not near the door.\n- The trash can in the first image is located near a wall, which is not near the door.\n- The heater is not visible in any of the images.\n\nTherefore, the chair is the closest to the telephone.\n\n<answer>(B) B. chair</answer>",
+      "answer": "D",
+      "task": "object_rel_distance",
+      "skipped": true,
+      "normalized_prediction": "B",
+      "normalized_ground_truth": "D",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_2910",
+      "success": true,
+      "prediction": "To determine the first-time appearance order of the categories (monitor, suitcase, refrigerator, table) in the video, I need to analyze the sequence of frames. Since the frames are uniformly sampled, I can infer the order by observing when each object first appears in the sequence.\n\nI will analyze each frame to identify the presence of the categories and determine their first appearance order.\n\nFirst, I will examine the frames to locate the first appearance of each object.\n\n1. **Table**: In frame 0, there is a round table with red chairs. In frame 1, the same table is visible. In frame 2, the table is still visible. In frame 3, the table is visible in a different position. In frame 4, the table is visible again. In frame 5, the table is visible. In frame 6, the table is visible. The table appears in frame 0.\n\n2. **Suitcase**: In frame 0, there is no suitcase. In frame 1, there is no suitcase. In frame 2, there is no suitcase. In frame 3, there is no suitcase. In frame 4, there is no suitcase. In frame 5, there is no suitcase. In frame 6, there is no suitcase. The suitcase does not appear in any of the frames.\n\n3. **Refrigerator**: In frame 0, there is no refrigerator. In frame 1, there is no refrigerator. In frame 2, there is no refrigerator. In frame 3, there is no refrigerator. In frame 4, there is a refrigerator visible in the background. In frame 5, the refrigerator is visible. In frame 6, the refrigerator is visible. The refrigerator appears in frame 4.\n\n4. **Monitor**: In frame 0, there is no monitor. In frame 1, there is no monitor. In frame 2, there is no monitor. In frame 3, there is no monitor. In frame 4, there is no monitor. In frame 5, there is a monitor visible in the background. In frame 6, the monitor is visible. The monitor appears in frame 5.\n\nBased on the analysis, the first-time appearance order is: table (frame 0), refrigerator (frame 4), monitor (frame 5), suitcase (not present in any frame).\n\nHowever, since the suitcase does not appear in any of the frames, it cannot be part of the first-time appearance order. This suggests that the question might be asking for the first-time appearance order of the categories that are present in the video.\n\nGiven the options, the correct order is: table, refrigerator, monitor, suitcase. Since the suitcase does not appear in any of the frames, it cannot be part of the first-time appearance order. Therefore, the correct answer is (D) D. table, refrigerator, monitor, suitcase.\n\n<answer>D</answer>",
+      "answer": "C",
+      "task": "obj_appearance_order",
+      "skipped": true,
+      "normalized_prediction": "D",
+      "normalized_ground_truth": "C",
+      "is_correct": false,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_3973",
+      "success": true,
+      "prediction": "To determine the first-time appearance order of the categories \"trash bin\", \"table\", \"window\", and \"backpack\" in the video, we need to analyze the sequence of the 7 frames. Since the frames are uniformly sampled, we can infer the temporal order by examining the presence of each object in each frame.\n\n### Step 1: Analyze the frames for object presence\nWe will go frame by frame and note the presence of each category.\n\n#### Frame 1:\n- **Table**: Present (a desk with monitors and a keyboard)\n- **Window**: Not visible (no window in the frame)\n- **Backpack**: Not visible\n- **Trash bin**: Not visible (no trash bin in the frame)\n\n#### Frame 2:\n- **Table**: Present (the desk is still visible)\n- **Window**: Not visible\n- **Backpack**: Not visible\n- **Trash bin**: Not visible\n\n#### Frame 3:\n- **Table**: Present (the desk is still visible)\n- **Window**: Not visible\n- **Backpack**: Present (a backpack is visible on the floor)\n- **Trash bin**: Not visible\n\n#### Frame 4:\n- **Table**: Present (the desk is still visible)\n- **Window**: Not visible\n- **Backpack**: Present (the backpack is still visible)\n- **Trash bin**: Not visible\n\n#### Frame 5:\n- **Table**: Present (the desk is still visible)\n- **Window**: Present (a large window with blinds is visible)\n- **Backpack**: Present (the backpack is still visible)\n- **Trash bin**: Not visible\n\n#### Frame 6:\n- **Table**: Present (the desk is still visible)\n- **Window**: Present (the window is still visible)\n- **Backpack**: Present (the backpack is still visible)\n- **Trash bin**: Not visible\n\n#### Frame 7:\n- **Table**: Present (the desk is still visible)\n- **Window**: Present (the window is still visible)\n- **Backpack**: Present (the backpack is still visible)\n- **Trash bin**: Present (a trash bin is visible in the frame)\n\n### Step 2: Determine the first-time appearance order\nFrom the analysis above:\n- **Table**: Appears in Frame 1\n- **Backpack**: Appears in Frame 3\n- **Window**: Appears in Frame 5\n- **Trash bin**: Appears in Frame 7\n\n### Step 3: Match the order to the given choices\nThe first-time appearance order is: Table, Backpack, Window, Trash bin.\n\nThis matches option (D).\n\n<answer>D</answer>",
+      "answer": "D",
+      "task": "obj_appearance_order",
+      "skipped": true,
+      "normalized_prediction": "D",
+      "normalized_ground_truth": "D",
+      "is_correct": true,
+      "output_type": "MCQ"
+    },
+    {
+      "id": "VSIBench_2725",
+      "success": true,
+      "prediction": "To determine the first-time appearance order of the categories \"chair\", \"toilet\", \"blanket\", and \"basket\" in the video, I need to analyze the sequence of the provided frames. The frames are uniformly sampled, so I can infer the temporal order by examining the content of each frame.\n\nStep 1: Analyze each frame to identify the presence of the categories.\n- Frame 0: Shows a bathroom with a wall-mounted shelf containing a basket (a basket is visible). No chair, toilet, or blanket.\n- Frame 1: Shows a shower curtain and a towel hanging on the wall. No chair, toilet, or blanket.\n- Frame 2: Shows a wooden floor and walls. No visible objects of interest.\n- Frame 3: Shows a bedroom with a blue chair, a desk, and a bed with a blanket. The chair and blanket are visible.\n- Frame 4: Shows a dining table with a basket on it. The basket is visible. The chair is visible.\n- Frame 5: Shows a view of a room with a bed, a plant, and a chair. The chair is visible.\n- Frame 6: Shows a view of a room with a bed, a plant, and a chair. The chair is visible.\n\nStep 2: Determine the first-time appearance of each category.\n- Chair: Appears in frame 3.\n- Toilet: Not visible in any of the frames.\n- Blanket: Appears in frame 3.\n- Basket: Appears in frame 0.\n\nStep 3: Determine the order of appearance.\n- The basket appears first in frame 0.\n- The chair appears in frame 3.\n- The blanket appears in frame 3.\n- The toilet is not visible in any of the frames.\n\nStep 4: Compare with the given options.\nThe correct order should be: basket, chair, blanket, toilet. However, the toilet is not visible in any of the frames. Therefore, the correct answer should be based on the visible objects.\n\nGiven the analysis, the correct order is: basket, chair, blanket. The toilet is not visible in any of the frames, so it cannot be included in the order.\n\nThe correct answer is: (D) D. blanket, toilet, basket, chair. However, since the toilet is not visible, this option is incorrect. The correct answer should be: basket, chair, blanket.\n\nSince the toilet is not visible in any of the frames, the correct answer should be: basket, chair, blanket.\n\n<answer>D</answer>",
+      "answer": "B",
+      "task": "obj_appearance_order",
+      "skipped": true,
+      "normalized_prediction": "D",
+      "normalized_ground_truth": "B",
+      "is_correct": false,
+      "output_type": "MCQ"
+    }
+  ]
+}
