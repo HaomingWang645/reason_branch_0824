@@ -59,9 +59,16 @@ Table 1 (VSI-Bench-tiny):
   eval time, whereas RL training used `MAX_PIXELS=262144` (256 tokens / image). The main tables use the
   repo/vLLM defaults; an extra run with `--mm-processor-kwargs '{"max_pixels": 262144}'` (tag `px256k`)
   tests the resolution-matched setting.
-* **Tool use at eval.** The released RL checkpoint requests diverse non-zero viewpoints (mostly ego views
-  at az ±90°, el 30°); the untrained Qwen3-VL-4B mostly issues the "wasted" (0°, 0°) call, as described in
-  the paper. On VSI-Bench the RL model calls the tool for only ~25 % of the questions (MindCube: ~85 %).
+* **Tool use at eval** (all 3 runs, `outputs/run*/spagent_traces`): the untrained Qwen3-VL-4B calls the tool
+  on ~100 % of MindCube/BLINK questions but 22 % / 95 % of those calls are the "wasted" (0°, 0°) view the
+  paper describes; the released RL checkpoint never issues (0°, 0°), prefers ego views at az ±90°, el 30°,
+  and calls the tool on 61 % (MindCube) / 76 % (BLINK) / 24 % (VSI-Bench) of the questions.
+
+| model | dataset | questions with ≥1 tool call | (0°,0°) calls | ego-view calls | mean agent iterations |
+|---|---|---|---|---|---|
+| Qwen3-VL-4B | MindCube / BLINK / VSI | 100 % / 99 % / 59 % | 22 % / 95 % / 65 % | 100 % | 1.99 / 1.99 / 1.63 |
+| released SPAgent-4B (RL) | MindCube / BLINK / VSI | 61 % / 76 % / 24 % | 0 % / 2 % / 0 % | 90 % / 87 % / 62 % | 1.68 / 1.79 / 1.32 |
+
 * **Scoring.** No LLM judge is available; the option letter inside `<answer>` tags is matched exactly
   (fallback: first `(X)`/`X.` pattern, as in the repo). Long chains of thought that hit the 1024-token limit
   without an `<answer>` tag count as wrong (this also happens in the repo's own scorer).
