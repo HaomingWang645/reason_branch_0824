@@ -75,4 +75,46 @@ Table 1 (VSI-Bench-tiny):
 
 ## Reproduced numbers
 
-_(filled in as runs complete — see `outputs/summary.csv`)_
+All numbers are accuracy (%), mean ± std over 3 independent runs (temperature 1.0); the paper's
+number for the same row is given in brackets. Rows marked "released SPAgent-4B" use the authors'
+public RL checkpoint (`jialianjie/SPAgent-4B`); rows for our own GRPO run are added when the run
+finishes (`Think3D-RL-4B`, see `outputs/results_tables.md` for the live version).
+
+### Table 2 — BLINK Multi-view + MindCube (accuracy %, mean ± std over runs; paper value in brackets)
+
+| Model | Multi-view | rotation | among | around | Avg | runs |
+|---|---|---|---|---|---|---|
+| Qwen3-VL-4B (no tool) | 45.36 ± 1.1 [47.87] | 37.50 ± 6.6 [34.17] | 31.67 ± 5.2 [20.00] | 40.83 ± 1.4 [41.67] | 38.84 [35.92] | 3 |
+| Think3D (Qwen3-VL-4B) | 48.62 ± 4.5 [48.62] | 40.83 ± 5.2 [35.83] | 44.17 ± 8.0 [28.33] | 35.00 ± 0.0 [33.33] | 42.16 [36.53] | 3 |
+| Qwen3-VL-4B-T3RL, released SPAgent-4B (no tool) | 46.12 ± 2.6 [46.11] | 26.67 ± 3.8 [30.83] | 35.83 ± 3.8 [25.83] | 39.17 ± 6.3 [35.83] | 36.95 [34.65] | 3 |
+| Think3D (released SPAgent-4B) | 49.62 ± 2.6 [53.39] | 35.83 ± 5.2 [42.50] | 41.67 ± 2.9 [37.47] | 44.17 ± 2.9 [42.50] | 42.82 [43.97] | 3 |
+| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 45.11 ± 5.3 [53.39] | 33.33 ± 8.0 [42.50] | 40.00 ± 6.6 [37.47] | 35.00 ± 2.5 [42.50] | 38.36 [43.97] | 3 |
+
+### Table 1 — VSI-Bench-tiny, 4 MC tasks (accuracy %, mean ± std over runs; paper value in brackets)
+
+| Model | route planning | object rel direction | object rel distance | obj appearance order | Avg | runs |
+|---|---|---|---|---|---|---|
+| Qwen3-VL-4B (no tool) | 36.00 ± 0.0 [34.69] | 36.67 ± 4.6 [40.67] | 39.33 ± 4.2 [35.33] | 35.33 ± 6.4 [42.44] | 36.83 [38.28] | 3 |
+| Think3D (Qwen3-VL-4B) | 33.33 ± 5.0 [30.61] | 33.33 ± 12.9 [44.00] | 32.67 ± 4.2 [29.33] | 33.33 ± 6.1 [52.38] | 33.17 [39.08] | 3 |
+| Qwen3-VL-4B-T3RL, released SPAgent-4B (no tool) | 32.67 ± 4.6 [27.89] | 41.33 ± 5.0 [30.67] | 44.67 ± 4.6 [32.00] | 32.67 ± 3.1 [42.86] | 37.83 [33.36] | 3 |
+| Think3D (released SPAgent-4B) | 36.00 ± 8.7 [36.73] | 32.67 ± 10.1 [39.00] | 34.00 ± 4.0 [44.67] | 34.00 ± 2.0 [61.22] | 34.17 [45.41] | 3 |
+| Think3D (released SPAgent-4B), eval images capped at 262144 px (= RL training MAX_PIXELS) | 35.00 ± 4.2 [36.73] | 34.00 ± 11.3 [39.00] | 34.00 ± 5.7 [44.67] | 33.00 ± 1.4 [61.22] | 34.00 [45.41] | 2 |
+
+
+### Reading of the results
+
+* **BLINK multi-view + MindCube (Table 2).** The qualitative picture of the paper reproduces: tools help
+  the untrained Qwen3-VL-4B only a little on MindCube-style multi-view questions (+3.3 avg here vs. +0.6
+  in the paper), the RL checkpoint without the tool is no better than the base model (36.9 vs 38.8;
+  paper 34.7 vs 35.9), and RL + Think3D is the best configuration (42.8 avg here vs. 44.0 in the paper;
+  gain over its own no-tool row +5.9 here vs. +9.3 in the paper). BLINK numbers match to within ~2-4
+  points; MindCube per-category numbers are noisier (40 questions per category → ±5-8 points between runs).
+* **VSI-Bench-tiny (Table 1).** Baseline rows are close to the paper (no-tool Qwen3-VL-4B 36.8 vs 38.3;
+  no-tool RL 37.8 vs 33.4), but the tool does not help on VSI in this reproduction (RL + Think3D 34.2 vs
+  45.4 in the paper). In our traces the RL checkpoint only invokes the Pi3X tool on ~25 % of the VSI
+  questions (vs ~85 % on MindCube) and 7-frame video reconstructions are used as-is; the exact VSI-tiny
+  question set, frame sampling and rendering settings of the paper could not be recovered from the paper
+  or the repo, so this row is the one clear gap.
+* **Resolution ablation (px256k).** Capping eval images at the RL training resolution (256 visual tokens
+  per image) lowers the RL checkpoint's Think3D scores (38.4 vs 42.8 on Table 2, unchanged on VSI), so the
+  default full-resolution renders are kept for the main tables.

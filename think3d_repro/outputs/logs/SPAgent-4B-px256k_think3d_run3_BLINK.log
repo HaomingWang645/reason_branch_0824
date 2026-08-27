@@ -1,0 +1,24 @@
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=3 dataset=BLINK extra=--rl-trained
+[2026-08-27 00:27:10] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:   1%|          | 1/133 [00:02<05:25,  2.46s/it]  BLINK:   2%|▏         | 2/133 [00:09<11:53,  5.45s/it]  BLINK:   2%|▏         | 3/133 [00:23<20:07,  9.29s/it]  BLINK:   3%|▎         | 4/133 [00:31<18:15,  8.49s/it]  BLINK:   4%|▍         | 5/133 [00:46<23:13, 10.89s/it]

@@ -1,5 +1,5 @@
 [run_eval] model=SPAgent-4B setting=think3d run=2 dataset=MindCube extra=--rl-trained
-[2026-08-26 21:52:09] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+[2026-08-26 23:08:53] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
 
 =================================================================
   SPAgent Quick Eval
@@ -20,100 +20,9 @@ Tools: ['pi3x_tool']
   MindCube
   Loading local JSONL: /home/haoming/reason_branch_0824/think3d_repro/spagent/dataset/MindCube_eval120.jsonl
   120 rows loaded
+  Resuming: 120 prior predictions loaded
   Running 120 samples (image_base_path=/home/haoming/reason_branch_0824/think3d_repro/spagent/dataset) ...
-  MindCube:   0%|          | 0/120 [00:00<?, ?it/s]  MindCube:   1%|          | 1/120 [00:14<28:59, 14.62s/it]  MindCube:   2%|▏         | 2/120 [00:29<29:20, 14.92s/it]  MindCube:   2%|▎         | 3/120 [00:56<39:39, 20.34s/it]  MindCube:   3%|▎         | 4/120 [01:08<32:33, 16.84s/it]  MindCube:   4%|▍         | 5/120 [01:17<27:00, 14.09s/it]  MindCube:   5%|▌         | 6/120 [01:23<21:36, 11.37s/it]  MindCube:   6%|▌         | 7/120 [01:39<24:06, 12.80s/it]  MindCube:   7%|▋         | 8/120 [01:43<19:09, 10.26s/it]  MindCube:   8%|▊         | 9/120 [01:52<18:03,  9.77s/it]  MindCube:   8%|▊         | 10/120 [02:04<19:08, 10.44s/it]  MindCube:   9%|▉         | 11/120 [02:24<24:22, 13.41s/it]  MindCube:  10%|█         | 12/120 [02:45<28:23, 15.77s/it]  MindCube:  11%|█         | 13/120 [02:50<22:05, 12.39s/it]  MindCube:  12%|█▏        | 14/120 [03:04<22:54, 12.96s/it]  MindCube:  12%|█▎        | 15/120 [03:13<20:23, 11.65s/it]  MindCube:  13%|█▎        | 16/120 [03:21<18:15, 10.53s/it]  MindCube:  14%|█▍        | 17/120 [03:29<16:49,  9.80s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  15%|█▌        | 18/120 [04:01<27:53, 16.41s/it]  MindCube:  16%|█▌        | 19/120 [04:07<22:40, 13.47s/it]  MindCube:  17%|█▋        | 20/120 [04:20<22:07, 13.28s/it]  MindCube:  18%|█▊        | 21/120 [04:27<18:38, 11.30s/it]  MindCube:  18%|█▊        | 22/120 [04:43<20:44, 12.70s/it]libpng error: bad parameters to zlib
-  MindCube:  19%|█▉        | 23/120 [05:08<26:25, 16.34s/it]  MindCube:  20%|██        | 24/120 [05:19<23:49, 14.89s/it]  MindCube:  21%|██        | 25/120 [05:30<21:34, 13.63s/it]  MindCube:  22%|██▏       | 26/120 [05:52<25:34, 16.32s/it]  MindCube:  22%|██▎       | 27/120 [06:00<21:07, 13.63s/it]  MindCube:  23%|██▎       | 28/120 [06:16<22:10, 14.46s/it]  MindCube:  24%|██▍       | 29/120 [06:20<17:02, 11.24s/it]  MindCube:  25%|██▌       | 30/120 [06:31<16:36, 11.07s/it]  MindCube:  26%|██▌       | 31/120 [06:38<14:47,  9.97s/it]  MindCube:  27%|██▋       | 32/120 [06:56<17:59, 12.26s/it]  MindCube:  28%|██▊       | 33/120 [07:02<15:12, 10.49s/it]  MindCube:  28%|██▊       | 34/120 [07:12<14:49, 10.34s/it]  MindCube:  29%|██▉       | 35/120 [07:35<20:05, 14.19s/it]  MindCube:  30%|███       | 36/120 [07:44<17:32, 12.53s/it]  MindCube:  31%|███       | 37/120 [07:50<14:48, 10.71s/it]  MindCube:  32%|███▏      | 38/120 [08:01<14:42, 10.76s/it]  MindCube:  32%|███▎      | 39/120 [08:12<14:27, 10.71s/it]  MindCube:  33%|███▎      | 40/120 [08:26<15:36, 11.71s/it]  MindCube:  34%|███▍      | 41/120 [08:30<12:22,  9.40s/it]  MindCube:  35%|███▌      | 42/120 [08:36<11:01,  8.49s/it]  MindCube:  36%|███▌      | 43/120 [08:41<09:20,  7.28s/it]  MindCube:  37%|███▋      | 44/120 [08:49<09:46,  7.72s/it]  MindCube:  38%|███▊      | 45/120 [08:54<08:32,  6.84s/it]  MindCube:  38%|███▊      | 46/120 [08:59<07:45,  6.29s/it]  MindCube:  39%|███▉      | 47/120 [09:10<09:18,  7.65s/it]  MindCube:  40%|████      | 48/120 [09:17<08:49,  7.35s/it]  MindCube:  41%|████      | 49/120 [09:33<11:56, 10.09s/it]  MindCube:  42%|████▏     | 50/120 [09:38<09:59,  8.56s/it]  MindCube:  42%|████▎     | 51/120 [09:48<10:25,  9.06s/it]libpng error: bad parameters to zlib
-  MindCube:  43%|████▎     | 52/120 [09:54<09:11,  8.11s/it]  MindCube:  44%|████▍     | 53/120 [09:58<07:35,  6.80s/it]libpng error: bad parameters to zlib
-  MindCube:  45%|████▌     | 54/120 [10:13<10:05,  9.18s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  46%|████▌     | 55/120 [10:27<11:45, 10.85s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  47%|████▋     | 56/120 [10:44<13:26, 12.60s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  48%|████▊     | 57/120 [10:59<14:06, 13.43s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  48%|████▊     | 58/120 [11:11<13:11, 12.76s/it]  MindCube:  49%|████▉     | 59/120 [11:17<10:56, 10.76s/it]  MindCube:  50%|█████     | 60/120 [11:20<08:39,  8.66s/it]  MindCube:  51%|█████     | 61/120 [11:25<07:21,  7.49s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  52%|█████▏    | 62/120 [11:44<10:35, 10.95s/it]  MindCube:  52%|█████▎    | 63/120 [11:52<09:30, 10.02s/it]  MindCube:  53%|█████▎    | 64/120 [11:59<08:34,  9.19s/it]  MindCube:  54%|█████▍    | 65/120 [12:06<07:51,  8.57s/it]libpng error: bad parameters to zlib
-  MindCube:  55%|█████▌    | 66/120 [12:13<07:14,  8.05s/it]  MindCube:  56%|█████▌    | 67/120 [12:18<06:17,  7.13s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  57%|█████▋    | 68/120 [12:46<11:25, 13.18s/it]  MindCube:  57%|█████▊    | 69/120 [12:52<09:27, 11.13s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  58%|█████▊    | 70/120 [13:14<11:56, 14.34s/it]  MindCube:  59%|█████▉    | 71/120 [13:20<09:39, 11.83s/it]  MindCube:  60%|██████    | 72/120 [13:29<08:52, 11.09s/it]  MindCube:  61%|██████    | 73/120 [13:42<09:08, 11.66s/it]  MindCube:  62%|██████▏   | 74/120 [13:53<08:48, 11.49s/it]  MindCube:  62%|██████▎   | 75/120 [13:57<06:58,  9.31s/it]  MindCube:  63%|██████▎   | 76/120 [14:04<06:19,  8.62s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  64%|██████▍   | 77/120 [14:16<06:54,  9.65s/it]  MindCube:  65%|██████▌   | 78/120 [14:25<06:27,  9.23s/it]  MindCube:  66%|██████▌   | 79/120 [14:31<05:37,  8.23s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  67%|██████▋   | 80/120 [14:45<06:44, 10.11s/it]libpng error: bad parameters to zlib
-  MindCube:  68%|██████▊   | 81/120 [14:54<06:15,  9.63s/it]  MindCube:  68%|██████▊   | 82/120 [14:59<05:18,  8.38s/it]  MindCube:  69%|██████▉   | 83/120 [15:12<06:04,  9.85s/it]  MindCube:  70%|███████   | 84/120 [15:22<05:54,  9.86s/it]  MindCube:  71%|███████   | 85/120 [15:44<07:47, 13.36s/it]  MindCube:  72%|███████▏  | 86/120 [15:54<07:02, 12.42s/it]  MindCube:  72%|███████▎  | 87/120 [16:13<07:59, 14.53s/it]  MindCube:  73%|███████▎  | 88/120 [16:26<07:26, 13.96s/it]  MindCube:  74%|███████▍  | 89/120 [16:54<09:24, 18.22s/it]  MindCube:  75%|███████▌  | 90/120 [16:59<07:07, 14.24s/it]libpng error: bad parameters to zlib
-  MindCube:  76%|███████▌  | 91/120 [17:12<06:40, 13.81s/it]libpng error: bad parameters to zlib
-  MindCube:  77%|███████▋  | 92/120 [17:18<05:18, 11.37s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  78%|███████▊  | 93/120 [17:40<06:38, 14.78s/it]  MindCube:  78%|███████▊  | 94/120 [17:46<05:09, 11.89s/it]  MindCube:  79%|███████▉  | 95/120 [18:00<05:16, 12.66s/it]  MindCube:  80%|████████  | 96/120 [18:11<04:49, 12.07s/it]  MindCube:  81%|████████  | 97/120 [18:27<05:04, 13.23s/it]  MindCube:  82%|████████▏ | 98/120 [18:33<04:04, 11.12s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  82%|████████▎ | 99/120 [19:06<06:11, 17.68s/it]  MindCube:  83%|████████▎ | 100/120 [19:17<05:15, 15.78s/it]  MindCube:  84%|████████▍ | 101/120 [19:37<05:22, 16.98s/it]libpng error: bad parameters to zlib
-  MindCube:  85%|████████▌ | 102/120 [19:48<04:33, 15.17s/it]  MindCube:  86%|████████▌ | 103/120 [20:00<04:00, 14.16s/it]  MindCube:  87%|████████▋ | 104/120 [20:34<05:22, 20.14s/it]  MindCube:  88%|████████▊ | 105/120 [21:55<09:35, 38.36s/it]  MindCube:  88%|████████▊ | 106/120 [22:05<07:00, 30.03s/it]  MindCube:  89%|████████▉ | 107/120 [22:11<04:55, 22.75s/it]  MindCube:  90%|█████████ | 108/120 [22:16<03:28, 17.41s/it]libpng error: bad parameters to zlib
-libpng error: bad parameters to zlib
-  MindCube:  91%|█████████ | 109/120 [23:01<04:42, 25.65s/it]  MindCube:  92%|█████████▏| 110/120 [23:05<03:13, 19.32s/it]  MindCube:  92%|█████████▎| 111/120 [23:20<02:41, 17.90s/it]  MindCube:  93%|█████████▎| 112/120 [23:30<02:03, 15.49s/it]  MindCube:  94%|█████████▍| 113/120 [23:39<01:34, 13.56s/it]libpng error: bad parameters to zlib
-  MindCube:  95%|█████████▌| 114/120 [23:48<01:14, 12.35s/it]libpng error: bad parameters to zlib
-  MindCube:  96%|█████████▌| 115/120 [24:13<01:20, 16.06s/it]  MindCube:  97%|█████████▋| 116/120 [24:20<00:53, 13.40s/it]  MindCube:  98%|█████████▊| 117/120 [24:31<00:37, 12.42s/it]  MindCube:  98%|█████████▊| 118/120 [24:39<00:22, 11.38s/it]  MindCube:  99%|█████████▉| 119/120 [24:48<00:10, 10.61s/it]  MindCube: 100%|██████████| 120/120 [25:09<00:00, 13.58s/it]  MindCube: 100%|██████████| 120/120 [25:09<00:00, 12.58s/it]
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim180.0_elev0.0_refcam3.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_1_4_azim90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim90.0_elev30.0_refcam2_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_47115427_view_2_20_azim0.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_0230_00_2_06_azim90.0_elev0.0_refcam3_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim180.0_elev30.0_refcam3_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_0230_00_2_06_azim-90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim0.0_elev30.0_refcam3_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim180.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_47115427_view_1_11_azim90.0_elev0.0_refcam3.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_arkitscenes_44796237_view_0_9_azim0.0_elev60.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_cc06a25029d3a488225cbc259199ba24c183c4304ccb6e7a3f077293d460efc9_4_frame_00130_azim0.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_c3a4d9f0f1b01fb698c1557deca536ae703defca580978335b3d45f9c22b5bff_2_frame_00075_azim0.0_elev60.0_refcam2.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_68a5dbe0edb73084554ac2a7502921fda9c6d8155b56799a942dd20478c48abf_1_frame_00179_azim90.0_elev30.0_refcam2_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_75a7a3f3801e0d1399908b251b9b5c3b0fee8c954db8c832765b4a49bec857ac_1_frame_00042_azim90.0_elev30.0_refcam2_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_26b1a4b226e2e3509100a595ebc5d17dafd361abfdf06fcf20e36f905e138faa_1_frame_00072_azim90.0_elev30.0_refcam2_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_4a0b0219bbf9862766e8fdbb860d565b07ec53baa798820bbc309dc912539887_1_frame_00185_azim90.0_elev0.0_refcam3_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_1be0927f8925c30aa632ee35e0513d8d4ae4a77092330fed20757d92568fe6e0_1_frame_00279_azim90.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_ae75e062177eb99d540ce0ed6fa8d5f00ce67d8585d73dd2137324c520d1ddc3_3_frame_00313_azim90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_9839c696dbdb1601651ad79fa3959dbcebe7cc3acb76a7a38db4a26e07557b8d_1_frame_00073_azim90.0_elev30.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bf40e360bd6e6c4c730fa6d7761b20eeb4dd2d95c77bafa8282951b94a748987_1_frame_00229_azim-90.0_elev30.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_888d26415dd9c1aadb022ca48bf6cad3a5652ea264c02f423310516766122b27_1_frame_00208_azim90.0_elev0.0_refcam3_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_e551e5ed161a470b5b7cbad113db3da07761f13eb922dfc5a52534923009ac99_1_frame_00225_azim-90.0_elev0.0_refcam2_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_35122ec333dc84cf223ea366c3ad968dfece8ca02e57a8c241819837583f76f0_back_192_azim180.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bottle_157_left_077_azim-90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_ball_314_back_133_azim180.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bottle_000_left_124_azim-90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_detergent_093_left_214_azim90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_chair_709_left_223_azim45.0_elev30.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_35122ec333dc84cf223ea366c3ad968dfece8ca02e57a8c241819837583f76f0_right_218_azim90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_78d7c094e9caf11f01b33337cc3697724731f15c54e516153694faa0f8101a7e_left_174_azim-90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_32c0925b3c1d2f1bc0a41f62eff0ee4ad990fd816e90ba64757d1c09e3d9aaf0_front_104_azim-90.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bottle_108_left_058_azim90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_cup_783_front_002_azim90.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_35122ec333dc84cf223ea366c3ad968dfece8ca02e57a8c241819837583f76f0_left_169_azim180.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_94e4f0e8403983cfd3b0f0f3e9ce8a8eebd2f270351e9b5d03054b64089999dc_left_299_azim90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_backpack_010_back_135_azim90.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_backpack_011_front_028_azim90.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_26da8aea7dc318bbeddc6d935b28352f67b12915ec4ff634e04c31495e656449_front_116_azim90.0_elev0.0.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_detergent_091_back_112_azim90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_detergent_093_right_067_azim180.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_7ae6ffaa7d3a703ce4e8dbe7c189f147024d3ca344f00ff3f8fe1587d617d117_back_175_azim0.0_elev60.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_9bf509056d90440300efa33d614564feb1ae17672e2dd1fb722aef2ddc534318_right_201_azim0.0_elev30.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bottle_125_front_000_azim90.0_elev30.0_refcam4_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_detergent_091_left_172_azim-90.0_elev0.0_camview.png
-no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_bottle_134_right_258_azim0.0_elev30.0_camview.png
+  MindCube:   0%|          | 0/120 [00:00<?, ?it/s]  MindCube: 100%|██████████| 120/120 [00:00<00:00, 1413810.34it/s]
   Overall accuracy: 40.00%  (48.0/120)
     among                    : 40.00% (16.0/40)
     around                   : 42.50% (17.0/40)

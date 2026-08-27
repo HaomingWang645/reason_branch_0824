@@ -1,0 +1,107 @@
+[run_eval] model=SPAgent-4B-px256k setting=think3d run=1 dataset=BLINK extra=--rl-trained
+[2026-08-26 23:11:44] ERROR - __init__.py: load_env - 20: Did not detect the .env file at /home/haoming/reason_branch_0824/think3d_repro/spagent/third_party/VLMEvalKit/.env, failed to load.
+
+=================================================================
+  SPAgent Quick Eval
+  Model    : SPAgent-4B-px256k  (backend=qwen-vllm)
+  Tools    : ['pi3x']
+  Datasets : ['BLINK']
+  Limit    : 1000
+  Per-cat  : (none)
+  Prompt   : spatial
+  RL-tuned : True
+  Tag      : SPAgent_4B_px256k_pi3x_spatial
+=================================================================
+
+Tools: ['pi3x_tool']
+
+
+───────────────────────────────────────────────────────
+  BLINK
+  Category filter ['Multi-view_Reasoning']: 1901 -> 133 rows
+  133 rows loaded
+  Running 133 samples ...
+  BLINK:   0%|          | 0/133 [00:00<?, ?it/s]  BLINK:   1%|          | 1/133 [00:17<37:53, 17.22s/it]  BLINK:   2%|▏         | 2/133 [00:46<52:27, 24.03s/it]  BLINK:   2%|▏         | 3/133 [00:49<31:48, 14.68s/it]  BLINK:   3%|▎         | 4/133 [01:01<28:58, 13.47s/it]  BLINK:   4%|▍         | 5/133 [01:36<45:47, 21.46s/it]  BLINK:   5%|▍         | 6/133 [01:51<40:47, 19.27s/it]  BLINK:   5%|▌         | 7/133 [01:57<31:13, 14.87s/it]  BLINK:   6%|▌         | 8/133 [02:25<39:29, 18.95s/it]  BLINK:   7%|▋         | 9/133 [02:32<31:33, 15.27s/it]  BLINK:   8%|▊         | 10/133 [02:41<27:13, 13.28s/it]  BLINK:   8%|▊         | 11/133 [02:46<21:39, 10.65s/it]  BLINK:   9%|▉         | 12/133 [03:00<24:07, 11.96s/it]  BLINK:  10%|▉         | 13/133 [03:06<19:57,  9.98s/it]  BLINK:  11%|█         | 14/133 [03:26<25:39, 12.94s/it]  BLINK:  11%|█▏        | 15/133 [03:33<22:09, 11.27s/it]  BLINK:  12%|█▏        | 16/133 [03:54<27:54, 14.31s/it][2026-08-26 23:16:07] ERROR - spagent.py: _execute_tools - 968: Tool not found: pi3X_tool
+  BLINK:  13%|█▎        | 17/133 [04:19<33:23, 17.27s/it]  BLINK:  14%|█▎        | 18/133 [04:32<30:41, 16.02s/it]  BLINK:  14%|█▍        | 19/133 [04:46<29:29, 15.53s/it]  BLINK:  15%|█▌        | 20/133 [04:54<24:59, 13.27s/it]  BLINK:  16%|█▌        | 21/133 [05:07<24:33, 13.16s/it]  BLINK:  17%|█▋        | 22/133 [05:33<31:37, 17.09s/it]  BLINK:  17%|█▋        | 23/133 [06:19<47:11, 25.74s/it]  BLINK:  18%|█▊        | 24/133 [06:27<36:47, 20.26s/it]  BLINK:  19%|█▉        | 25/133 [07:29<59:16, 32.94s/it]  BLINK:  20%|█▉        | 26/133 [08:51<1:25:04, 47.71s/it]  BLINK:  20%|██        | 27/133 [09:21<1:14:41, 42.28s/it]  BLINK:  21%|██        | 28/133 [09:28<55:36, 31.77s/it]    BLINK:  22%|██▏       | 29/133 [10:07<58:48, 33.93s/it]  BLINK:  23%|██▎       | 30/133 [10:14<44:13, 25.76s/it]  BLINK:  23%|██▎       | 31/133 [11:05<56:47, 33.41s/it]  BLINK:  24%|██▍       | 32/133 [11:23<48:17, 28.68s/it]  BLINK:  25%|██▍       | 33/133 [11:39<41:45, 25.05s/it]  BLINK:  26%|██▌       | 34/133 [11:45<31:52, 19.32s/it]  BLINK:  26%|██▋       | 35/133 [12:03<30:34, 18.71s/it]  BLINK:  27%|██▋       | 36/133 [12:19<29:10, 18.04s/it]  BLINK:  28%|██▊       | 37/133 [12:33<26:54, 16.82s/it]  BLINK:  29%|██▊       | 38/133 [12:38<21:07, 13.34s/it]  BLINK:  29%|██▉       | 39/133 [12:46<18:07, 11.57s/it]  BLINK:  30%|███       | 40/133 [12:50<14:30,  9.36s/it]  BLINK:  31%|███       | 41/133 [13:08<18:29, 12.06s/it]  BLINK:  32%|███▏      | 42/133 [13:42<28:15, 18.63s/it]  BLINK:  32%|███▏      | 43/133 [14:01<28:10, 18.78s/it]  BLINK:  33%|███▎      | 44/133 [14:44<38:30, 25.96s/it]  BLINK:  34%|███▍      | 45/133 [15:06<36:16, 24.74s/it]  BLINK:  35%|███▍      | 46/133 [15:10<26:58, 18.61s/it]  BLINK:  35%|███▌      | 47/133 [15:23<24:12, 16.89s/it]  BLINK:  36%|███▌      | 48/133 [15:31<19:54, 14.05s/it]  BLINK:  37%|███▋      | 49/133 [16:15<32:22, 23.12s/it]  BLINK:  38%|███▊      | 50/133 [16:22<25:18, 18.30s/it]  BLINK:  38%|███▊      | 51/133 [17:01<33:37, 24.61s/it]  BLINK:  39%|███▉      | 52/133 [17:19<30:38, 22.69s/it]  BLINK:  40%|███▉      | 53/133 [18:10<41:14, 30.93s/it]  BLINK:  41%|████      | 54/133 [18:43<41:40, 31.66s/it]  BLINK:  41%|████▏     | 55/133 [19:00<35:20, 27.19s/it]  BLINK:  42%|████▏     | 56/133 [19:45<41:48, 32.57s/it]  BLINK:  43%|████▎     | 57/133 [20:01<34:58, 27.62s/it]  BLINK:  44%|████▎     | 58/133 [20:13<28:46, 23.02s/it]  BLINK:  44%|████▍     | 59/133 [20:30<26:02, 21.12s/it]  BLINK:  45%|████▌     | 60/133 [20:44<22:57, 18.87s/it]  BLINK:  46%|████▌     | 61/133 [21:03<22:41, 18.91s/it]  BLINK:  47%|████▋     | 62/133 [21:24<23:11, 19.59s/it]  BLINK:  47%|████▋     | 63/133 [21:54<26:36, 22.81s/it]  BLINK:  48%|████▊     | 64/133 [22:14<25:08, 21.87s/it]  BLINK:  49%|████▉     | 65/133 [22:25<21:01, 18.55s/it]  BLINK:  50%|████▉     | 66/133 [22:30<16:11, 14.49s/it]  BLINK:  50%|█████     | 67/133 [22:52<18:42, 17.01s/it]  BLINK:  51%|█████     | 68/133 [23:08<17:50, 16.48s/it]  BLINK:  52%|█████▏    | 69/133 [23:26<18:05, 16.96s/it]  BLINK:  53%|█████▎    | 70/133 [23:42<17:39, 16.82s/it]  BLINK:  53%|█████▎    | 71/133 [23:54<15:51, 15.35s/it]  BLINK:  54%|█████▍    | 72/133 [24:34<22:59, 22.61s/it]  BLINK:  55%|█████▍    | 73/133 [25:13<27:38, 27.64s/it]  BLINK:  56%|█████▌    | 74/133 [25:18<20:19, 20.68s/it]  BLINK:  56%|█████▋    | 75/133 [25:28<16:53, 17.47s/it]  BLINK:  57%|█████▋    | 76/133 [25:45<16:40, 17.55s/it]  BLINK:  58%|█████▊    | 77/133 [26:00<15:39, 16.77s/it]  BLINK:  59%|█████▊    | 78/133 [26:32<19:28, 21.25s/it]  BLINK:  59%|█████▉    | 79/133 [26:44<16:43, 18.58s/it]  BLINK:  60%|██████    | 80/133 [27:02<16:05, 18.22s/it]  BLINK:  61%|██████    | 81/133 [27:30<18:18, 21.12s/it]  BLINK:  62%|██████▏   | 82/133 [27:42<15:47, 18.57s/it]  BLINK:  62%|██████▏   | 83/133 [28:15<19:09, 22.99s/it]  BLINK:  63%|██████▎   | 84/133 [28:20<14:13, 17.42s/it]  BLINK:  64%|██████▍   | 85/133 [28:27<11:32, 14.43s/it]  BLINK:  65%|██████▍   | 86/133 [28:30<08:38, 11.03s/it]  BLINK:  65%|██████▌   | 87/133 [29:24<18:19, 23.91s/it]  BLINK:  66%|██████▌   | 88/133 [29:36<15:07, 20.17s/it]  BLINK:  67%|██████▋   | 89/133 [30:17<19:20, 26.37s/it]  BLINK:  68%|██████▊   | 90/133 [30:28<15:43, 21.93s/it]  BLINK:  68%|██████▊   | 91/133 [31:16<20:42, 29.59s/it]  BLINK:  69%|██████▉   | 92/133 [31:31<17:15, 25.26s/it]  BLINK:  70%|██████▉   | 93/133 [31:37<13:06, 19.66s/it]  BLINK:  71%|███████   | 94/133 [31:43<09:58, 15.35s/it]  BLINK:  71%|███████▏  | 95/133 [31:51<08:26, 13.32s/it]  BLINK:  72%|███████▏  | 96/133 [31:54<06:14, 10.12s/it]  BLINK:  73%|███████▎  | 97/133 [32:03<05:51,  9.76s/it]  BLINK:  74%|███████▎  | 98/133 [32:17<06:23, 10.94s/it]  BLINK:  74%|███████▍  | 99/133 [32:40<08:23, 14.80s/it]  BLINK:  75%|███████▌  | 100/133 [32:51<07:30, 13.64s/it]  BLINK:  76%|███████▌  | 101/133 [33:02<06:52, 12.89s/it]  BLINK:  77%|███████▋  | 102/133 [33:09<05:38, 10.93s/it]  BLINK:  77%|███████▋  | 103/133 [33:16<04:50,  9.68s/it]  BLINK:  78%|███████▊  | 104/133 [33:31<05:32, 11.48s/it]  BLINK:  79%|███████▉  | 105/133 [34:05<08:29, 18.20s/it]  BLINK:  80%|███████▉  | 106/133 [34:41<10:31, 23.39s/it]  BLINK:  80%|████████  | 107/133 [35:17<11:49, 27.29s/it]no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_2_0_azim-90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_5_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_8_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_12_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_14_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_16_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_17_0_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_17_1_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_19_0_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_22_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_23_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_25_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_26_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_27_0_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_29_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_31_0_azim-90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_32_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_33_0_azim90.0_elev0.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_37_0_azim-90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_42_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_43_0_azim-90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_44_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_45_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_49_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_51_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_52_0_azim90.0_elev0.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_53_0_azim-90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_54_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_56_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_58_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_59_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_60_0_azim-90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_61_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_62_0_azim0.0_elev0.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_63_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_67_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_70_0_azim90.0_elev0.0_refcam2_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_71_0_azim0.0_elev60.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_72_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_73_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_76_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_78_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_79_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_81_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_83_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_87_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_89_1_azim180.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_91_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_92_0_azim90.0_elev0.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_97_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_99_0_azim-90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_100_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_101_0_azim0.0_elev60.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_105_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_106_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_107_0_azim90.0_elev0.0.png
+no_cache_found:   BLINK:  81%|████████  | 108/133 [35:30<09:33, 22.94s/it]  BLINK:  82%|████████▏ | 109/133 [35:34<06:57, 17.38s/it]  BLINK:  83%|████████▎ | 110/133 [36:17<09:34, 24.96s/it]  BLINK:  83%|████████▎ | 111/133 [36:27<07:28, 20.39s/it]  BLINK:  84%|████████▍ | 112/133 [37:34<12:01, 34.36s/it]  BLINK:  85%|████████▍ | 113/133 [38:10<11:40, 35.04s/it]  BLINK:  86%|████████▌ | 114/133 [38:21<08:49, 27.87s/it]  BLINK:  86%|████████▋ | 115/133 [38:35<07:07, 23.73s/it]  BLINK:  87%|████████▋ | 116/133 [38:46<05:36, 19.77s/it]  BLINK:  88%|████████▊ | 117/133 [38:53<04:13, 15.83s/it]  BLINK:  89%|████████▊ | 118/133 [39:06<03:47, 15.19s/it]  BLINK:  89%|████████▉ | 119/133 [39:44<05:06, 21.92s/it]  BLINK:  90%|█████████ | 120/133 [40:17<05:29, 25.38s/it]  BLINK:  91%|█████████ | 121/133 [40:32<04:27, 22.28s/it]  BLINK:  92%|█████████▏| 122/133 [40:48<03:42, 20.20s/it]  BLINK:  92%|█████████▏| 123/133 [40:51<02:31, 15.16s/it]  BLINK:  93%|█████████▎| 124/133 [41:02<02:03, 13.77s/it]  BLINK:  94%|█████████▍| 125/133 [41:14<01:45, 13.22s/it]  BLINK:  95%|█████████▍| 126/133 [41:22<01:22, 11.78s/it]  BLINK:  95%|█████████▌| 127/133 [42:00<01:57, 19.60s/it]  BLINK:  96%|█████████▌| 128/133 [42:32<01:57, 23.40s/it]  BLINK:  97%|█████████▋| 129/133 [43:12<01:53, 28.44s/it]  BLINK:  98%|█████████▊| 130/133 [43:59<01:41, 33.91s/it]  BLINK:  98%|█████████▊| 131/133 [44:13<00:55, 27.95s/it]  BLINK:  99%|█████████▉| 132/133 [44:30<00:24, 24.77s/it]  BLINK: 100%|██████████| 133/133 [44:49<00:00, 23.03s/it]  BLINK: 100%|██████████| 133/133 [44:49<00:00, 20.22s/it]
+ /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_108_0_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_110_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_111_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_112_0_azim-90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_113_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_115_0_azim90.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_119_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_120_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_121_0_azim0.0_elev30.0_camview.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_127_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_128_0_azim0.0_elev60.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_129_0_azim90.0_elev0.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_130_0_azim90.0_elev30.0.png
+no_cache_found:  /home/haoming/reason_branch_0824/think3d_repro/spagent/outputs/pi3x_BLINK_val_Multi-view_Reasoning_131_0_azim90.0_elev30.0_camview.png
+  Saved predictions → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK.xlsx
+  Scoring (judge=exact_matching) ...
+  Judge API base: (default openai.com)
+  0%|          | 0/133 [00:00<?, ?it/s]100%|██████████| 133/133 [00:00<00:00, 4792.87it/s]
+  Error log (67 wrong) → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial/BLINK/SPAgent_4B_px256k_pi3x_spatial_BLINK_errors.jsonl
+
+  ✓ BLINK scores: {'split': ['none'], 'Overall': [0.3082706766917293], 'Multi-view_Reasoning': [0.3082706766917293]}
+
+
+Summary → /home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_px256k_pi3x_spatial_quick_summary.json
+Done.
+

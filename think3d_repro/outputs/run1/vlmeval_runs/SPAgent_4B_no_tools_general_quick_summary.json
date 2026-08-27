@@ -1,14 +1,18 @@
 {
-  "VSIBench": {
-    "dataset": "VSIBench",
-    "n_samples": 200,
-    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_no_tools_general/VSIBench/SPAgent_4B_no_tools_general_VSIBench.xlsx",
+  "BLINK": {
+    "dataset": "BLINK",
+    "n_samples": 133,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run1/vlmeval_runs/SPAgent_4B_no_tools_general/BLINK/SPAgent_4B_no_tools_general_BLINK.xlsx",
     "scores": {
-      "Overall": 0.385,
-      "route_planning": 0.3,
-      "object_rel_direction": 0.46,
-      "object_rel_distance": 0.42,
-      "obj_appearance_order": 0.36
+      "split": [
+        "none"
+      ],
+      "Overall": [
+        0.3383458646616541
+      ],
+      "Multi-view_Reasoning": [
+        0.3383458646616541
+      ]
     }
   }
 }

@@ -1,13 +1,14 @@
 {
-  "MindCube": {
-    "dataset": "MindCube",
-    "n_samples": 120,
-    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_no_tools_general/MindCube/SPAgent_4B_no_tools_general_MindCube.xlsx",
+  "VSIBench": {
+    "dataset": "VSIBench",
+    "n_samples": 200,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run3/vlmeval_runs/SPAgent_4B_no_tools_general/VSIBench/SPAgent_4B_no_tools_general_VSIBench.xlsx",
     "scores": {
-      "Overall": 0.3333,
-      "rotation": 0.275,
-      "around": 0.325,
-      "among": 0.4
+      "Overall": 0.38,
+      "route_planning": 0.38,
+      "object_rel_direction": 0.42,
+      "object_rel_distance": 0.42,
+      "obj_appearance_order": 0.3
     }
   }
 }

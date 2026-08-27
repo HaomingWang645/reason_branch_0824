@@ -1,14 +1,18 @@
 {
-  "VSIBench": {
-    "dataset": "VSIBench",
-    "n_samples": 200,
-    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/VSIBench/SPAgent_4B_pi3x_spatial_VSIBench.xlsx",
+  "BLINK": {
+    "dataset": "BLINK",
+    "n_samples": 133,
+    "xlsx": "/home/haoming/reason_branch_0824/think3d_repro/outputs/run2/vlmeval_runs/SPAgent_4B_pi3x_spatial/BLINK/SPAgent_4B_pi3x_spatial_BLINK.xlsx",
     "scores": {
-      "Overall": 0.35,
-      "route_planning": 0.42,
-      "object_rel_direction": 0.34,
-      "object_rel_distance": 0.3,
-      "obj_appearance_order": 0.34
+      "split": [
+        "none"
+      ],
+      "Overall": [
+        0.2706766917293233
+      ],
+      "Multi-view_Reasoning": [
+        0.2706766917293233
+      ]
     }
   }
 }
