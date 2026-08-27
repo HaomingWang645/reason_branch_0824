@@ -39,6 +39,40 @@ Table 1 (VSI-Bench-tiny):
 | Qwen3-VL-4B-T3RL (no tool) | 27.89 | 30.67 | 32.00 | 42.86 | 33.36 |
 | Think3D (Qwen3-VL-4B-T3RL) | 36.73 | 39.00 | 44.67 | 61.22 | 45.41 |
 
+
+## Implementation notes / deviations discovered while reproducing
+
+* **Compute layout.** GPU 5 is in `Exclusive_Process` mode (one process only) → it hosts the single-process
+  GRPO job; GPU 6 hosts the Pi3X server and the vLLM policy servers. `CUDA_DEVICE_ORDER=PCI_BUS_ID` is
+  required on this box (CUDA's default order differs from nvidia-smi's).
+* **RL data.** 24 of the 1000 Think3DQA samples reference images that are not in the public MindCube
+  release (11 `among` files with different zero-padding, 13 `linear` scenes) → 976 samples (paper: 977).
+  8 of the 598 unique scenes could not be reconstructed by Pi3X offline (oversized / mixed-size `around`
+  images); their tool calls return an error during rollouts.
+* **Test/train overlap.** 362 of the 1050 `MindCube_tinybench` questions share a scene with the RL training
+  set; the 120-question eval subset is drawn only from the remaining 688.
+* **VSI-Bench-tiny** ids are not public; the paper's per-task denominators (49–50 questions / task / run)
+  match the 400-question "tiny" subset of the original VSI-Bench paper (50 / task), so 50 questions per MC
+  task were sampled with a fixed seed.
+* **Rendered-view resolution.** The Pi3X server returns 3900×3900 (global) / up to 6000×5000 px renders.
+  vLLM's default Qwen3-VL processor keeps up to 16.7 M px, i.e. one render costs ~15 k visual tokens at
+  eval time, whereas RL training used `MAX_PIXELS=262144` (256 tokens / image). The main tables use the
+  repo/vLLM defaults; an extra run with `--mm-processor-kwargs '{"max_pixels": 262144}'` (tag `px256k`)
+  tests the resolution-matched setting.
+* **Tool use at eval.** The released RL checkpoint requests diverse non-zero viewpoints (mostly ego views
+  at az ±90°, el 30°); the untrained Qwen3-VL-4B mostly issues the "wasted" (0°, 0°) call, as described in
+  the paper. On VSI-Bench the RL model calls the tool for only ~25 % of the questions (MindCube: ~85 %).
+* **Scoring.** No LLM judge is available; the option letter inside `<answer>` tags is matched exactly
+  (fallback: first `(X)`/`X.` pattern, as in the repo). Long chains of thought that hit the 1024-token limit
+  without an `<answer>` tag count as wrong (this also happens in the repo's own scorer).
+* **Training speed.** With the repo's HF-generate rollouts one optimizer step took 45 min (1.5 M-point
+  matplotlib renders + sequential generation). Rendering was capped at 150 k points (the live server renders
+  ~130 k filtered points anyway), rollouts moved to vLLM colocate mode, and the likely viewpoints were
+  pre-rendered in parallel on CPU; the optimization itself (data, rewards, rollouts / prompt, lr schedule,
+  epochs) is unchanged.
+* **Infra.** vLLM 0.11.2's multimodal processor cache crashed one engine core (`AssertionError: Expected a
+  cached item for mm_hash=...`); servers are now started with `--mm-processor-cache-gb 0`.
+
 ## Reproduced numbers
 
 _(filled in as runs complete — see `outputs/summary.csv`)_
