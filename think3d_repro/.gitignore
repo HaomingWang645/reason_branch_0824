@@ -12,3 +12,4 @@ spagent/**/__pycache__/
 outputs/*/spagent_traces/
 outputs/runsmoke/
 *_errors.jsonl
+outputs/runviz/frames/
