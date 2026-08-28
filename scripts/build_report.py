@@ -83,13 +83,19 @@ ost_note = "" if tree_ost else "*(ViewTree tree evaluation on OST-Bench in progr
 
 
 # ---------------- STI-Bench ----------------
+def load_sti(pat):  # STI 'ID' is only unique within a video -> key by (video, id)
+    d = {}
+    for p in glob.glob(os.path.join(R, pat)):
+        for l in open(p):
+            r = json.loads(l); d[r["scene"] + "/" + r["id"]] = r
+    return d
 STI = collections.OrderedDict([
-    ("Qwen2.5-VL-7B zero-shot", load("results/newbench/sti_direct_zeroshot_s*.jsonl")),
-    ("SFT-plain", load("results/newbench/sti_direct_sft_plain_s*.jsonl")),
-    ("SFT+GRPO-plain", load("results/newbench/sti_direct_grpo_plain_s*.jsonl")),
-    ("SFT-v2 adapter, single pass", load("results/newbench/sti_direct_sft2_s*.jsonl")),
-    ("D_10k adapter, single pass", load("results/newbench/sti_direct_d10k_s*.jsonl")),
-    ("**ViewTree (best): reasoning tree**", load("results/newbench/sti_tree_s*.jsonl")),
+    ("Qwen2.5-VL-7B zero-shot", load_sti("results/newbench/sti_direct_zeroshot_s*.jsonl")),
+    ("SFT-plain", load_sti("results/newbench/sti_direct_sft_plain_s*.jsonl")),
+    ("SFT+GRPO-plain", load_sti("results/newbench/sti_direct_grpo_plain_s*.jsonl")),
+    ("SFT-v2 adapter, single pass", load_sti("results/newbench/sti_direct_sft2_s*.jsonl")),
+    ("D_10k adapter, single pass", load_sti("results/newbench/sti_direct_d10k_s*.jsonl")),
+    ("**ViewTree (best): reasoning tree**", load_sti("results/newbench/sti_tree_s*.jsonl")),
 ])
 STI = collections.OrderedDict((k, v) for k, v in STI.items() if len(v) >= 2000)  # only systems with (near-)complete coverage
 sti_md = ""
@@ -129,11 +135,15 @@ By video source:
 
 ViewTree path mix: {" · ".join(f"{k} {v}" for k, v in smodes.items())}.
 
-**Reading.** STI-Bench is dominated by *temporal-quantitative* tasks (speed, displacement, trajectory, pose over time) for which a
-static scene memory is the wrong tool, and two of its three sources (driving, desktop manipulation) are outside the indoor-room domain
-of every training set used here. The table therefore measures robustness rather than the method's target skill: the tree should
-not fall below the no-memory baselines, and where it differs by task (dimensional measurement, spatial relation, 3-D grounding
-vs speed/trajectory) the pattern matches the VSI/OST findings — geometry questions benefit from the memory, motion questions do not.
+**Reading (a negative result, reported as such).** On STI-Bench the *zero-shot* model is the best system: every model
+fine-tuned on MindCube indoor multiple-choice data regresses, most severely the no-memory baselines (−11 pts; pose estimation
+0.535→0.28, ego-centric orientation 0.454→0.11), whose answer-only fine-tuning over-fits the MindCube option format and indoor
+domain. ViewTree keeps more of the base model's ability (−6.4) and is +4.5 above both no-memory baselines (significant), and
+its gate answers directly on 66 % of items — the tree does no harm — but it does not recover zero-shot performance. STI's tasks
+are largely temporal-quantitative (speed, displacement, trajectory, pose over time) and two of three sources (driving, desktop
+manipulation) are far from the indoor-room domain of all training data used here; a static scene memory is the wrong tool for
+motion questions. The practical conclusion is that the *controller adapter*, not the memory, is what limits transfer to this
+benchmark; the multi-step design (DESIGN_DEPTH.md) trains on a corpus that includes camera-motion questions for this reason.
 """
 
 # ---------------- figures ----------------

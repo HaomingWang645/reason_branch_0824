@@ -717,6 +717,38 @@ SFT-plain / SFT+GRPO-plain on VSI and OST, 3 reasoning trees per task):
 `report/REPORT.md`, `report/REPORT.pdf` (built by `scripts/build_report.py`;
 figures `figures/tree_rep_vsi_*.png`, `figures/tree_rep_ost_*.png`).
 
+## 6e. STI-Bench (2026-08-28; no retraining) — negative result
+
+2,064 single-choice items, 8 spatial-temporal tasks, videos from ScanNet /
+Waymo (driving) / Omni6DPose (desktop). All systems: 16 frames inside the
+queried time window. Paired n = 2,062. ViewTree = D_10k adapter + human views
++ matched head, full tree. (`scripts/eval_video_bench.py`; the D_10k
+single-pass row is still running.)
+
+| system | overall | 3D grounding (317) | dimensional (289) | displacement (358) | ego-orientation (185) | pose (359) | spatial relation (146) | speed/accel (330) | trajectory (78) |
+|---|---|---|---|---|---|---|---|---|---|
+| **zero-shot Qwen2.5-VL-7B** | **0.371** | 0.315 | 0.301 | 0.240 | **0.454** | **0.535** | **0.527** | 0.309 | **0.462** |
+| SFT-plain | 0.261 | 0.240 | 0.260 | 0.221 | 0.108 | 0.281 | 0.466 | 0.291 | 0.308 |
+| SFT+GRPO-plain | 0.263 | 0.249 | 0.263 | 0.204 | 0.108 | 0.290 | 0.500 | 0.288 | 0.282 |
+| SFT-v2 adapter, single pass | 0.315 | 0.271 | 0.225 | 0.237 | 0.292 | 0.432 | 0.479 | 0.315 | 0.397 |
+| ViewTree tree | 0.306 | 0.271 | 0.239 | 0.249 | 0.178 | 0.415 | 0.466 | 0.324 | 0.397 |
+
+By source (zero-shot / SFT-plain / GRPO-plain / SFT-v2 / ViewTree): Omni6DPose
+0.347 / 0.300 / 0.302 / 0.302 / 0.307 · ScanNet 0.299 / 0.216 / 0.213 /
+0.242 / 0.237 · Waymo 0.460 / 0.291 / 0.298 / 0.402 / 0.382.
+ViewTree − SFT-plain **+4.5 [+2.3, +6.6]**, − GRPO-plain **+4.4 [+2.5, +6.1]**,
+− zero-shot **−6.4 [−8.3, −4.7]** (video-bootstrap CIs). Path mix: direct
+1,356 · fallback 344 · consensus 237 · fused 125.
+
+- **Every MindCube-fine-tuned model regresses on STI**, worst for the
+  answer-only baselines (pose 0.535→0.28, ego-orientation 0.454→0.11):
+  fine-tuning on indoor MC data over-fits the option format and domain.
+  ViewTree loses less (its adapter also trained on control/fusion, and the
+  gate answers directly on 66 %) but does not recover zero-shot.
+- The limiting factor is the *adapter*, not the memory — motivation for
+  training the multi-step controller on a corpus with camera-motion
+  questions (DESIGN_DEPTH.md §2).
+
 ## 6b. Data-leakage audit (2026-08-24)
 
 Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-

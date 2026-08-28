@@ -50,7 +50,7 @@ def load_sti():
         cands = ast.literal_eval(r["Candidates"]) if isinstance(r["Candidates"], str) else dict(r["Candidates"])
         opts = [f"{k}. {v}" for k, v in cands.items() if v not in (None, "", "None")]
         extra = (str(r["Prompt"]).strip() + "\n") if str(r["Prompt"]).strip() not in ("", "nan") else ""
-        items.append(dict(id=f"sti_{r['ID']}", video=f"{EXT}/sti/video/{r['Video']}", t0=float(r["time_start"]), t1=float(r["time_end"]), n=16,
+        items.append(dict(id=f"sti_{str(r['Video'])[:-4]}_{r['ID']}", video=f"{EXT}/sti/video/{r['Video']}", t0=float(r["time_start"]), t1=float(r["time_end"]), n=16,
                           prompt=f"{extra}{r['Question']}\n" + "\n".join(opts) + f"\n{MC_SUFFIX}", gt=str(r["Answer"]).strip(), numeric=False,
                           qtype=r["Task"], source=r["Source"], scene=str(r["Video"])[:-4]))
     return items

@@ -49,6 +49,17 @@ could have taken — instead of answering from whatever frames it was given.
 *Figure 2. Legacy proposer (outside/above the room, 39° pitch) vs the human-camera constraint (inside the walked region, eye level,
 roll 0°) on held-out VSI scenes; the top-down bird's-eye view is shared.*
 
+
+### 1.4 Frame budgets (fixed for every evaluation)
+
+| benchmark | frames fed to VGGT (3-D memory) | frames the controller sees per call | notes |
+|---|---|---|---|
+| VSI-Bench (video) | 32 uniformly sampled frames | 8 of those 32 (uniform subset) + 1 render per branch, 2 renders at fuse | memory ≈ 7.8 GB + 0.22 GB × 32 ≈ 14.8 GB per reconstruction; static-memory baseline: 16-frame reconstruction, 12 frames + 5 renders; no-memory baselines: 16 frames |
+| OST-Bench (image history) | all observed images (latest 12) | up to 8 of them + renders | identical input to the single-pass baselines |
+| STI-Bench | 16 frames inside the queried time window | all 16 + renders | ±1 s window for instantaneous questions |
+| VSTI-Bench | 32 uniform frames | all 32 + renders | questions cite "frame k of 32" |
+| MindCube (training) | all given views (≤ 4) → one top-down render | 1…k views as the ladder policy acquires them | |
+
 ### 1.3 What is being compared
 - **SFT-plain** — the same base model LoRA-fine-tuned on the benchmark's own training split (all 10,000 MindCube train items;
   input = all given views + question, target = answer letter). No memory, no renders, no control.
@@ -119,6 +130,48 @@ rows use the same adapters answering directly from the image history.
 - ViewTree − Qwen2.5-VL-7B zero-shot: **+0.001** [-0.010, +0.013] (bootstrap 95 % CI over item blocks)
 
 ViewTree path mix on OST-Bench: fused_fallback_direct 1729 · direct 2033 · fused 539 · branch_consensus 1102.
+
+
+## 3b. STI-Bench (spatial-temporal understanding from video, 2,064 single-choice items, 8 tasks)
+
+Videos come from ScanNet (indoor walkthroughs), Waymo (outdoor driving) and Omni6DPose (desktop object manipulation); every question
+refers to a time window of the video. All systems see the same 16 frames sampled inside the queried window (±1 s for instantaneous
+questions). Only 2 of the 150 ScanNet videos overlap the scenes used to train our confidence head; results are on all items
+(paired n = 2062). No model was retrained for this benchmark.
+
+| system | overall | 3D Video Grounding (317) | Dimensional Measurement (289) | Displacement & Path Length (358) | Ego-Centric Orientation (185) | Pose Estimation (359) | Spatial Relation (146) | Speed & Acceleration (330) | Trajectory Description (78) |
+|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | **0.371** | 0.315 | 0.301 | 0.240 | 0.454 | 0.535 | 0.527 | 0.309 | 0.462 |
+| SFT-plain | **0.261** | 0.240 | 0.260 | 0.221 | 0.108 | 0.281 | 0.466 | 0.291 | 0.308 |
+| SFT+GRPO-plain | **0.263** | 0.249 | 0.263 | 0.204 | 0.108 | 0.290 | 0.500 | 0.288 | 0.282 |
+| SFT-v2 adapter, single pass | **0.315** | 0.271 | 0.225 | 0.237 | 0.292 | 0.432 | 0.479 | 0.315 | 0.397 |
+| **ViewTree (best): reasoning tree** | **0.306** | 0.271 | 0.239 | 0.249 | 0.178 | 0.415 | 0.466 | 0.324 | 0.397 |
+
+By video source:
+
+| system | Omni6DPose (404) | ScanNet (865) | Waymo (793) |
+|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | 0.347 | 0.299 | 0.460 |
+| SFT-plain | 0.300 | 0.216 | 0.291 |
+| SFT+GRPO-plain | 0.302 | 0.213 | 0.298 |
+| SFT-v2 adapter, single pass | 0.302 | 0.242 | 0.402 |
+| **ViewTree (best): reasoning tree** | 0.307 | 0.237 | 0.382 |
+
+- ViewTree − SFT-plain: **+0.045** [+0.023, +0.066] (video-bootstrap 95 % CI)
+- ViewTree − SFT+GRPO-plain: **+0.044** [+0.025, +0.061] (video-bootstrap 95 % CI)
+- ViewTree − Qwen2.5-VL-7B zero-shot: **-0.064** [-0.083, -0.047] (video-bootstrap 95 % CI)
+
+ViewTree path mix: fused_fallback_direct 344 · direct 1356 · branch_consensus 237 · fused 125.
+
+**Reading (a negative result, reported as such).** On STI-Bench the *zero-shot* model is the best system: every model
+fine-tuned on MindCube indoor multiple-choice data regresses, most severely the no-memory baselines (−11 pts; pose estimation
+0.535→0.28, ego-centric orientation 0.454→0.11), whose answer-only fine-tuning over-fits the MindCube option format and indoor
+domain. ViewTree keeps more of the base model's ability (−6.4) and is +4.5 above both no-memory baselines (significant), and
+its gate answers directly on 66 % of items — the tree does no harm — but it does not recover zero-shot performance. STI's tasks
+are largely temporal-quantitative (speed, displacement, trajectory, pose over time) and two of three sources (driving, desktop
+manipulation) are far from the indoor-room domain of all training data used here; a static scene memory is the wrong tool for
+motion questions. The practical conclusion is that the *controller adapter*, not the memory, is what limits transfer to this
+benchmark; the multi-step design (DESIGN_DEPTH.md) trains on a corpus that includes camera-motion questions for this reason.
 
 ## 4. Visualized reasoning trees
 
