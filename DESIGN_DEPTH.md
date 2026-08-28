@@ -1,7 +1,7 @@
 # ViewTree-D: multi-step (depth > 1) view acquisition — experiment design
 
-*Drafted 2026-08-28. Status: Phase 0 data preparation started; GPUs currently
-finish the STI/VSTI evaluation, training starts when they free.*
+*Drafted 2026-08-28. Status: corpus assembled (493,663 QA / 1,709 scenes, see §2
+update); Phase 0 pose-bank generation queued behind the STI/VSTI evaluation.*
 
 ## 0. Why a new design is needed
 
@@ -63,6 +63,23 @@ Videos: `Journey9ni/vlm3r_videos` (3,537 videos: ARKitScenes 1,480, ScanNet
 1,201, ScanNet++ 856; 54 GB) — downloading now. Target after de-duplication
 and balancing: **≈ 400k QA on ≈ 3,500 scenes** (40× MindCube). Numeric
 answers are trained as text and scored by MRA as in VSI-Bench.
+
+**Corpus as assembled (2026-08-28).** The gated `vlm3r_videos` mirror could not be
+downloaded; videos come from VSI-590K's own ScanNet (1,513) and ScanNet++ v2
+(856) tarballs instead, ARKitScenes deferred. After joining QA to held videos
+and excluding every evaluation scene (348 ScanNet scenes; 73,680 QA dropped):
+
+| source | QA kept | scenes |
+|---|---|---|
+| VLM-3R `vsibench_train` (VSI-type, ScanNet + ScanNet++) | 192,056 | |
+| VLM-3R `vstibench_train` (camera-motion / temporal) | 94,110 | |
+| VSI-590K ScanNet + ScanNet++ v2 | 207,497 | |
+| **total** | **493,663** (176,356 numeric) | **1,709** |
+
+`data/train3r/qa_all.jsonl`, `data/train3r/manifest.jsonl`. MindCube (10k,
+image sets) is added in Phase 1 with a bank built from its ≤ 4 views.
+Pose bank measured on a ScanNet scene: 97 entries, 71 pass the 45 %
+coverage mask, eye height 0.80 of room height.
 
 ## 3. Phases
 
