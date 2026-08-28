@@ -58,6 +58,71 @@ hardest spatial types; appearance order (temporal) is the one type where every
 memory/SFT variant trails plain frame prompting — renders cannot encode time,
 and MindCube training has no temporal questions.
 
+## 1c. No-world-memory baselines: SFT and SFT+GRPO on the benchmark's own training data (2026-08-28)
+
+Two baselines trained on the 10k MindCube train items with **no scene
+memory, no rendered views, no control policy** (DECISIONS.md §10):
+**SFT-plain** (all views + question → answer letter) and **SFT+GRPO-plain**
+(GRPO from SFT-plain, reward = answer correctness, 6 samples/item, 9,995
+items). Same evaluation suites as the memory systems, paired.
+
+### MindCube (evidence ladder, accuracy)
+
+| system | tiny 1 view | tiny all views | rest 1 view | rest all views | notes |
+|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | 0.343 | 0.346 | 0.286 | 0.267 | |
+| SFT-v2 (ViewTree Stage III, control+answer+fusion) | 0.532 | 0.532 | 0.688 | 0.688 | all-views state |
+| SFT-v2 policy (adaptive views) | — | 0.615 @ 1.63 views | — | 0.765 @ 1.85 | |
+| D_highcost 10k policy (adaptive views) | — | 0.632 @ 1.31 views | — | 0.778 @ 1.30 | |
+| **SFT-plain** (no memory) | 0.536 | **0.722** @ 3.4 views | 0.689 | **0.811** @ 3.4 | ladder tiny 0.536/0.602/0.728/0.849 (1/2/3/4 views) |
+| SFT+GRPO-plain (no memory) | *evaluating* | | | | GRPO train acc 0.879 → 0.887 |
+
+- **On MindCube itself, plain SFT on all views is the strongest system**
+  (+9.0 tiny / +3.3 rest over the best ViewTree policy). It uses every
+  view (3.4 on average vs 1.3 for D_10k), and its per-view ladder is
+  monotone (0.54 → 0.85 on tiny) — the fine-tune learns to integrate the
+  fixed multi-view set the benchmark hands it. The ViewTree adapters were
+  trained on a mixture of control / partial-view / fusion examples and never
+  optimised for the all-views state; their value is the *acquisition*
+  trade-off (D_10k reaches 0.778 rest at 1.3 views), not peak accuracy when
+  all views are free. This is an honest negative for the memory system on
+  its own training benchmark.
+
+### VSI-Bench held-out half (2,557 q; frames only for the no-memory baselines)
+
+| system | mean of types | app_order | abs_dist | counting | dir easy | dir med | dir hard | rel_dist | obj_size | room_size | route |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| zero-shot frames16 | 0.313 | 0.289 | 0.088 | 0.254 | 0.478 | 0.420 | 0.203 | 0.391 | 0.340 | 0.357 | 0.308 |
+| **SFT-plain frames16** | 0.327 (+1.5 vs zero-shot) | 0.213 | **0.140** | 0.339 | 0.496 | 0.382 | 0.330 | 0.344 | 0.420 | 0.330 | 0.279 |
+| SFT+GRPO-plain frames16 | *evaluating* | | | | | | | | | | |
+| SFT-v2 memory (12 frames + 5 renders) | 0.342 (+1.4 vs SFT-plain [−0.8, +3.9]) | 0.218 | 0.083 | 0.356 | 0.522 | 0.396 | 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
+| **tree v4 + D_10k, human views + matched head** | **0.367 (+4.0 vs SFT-plain [+1.7, +6.0])** | 0.314 | 0.131 | 0.313 | 0.522 | 0.406 | 0.387 | 0.402 | **0.432** | 0.410 | 0.356 |
+
+- **Off the training benchmark the picture reverses**: with no memory the
+  SFT baseline transfers only +1.5 to VSI, while the full ViewTree system
+  is **+4.0 [+1.7, +6.0] above it** (significant). Scene memory + adaptive
+  view reasoning is what carries over to a different benchmark; plain
+  fine-tuning mostly learns MindCube.
+
+### External benchmarks (single pass; SFT+GRPO-plain pending)
+
+| benchmark | base | SFT-v2 | D_10k | **SFT-plain** |
+|---|---|---|---|---|
+| ViewSpatial (5,712) | 0.370 | 0.388 | 0.392 | **0.410** |
+| OST-Bench (5,557) | 0.539 | **0.550** | 0.549 | 0.521 |
+| OmniSpatial (691) | 0.421 | 0.434 | 0.436 | **0.453** |
+| BLINK multi-view (133) | 0.556 | 0.556 | 0.556 | 0.549 |
+| BLINK spatial relation (143) | **0.916** | 0.839 | 0.825 | 0.853 |
+| BLINK relative depth (124) | 0.790 | 0.798 | 0.790 | **0.847** |
+| BLINK object localization (122) | **0.566** | 0.516 | 0.500 | 0.541 |
+| BLINK counting (120) | 0.683 | **0.717** | 0.708 | 0.683 |
+
+- SFT-plain is the better *single-image / few-image* transfer model
+  (ViewSpatial +2.2, OmniSpatial +1.9, BLINK depth +5.7 over the ViewTree
+  adapters) and the worse *sequential-exploration* model (OST −2.9): the
+  control/fusion mixture the ViewTree adapters were trained on costs some
+  perception fidelity but teaches evidence accumulation over a stream.
+
 ## 2. Design-doc hypothesis checks
 
 | check | verdict | evidence |
