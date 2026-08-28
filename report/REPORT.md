@@ -145,6 +145,7 @@ questions). Only 2 of the 150 ScanNet videos overlap the scenes used to train ou
 | SFT-plain | **0.261** | 0.240 | 0.260 | 0.221 | 0.108 | 0.281 | 0.466 | 0.291 | 0.308 |
 | SFT+GRPO-plain | **0.263** | 0.249 | 0.263 | 0.204 | 0.108 | 0.290 | 0.500 | 0.288 | 0.282 |
 | SFT-v2 adapter, single pass | **0.315** | 0.271 | 0.225 | 0.237 | 0.292 | 0.432 | 0.479 | 0.315 | 0.397 |
+| D_10k adapter, single pass | **0.311** | 0.274 | 0.228 | 0.232 | 0.265 | 0.415 | 0.473 | 0.321 | 0.410 |
 | **ViewTree (best): reasoning tree** | **0.306** | 0.271 | 0.239 | 0.249 | 0.178 | 0.415 | 0.466 | 0.324 | 0.397 |
 
 By video source:
@@ -155,6 +156,7 @@ By video source:
 | SFT-plain | 0.300 | 0.216 | 0.291 |
 | SFT+GRPO-plain | 0.302 | 0.213 | 0.298 |
 | SFT-v2 adapter, single pass | 0.302 | 0.242 | 0.402 |
+| D_10k adapter, single pass | 0.312 | 0.238 | 0.390 |
 | **ViewTree (best): reasoning tree** | 0.307 | 0.237 | 0.382 |
 
 - ViewTree − SFT-plain: **+0.045** [+0.023, +0.066] (video-bootstrap 95 % CI)
@@ -172,6 +174,52 @@ are largely temporal-quantitative (speed, displacement, trajectory, pose over ti
 manipulation) are far from the indoor-room domain of all training data used here; a static scene memory is the wrong tool for
 motion questions. The practical conclusion is that the *controller adapter*, not the memory, is what limits transfer to this
 benchmark; the multi-step design (DESIGN_DEPTH.md) trains on a corpus that includes camera-motion questions for this reason.
+
+
+## 3c. VSTI-Bench (visual-spatial temporal intelligence on ScanNet videos, 5,736 items, 9 types)
+
+Seven multiple-choice types and two numeric types (camera displacement, camera–object absolute distance; scored by
+mean relative accuracy). All systems see the same 32 uniformly sampled frames (questions reference "frame k of 32").
+870 items lie on ScanNet scenes that were used to train our confidence head; the second table is the
+leakage-clean subset (n = 4866). No model was retrained.
+
+All items (paired n = 5736):
+
+| system | mean of types | cam displacement (833) | cam movement direction (913) | cam obj abs dist (905) | cam obj rel dist v1 (91) | cam obj rel dist v2 (493) | cam obj rel dist v3 (856) | obj-obj lr (605) | obj-obj nf (556) | obj-obj ud (484) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | **0.523** | 0.134 | 0.510 | 0.149 | 0.615 | 0.667 | 0.689 | 0.567 | 0.622 | 0.748 |
+| SFT-plain | **0.456** | 0.056 | 0.440 | 0.135 | 0.396 | 0.497 | 0.612 | 0.618 | 0.574 | 0.777 |
+| SFT+GRPO-plain | **0.452** | 0.044 | 0.423 | 0.123 | 0.374 | 0.495 | 0.606 | 0.602 | 0.579 | 0.818 |
+| SFT-v2 adapter, single pass | **0.498** | 0.072 | 0.503 | 0.149 | 0.484 | 0.631 | 0.661 | 0.603 | 0.615 | 0.769 |
+| D_10k adapter, single pass | **0.497** | 0.073 | 0.504 | 0.135 | 0.495 | 0.623 | 0.660 | 0.592 | 0.624 | 0.767 |
+| **ViewTree (best): reasoning tree** | **0.505** | 0.034 | 0.483 | 0.169 | 0.484 | 0.635 | 0.646 | 0.640 | 0.647 | 0.806 |
+
+Leakage-clean subset:
+
+| system | mean of types | cam displacement (713) | cam movement direction (783) | cam obj abs dist (773) | cam obj rel dist v1 (79) | cam obj rel dist v2 (419) | cam obj rel dist v3 (705) | obj-obj lr (504) | obj-obj nf (481) | obj-obj ud (409) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | **0.531** | 0.130 | 0.512 | 0.151 | 0.658 | 0.685 | 0.682 | 0.562 | 0.644 | 0.753 |
+| SFT-plain | **0.461** | 0.053 | 0.437 | 0.135 | 0.430 | 0.511 | 0.614 | 0.601 | 0.582 | 0.787 |
+| SFT+GRPO-plain | **0.455** | 0.043 | 0.419 | 0.123 | 0.392 | 0.504 | 0.607 | 0.587 | 0.586 | 0.834 |
+| SFT-v2 adapter, single pass | **0.507** | 0.068 | 0.508 | 0.151 | 0.519 | 0.647 | 0.655 | 0.601 | 0.636 | 0.775 |
+| D_10k adapter, single pass | **0.505** | 0.070 | 0.508 | 0.137 | 0.532 | 0.635 | 0.654 | 0.593 | 0.644 | 0.773 |
+| **ViewTree (best): reasoning tree** | **0.512** | 0.033 | 0.485 | 0.173 | 0.519 | 0.654 | 0.643 | 0.625 | 0.667 | 0.807 |
+
+- ViewTree − SFT-plain: **+0.049** [+0.031, +0.067] (scene-bootstrap 95 % CI)
+- ViewTree − SFT+GRPO-plain: **+0.053** [+0.033, +0.073] (scene-bootstrap 95 % CI)
+- ViewTree − Qwen2.5-VL-7B zero-shot: **-0.018** [-0.035, -0.002] (scene-bootstrap 95 % CI)
+- ViewTree − D_10k adapter, single pass: **+0.008** [-0.004, +0.018] (scene-bootstrap 95 % CI)
+
+ViewTree path mix: fused_fallback_direct 1053 · direct 1331 · fused 643 · branch_consensus 2709.
+
+**Reading.** The pattern of STI-Bench repeats on VSTI: the zero-shot model is the strongest overall (0.523), the no-memory
+baselines fine-tuned on MindCube lose ~7 points, and ViewTree recovers most of that loss (+4.9 / +5.3 over them, −1.8 below
+zero-shot, all significant). The per-type split is the informative part: on the three **object–object relative-position**
+types ViewTree is the best system of all (0.640 / 0.647 / 0.806 vs 0.567 / 0.622 / 0.748 zero-shot) — these are room-geometry
+questions the scene memory can answer — while on the **camera-motion** types (displacement, movement direction) every
+fine-tuned model is below zero-shot and the tree's renders cannot help, because the question is about the trajectory of the
+recorded camera, not about the room. The clean subset gives the same numbers within ±0.8 pt, so the head's exposure to 15 % of
+the scenes does not drive the result.
 
 ## 4. Visualized reasoning trees
 

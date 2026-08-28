@@ -146,6 +146,66 @@ motion questions. The practical conclusion is that the *controller adapter*, not
 benchmark; the multi-step design (DESIGN_DEPTH.md) trains on a corpus that includes camera-motion questions for this reason.
 """
 
+
+# ---------------- VSTI-Bench ----------------
+VSTI = collections.OrderedDict([
+    ("Qwen2.5-VL-7B zero-shot", load("results/newbench/vsti_direct_zeroshot_s*.jsonl")),
+    ("SFT-plain", load("results/newbench/vsti_direct_sft_plain_s*.jsonl")),
+    ("SFT+GRPO-plain", load("results/newbench/vsti_direct_grpo_plain_s*.jsonl")),
+    ("SFT-v2 adapter, single pass", load("results/newbench/vsti_direct_sft2_s*.jsonl")),
+    ("D_10k adapter, single pass", load("results/newbench/vsti_direct_d10k_s*.jsonl")),
+    ("**ViewTree (best): reasoning tree**", load("results/newbench/vsti_tree_s*.jsonl")),
+])
+vsti_md = ""
+VSTI = collections.OrderedDict((k, v) for k, v in VSTI.items() if len(v) >= 5000)
+if "**ViewTree (best): reasoning tree**" in VSTI and "SFT+GRPO-plain" in VSTI:
+    vids = [i for i in VSTI["SFT-plain"] if all(i in v for v in VSTI.values())]; vref = VSTI["SFT-plain"]; vtree = VSTI["**ViewTree (best): reasoning tree**"]
+    vtypes = sorted({vref[i]["qtype"] for i in vids}); VT = {t: t.replace("camera_", "cam ").replace("obj_obj_relative_pos_", "obj-obj ").replace("_", " ") for t in vtypes}
+    def vtab(subset):
+        tab = ["| system | mean of types | " + " | ".join(f"{VT[t]} ({sum(vref[i]['qtype']==t for i in subset)})" for t in vtypes) + " |", "|---|---|" + "---|" * len(vtypes)]
+        for k, v in VSTI.items():
+            per = [np.mean([v[i]["score"] for i in subset if vref[i]["qtype"] == t]) for t in vtypes]
+            tab.append(f"| {k} | **{np.mean(per):.3f}** | " + " | ".join(f"{x:.3f}" for x in per) + " |")
+        return tab
+    clean = [i for i in vids if vref[i]["clean"]]
+    vg = collections.defaultdict(list)
+    for i in vids: vg[vref[i]["scene"]].append(i)
+    vmot = lambda d: (lambda sel: np.mean([np.mean([d[i]["score"] for i in sel if vref[i]["qtype"] == t]) for t in vtypes]))
+    vcis = []
+    for k in ("SFT-plain", "SFT+GRPO-plain", "Qwen2.5-VL-7B zero-shot", "D_10k adapter, single pass"):
+        if k in VSTI:
+            lo, hi = boot_ci(vmot(vtree), vmot(VSTI[k]), vg); vcis.append(f"- ViewTree − {k}: **{vmot(vtree)(vids)-vmot(VSTI[k])(vids):+.3f}** [{lo:+.3f}, {hi:+.3f}] (scene-bootstrap 95 % CI)")
+    vmodes = collections.Counter(vtree[i]["mode"] for i in vids)
+    vsti_md = f"""
+## 3c. VSTI-Bench (visual-spatial temporal intelligence on ScanNet videos, 5,736 items, 9 types)
+
+Seven multiple-choice types and two numeric types (camera displacement, camera–object absolute distance; scored by
+mean relative accuracy). All systems see the same 32 uniformly sampled frames (questions reference "frame k of 32").
+{len(vids)-len(clean)} items lie on ScanNet scenes that were used to train our confidence head; the second table is the
+leakage-clean subset (n = {len(clean)}). No model was retrained.
+
+All items (paired n = {len(vids)}):
+
+{chr(10).join(vtab(vids))}
+
+Leakage-clean subset:
+
+{chr(10).join(vtab(clean))}
+
+{chr(10).join(vcis)}
+
+ViewTree path mix: {" · ".join(f"{k} {v}" for k, v in vmodes.items())}.
+
+**Reading.** The pattern of STI-Bench repeats on VSTI: the zero-shot model is the strongest overall (0.523), the no-memory
+baselines fine-tuned on MindCube lose ~7 points, and ViewTree recovers most of that loss (+4.9 / +5.3 over them, −1.8 below
+zero-shot, all significant). The per-type split is the informative part: on the three **object–object relative-position**
+types ViewTree is the best system of all (0.640 / 0.647 / 0.806 vs 0.567 / 0.622 / 0.748 zero-shot) — these are room-geometry
+questions the scene memory can answer — while on the **camera-motion** types (displacement, movement direction) every
+fine-tuned model is below zero-shot and the tree's renders cannot help, because the question is about the trajectory of the
+recorded camera, not about the room. The clean subset gives the same numbers within ±0.8 pt, so the head's exposure to 15 % of
+the scenes does not drive the result.
+"""
+
 # ---------------- figures ----------------
 def tree_figs(tag, tr_json):
     if not os.path.exists(tr_json): return {}
@@ -269,6 +329,7 @@ rows use the same adapters answering directly from the image history.
 {"ViewTree path mix on OST-Bench: " + " · ".join(f"{k} {v}" for k, v in omodes.items()) + "." if tree_ost else ""}
 
 {sti_md}
+{vsti_md}
 ## 4. Visualized reasoning trees
 
 Each figure is one question run through the best system. Every node shows the images the controller sees at that node

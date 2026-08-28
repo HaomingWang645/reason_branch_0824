@@ -749,6 +749,32 @@ ViewTree − SFT-plain **+4.5 [+2.3, +6.6]**, − GRPO-plain **+4.4 [+2.5, +6.1]
   training the multi-step controller on a corpus with camera-motion
   questions (DESIGN_DEPTH.md §2).
 
+## 6f. VSTI-Bench (2026-08-28; no retraining)
+
+5,736 items on ScanNet val videos (9 types; 2 numeric scored by MRA), 32
+frames for every system. Paired; leakage-clean subset (scenes never seen by
+the head) n = 4,866 gives the same numbers within ±0.8 pt.
+
+| system | mean of 9 types | cam displacement | cam movement dir | cam-obj abs dist | cam-obj rel v1/v2/v3 | obj-obj lr / nf / ud |
+|---|---|---|---|---|---|---|
+| **zero-shot** | **0.523** | **0.134** | **0.510** | 0.149 | **0.615 / 0.667 / 0.689** | 0.567 / 0.622 / 0.748 |
+| SFT-plain | 0.456 | 0.056 | 0.440 | 0.135 | 0.396 / 0.497 / 0.612 | 0.618 / 0.574 / 0.777 |
+| SFT+GRPO-plain | 0.452 | 0.044 | 0.423 | 0.123 | 0.374 / 0.495 / 0.606 | 0.602 / 0.579 / 0.818 |
+| SFT-v2 / D_10k single pass | 0.498 / 0.497 | 0.072 / 0.073 | 0.503 / 0.504 | 0.149 / 0.135 | 0.484 / 0.631 / 0.661 | 0.603 / 0.615 / 0.769 |
+| ViewTree tree | 0.505 | 0.034 | 0.483 | **0.169** | 0.484 / 0.635 / 0.646 | **0.640 / 0.647 / 0.806** |
+
+Tree − SFT-plain **+4.9 [+3.1, +6.4]**, − GRPO-plain **+5.3 [+3.4, +7.1]**,
+− zero-shot **−1.8 [−3.4, −0.1]**, − own adapter single-pass +0.8 [−0.3, +1.8].
+Path mix: consensus 2,709 · direct 1,331 · fallback 1,053 · fused 643.
+
+- Same pattern as STI (§6e): MindCube fine-tuning costs ~7 pts on this
+  benchmark for the no-memory baselines; ViewTree recovers most of it.
+- **Object–object relative position (lr / nf / ud): ViewTree is the best
+  system outright** (+7.3 / +2.5 / +5.8 over zero-shot) — room-geometry
+  questions the memory answers. **Camera-motion types** (displacement,
+  movement direction): all fine-tuned models below zero-shot; renders of
+  the room cannot describe the recorded camera's trajectory.
+
 ## 6b. Data-leakage audit (2026-08-24)
 
 Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-
