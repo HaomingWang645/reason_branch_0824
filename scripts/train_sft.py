@@ -63,6 +63,8 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--accum", type=int, default=16)
     ap.add_argument("--max-steps", type=int, default=0)
+    ap.add_argument("--init", default=None, help="resume LoRA weights from this adapter dir")
+    ap.add_argument("--skip-frac", type=float, default=0.0, help="skip this fraction of the (shuffled) data, for approximate resume")
     args = ap.parse_args()
 
     ddp = "RANK" in os.environ
@@ -86,7 +88,11 @@ def main():
                         "gate_proj", "up_proj", "down_proj"],
         task_type="CAUSAL_LM",
     )
-    model = get_peft_model(model, lcfg)
+    if args.init:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, args.init, is_trainable=True)
+    else:
+        model = get_peft_model(model, lcfg)
     if rank == 0:
         model.print_trainable_parameters()
     model.train()
@@ -95,6 +101,8 @@ def main():
 
     rows = [json.loads(l) for l in open(args.data)]
     random.Random(0).shuffle(rows)
+    if args.skip_frac > 0:
+        rows = rows[int(len(rows) * args.skip_frac):]
     rows = rows[rank::world]
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],
                             lr=args.lr, weight_decay=0.0)
