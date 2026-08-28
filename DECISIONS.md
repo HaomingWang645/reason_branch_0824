@@ -332,3 +332,19 @@ combine both routes).
 (SFT-v2, 12 frames + 4 human views + top-down) vs legacy memory; tree v4 +
 D_highcost 10k with human branches vs legacy branches; plus a 40-scene
 geometric audit (`scripts/human_view_check.py`). Results in RESULTS.md §6c.
+
+## 10. No-world-memory baselines (added 2026-08-27)
+
+Two baselines trained on the benchmark's own training split with no scene
+memory, no rendered views and no control policy, so the ViewTree gains can
+be separated from "just fine-tune on the data":
+- **SFT-plain**: LoRA (r=16, same recipe as Stage I) on all 10,000 MindCube
+  train items, input = all given views + question, target = answer letter
+  (`data/sft_plain.jsonl`, `scripts/train_sft.py`).
+- **SFT+GRPO-plain**: from SFT-plain, GRPO with reward = answer correctness,
+  6 sampled answers per item, group-relative advantage, policy gradient on
+  the sampled answer tokens (`scripts/train_grpo_plain.py`), all 9,995 items,
+  4-GPU DDP.
+Evaluated exactly like the memory systems: MindCube tiny/rest evidence
+ladder (1 view … all views), VSI-Bench held-out half with 16 frames only,
+ViewSpatial / OST / OmniSpatial / BLINK. Results in RESULTS.md §1c.

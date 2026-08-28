@@ -10,6 +10,12 @@ import random
 import sys
 
 import cv2
+
+_lr = os.environ.get("LOCAL_RANK")
+if _lr is not None and "CUDA_VISIBLE_DEVICES" not in os.environ:
+    _gpus = os.environ.get("DSE_GPUS")
+    os.environ["CUDA_VISIBLE_DEVICES"] = (_gpus.split(",")[int(_lr)] if _gpus else _lr)
+
 import torch
 import torch.distributed as dist
 from PIL import Image
@@ -61,8 +67,8 @@ def main():
     world = int(os.environ.get("WORLD_SIZE", 1))
     if ddp:
         dist.init_process_group("nccl")
-        torch.cuda.set_device(int(os.environ["LOCAL_RANK"]))
-    device = f"cuda:{int(os.environ.get('LOCAL_RANK', 0))}"
+        torch.cuda.set_device(0)  # each rank sees only its own GPU
+    device = "cuda:0"
 
     from peft import LoraConfig, get_peft_model
     from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
