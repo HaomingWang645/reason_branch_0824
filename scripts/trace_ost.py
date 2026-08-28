@@ -24,13 +24,17 @@ def main():
     a = ap.parse_args()
     OUT = os.path.join(REPO, "results", "traces", a.tag); os.makedirs(OUT, exist_ok=True)
     save = lambda img, n: cv2.imwrite(os.path.join(OUT, n), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-    items = [it for it in load_ost() if len(it[1]) >= 6]
+    want = set(a.ids or [])
+    items = []
+    for it in load_ost():
+        if (want and it[0] in want) or (not want and len(it[1]) >= 6): items.append(it)
+        if want and len(items) == len(want): break
     rng = np.random.default_rng(a.seed)
     by_type = {}
     for it in items: by_type.setdefault(it[4], []).append(it)
     picks = []
     if a.ids:
-        byid = {it[0]: it for it in load_ost()}; picks = [byid[i] for i in a.ids]
+        byid = {it[0]: it for it in items}; picks = [byid[i] for i in a.ids]
     while len(picks) < a.n:
         for t in sorted(by_type):
             if len(picks) < a.n: picks.append(by_type[t][int(rng.integers(len(by_type[t])))])

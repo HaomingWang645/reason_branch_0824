@@ -181,7 +181,9 @@ are close to the baselines.
 ## 3. OST-Bench (online spatio-temporal exploration, 5,557 multiple-choice items)
 
 Each item is a turn in an exploration; the agent sees the images observed so far and answers about its own state
-(*Agent_state*), what is visible (*Agent_visible_info*) or spatial relations to objects (*Agent_object_spatial*).
+(*Agent_state*), what is visible (*Agent_visible_info*) or spatial relations to objects (*Agent_object_spatial*). ViewTree reconstructs the observed images with VGGT and runs the same tree; 154 items whose image
+histories mix resolutions failed reconstruction and are excluded from every system (paired n = {len(ost_ids)}). The single-pass
+rows use the same adapters answering directly from the image history.
 {ost_note}
 
 {chr(10).join(ost_tab)}
@@ -204,6 +206,11 @@ md += "\n### 4.2 OST-Bench — three trees per task\n"
 for c in oclasses:
     md += f"\n#### {c}\n\n" + (fig_block(ost_figs.get(c, [])) or "*(pending)*\n")
 md += """
+**Reading.** On OST-Bench the tree is ahead of both no-memory baselines (SFT-plain, SFT+GRPO-plain) but not ahead of its own
+adapter answering directly from the image history: OST questions are about the agent's *own* trajectory and what it has *seen*
+(temporal facts), which a rendered view of the current reconstruction cannot add — the head correctly falls back to the direct
+answer on most explored items. The memory helps where the question is about the room's geometry (VSI), not about the agent's history.
+
 ## 5. Summary
 - ViewTree's contribution is **cross-benchmark transfer and view efficiency**: on benchmarks other than the one it was trained on it is
   the best system by a significant margin, while using few extra views (the controller answers directly on ~23 % of VSI questions and
