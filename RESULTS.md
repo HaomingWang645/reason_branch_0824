@@ -507,6 +507,18 @@ https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
 SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 (`figures/viewtree_traces.html` is the interactive version).
 
+**Reasoning paths of the NEW system (2026-08-28)** — tree v4 + D_highcost
+10k + human-camera views + matched head (`conf_head_v2_human.pt`):
+`figures/tree_human_{29,585,769,1010,503}.png` (image-bearing tree, one per
+path type: direct / branch_consensus / fused / fused_fallback_direct / a
+failure) and the matching montages `figures/trace_human_*.png` +
+`trace_human_summary.png`. Branch nodes now show eye-level interior renders
+(e.g. #585 room size: side-4 and top-down agree on 10 m² at 0.43 > direct
+0.42 → consensus; #769 abs-distance: fused answer 10 m vs GT 9.4 with the
+head ranking fused 0.080 > kept 0.068 > direct 0.028). Note: re-captured
+traces can differ from the batch evaluation on the same id because the
+proposer subsamples the point cloud randomly before farthest-point sampling.
+
 **Tree diagrams (2026-08-27):** `figures/tree_schematic.png` draws the depth-1
 tree as a graph (gate → 5 render branches → keep-2 → consensus / fuse →
 arbitrate, with call counts); `figures/tree_d10k_{1129,2220,76,1409}.png`
