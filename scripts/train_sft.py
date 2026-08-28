@@ -31,10 +31,13 @@ def load_example(r, processor, max_pixels=448 * 448):
     content = []
     for p in r["images"]:
         content.append({"type": "image",
-                        "image": Image.open(os.path.join(MC_ROOT, p)).convert("RGB"),
+                        "image": Image.open(p if p.startswith("/") else os.path.join(MC_ROOT, p)).convert("RGB"),
                         "min_pixels": 224 * 224, "max_pixels": max_pixels})
-    if r["render"]:
+    if r.get("render"):
         rp = os.path.join(REPO, "data", "mindcube_renders", f"{r['render']}.png")
+        content.append({"type": "image", "image": Image.open(rp).convert("RGB"),
+                        "min_pixels": 224 * 224, "max_pixels": max_pixels})
+    for rp in r.get("renders", []):  # ViewTree-D: absolute paths of pose-bank renders
         content.append({"type": "image", "image": Image.open(rp).convert("RGB"),
                         "min_pixels": 224 * 224, "max_pixels": max_pixels})
     content.append({"type": "text", "text": r["prompt"]})
