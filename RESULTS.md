@@ -58,7 +58,7 @@ hardest spatial types; appearance order (temporal) is the one type where every
 memory/SFT variant trails plain frame prompting — renders cannot encode time,
 and MindCube training has no temporal questions.
 
-## 1c. No-world-memory baselines: SFT and SFT+GRPO on the benchmark's own training data (2026-08-28)
+## 1c. No-world-memory baselines: SFT and SFT+GRPO on the benchmark's own training data (2026-08-28, complete)
 
 Two baselines trained on the 10k MindCube train items with **no scene
 memory, no rendered views, no control policy** (DECISIONS.md §10):
@@ -75,7 +75,7 @@ items). Same evaluation suites as the memory systems, paired.
 | SFT-v2 policy (adaptive views) | — | 0.615 @ 1.63 views | — | 0.765 @ 1.85 | |
 | D_highcost 10k policy (adaptive views) | — | 0.632 @ 1.31 views | — | 0.778 @ 1.30 | |
 | **SFT-plain** (no memory) | 0.536 | **0.722** @ 3.4 views | 0.689 | **0.811** @ 3.4 | ladder tiny 0.536/0.602/0.728/0.849 (1/2/3/4 views) |
-| SFT+GRPO-plain (no memory) | *evaluating* | | | | GRPO train acc 0.879 → 0.887 |
+| **SFT+GRPO-plain** (no memory) | 0.550 | **0.750** @ 3.4 | 0.679 | **0.814** @ 3.4 | ladder tiny 0.550/0.627/0.754/0.872; GRPO train acc 0.879 → 0.887 |
 
 - **On MindCube itself, plain SFT on all views is the strongest system**
   (+9.0 tiny / +3.3 rest over the best ViewTree policy). It uses every
@@ -94,9 +94,9 @@ items). Same evaluation suites as the memory systems, paired.
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | zero-shot frames16 | 0.313 | 0.289 | 0.088 | 0.254 | 0.478 | 0.420 | 0.203 | 0.391 | 0.340 | 0.357 | 0.308 |
 | **SFT-plain frames16** | 0.327 (+1.5 vs zero-shot) | 0.213 | **0.140** | 0.339 | 0.496 | 0.382 | 0.330 | 0.344 | 0.420 | 0.330 | 0.279 |
-| SFT+GRPO-plain frames16 | *evaluating* | | | | | | | | | | |
+| SFT+GRPO-plain frames16 | 0.324 (−0.3 vs SFT-plain [−1.3, +0.6]) | 0.218 | 0.133 | 0.332 | 0.504 | 0.411 | 0.335 | 0.320 | **0.430** | 0.308 | 0.250 |
 | SFT-v2 memory (12 frames + 5 renders) | 0.342 (+1.4 vs SFT-plain [−0.8, +3.9]) | 0.218 | 0.083 | 0.356 | 0.522 | 0.396 | 0.377 | 0.397 | 0.346 | 0.385 | 0.337 |
-| **tree v4 + D_10k, human views + matched head** | **0.367 (+4.0 vs SFT-plain [+1.7, +6.0])** | 0.314 | 0.131 | 0.313 | 0.522 | 0.406 | 0.387 | 0.402 | **0.432** | 0.410 | 0.356 |
+| **tree v4 + D_10k, human views + matched head** | **0.367 (+4.0 vs SFT-plain [+1.7, +6.0]; +4.3 vs SFT+GRPO-plain [+2.1, +6.5])** | 0.314 | 0.131 | 0.313 | 0.522 | 0.406 | 0.387 | 0.402 | **0.432** | 0.410 | 0.356 |
 
 - **Off the training benchmark the picture reverses**: with no memory the
   SFT baseline transfers only +1.5 to VSI, while the full ViewTree system
@@ -104,19 +104,24 @@ items). Same evaluation suites as the memory systems, paired.
   view reasoning is what carries over to a different benchmark; plain
   fine-tuning mostly learns MindCube.
 
-### External benchmarks (single pass; SFT+GRPO-plain pending)
+### External benchmarks (single pass)
 
-| benchmark | base | SFT-v2 | D_10k | **SFT-plain** |
-|---|---|---|---|---|
-| ViewSpatial (5,712) | 0.370 | 0.388 | 0.392 | **0.410** |
-| OST-Bench (5,557) | 0.539 | **0.550** | 0.549 | 0.521 |
-| OmniSpatial (691) | 0.421 | 0.434 | 0.436 | **0.453** |
-| BLINK multi-view (133) | 0.556 | 0.556 | 0.556 | 0.549 |
-| BLINK spatial relation (143) | **0.916** | 0.839 | 0.825 | 0.853 |
-| BLINK relative depth (124) | 0.790 | 0.798 | 0.790 | **0.847** |
-| BLINK object localization (122) | **0.566** | 0.516 | 0.500 | 0.541 |
-| BLINK counting (120) | 0.683 | **0.717** | 0.708 | 0.683 |
+| benchmark | base | SFT-v2 | D_10k | **SFT-plain** | SFT+GRPO-plain |
+|---|---|---|---|---|---|
+| ViewSpatial (5,712) | 0.370 | 0.388 | 0.392 | 0.410 | **0.414** |
+| OST-Bench (5,557) | 0.539 | **0.550** | 0.549 | 0.521 | 0.511 |
+| OmniSpatial (691) | 0.421 | 0.434 | 0.436 | 0.453 | **0.454** |
+| BLINK multi-view (133) | 0.556 | 0.556 | 0.556 | 0.549 | 0.549 |
+| BLINK spatial relation (143) | **0.916** | 0.839 | 0.825 | 0.853 | 0.853 |
+| BLINK relative depth (124) | 0.790 | 0.798 | 0.790 | **0.847** | 0.839 |
+| BLINK object localization (122) | **0.566** | 0.516 | 0.500 | 0.541 | 0.541 |
+| BLINK counting (120) | 0.683 | **0.717** | 0.708 | 0.683 | 0.675 |
 
+- **GRPO on top of plain SFT adds +2.8 on MindCube tiny (0.750) and +0.3 on
+  rest**, but nothing elsewhere: VSI −0.3 (n.s.), external within ±1 pt,
+  OST −1.0. Answer-correctness RL sharpens the benchmark-specific decision
+  and does not create transferable skill — the same pattern as view-control
+  RL in §4e, where the gain also stayed on MindCube.
 - SFT-plain is the better *single-image / few-image* transfer model
   (ViewSpatial +2.2, OmniSpatial +1.9, BLINK depth +5.7 over the ViewTree
   adapters) and the worse *sequential-exploration* model (OST −2.9): the
