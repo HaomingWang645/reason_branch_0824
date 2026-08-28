@@ -688,6 +688,35 @@ obj_size 0.432 · room_size 0.410 · route 0.356. Mode mix 598 / 839 / 576 /
   valid position to stand at (view selection over the walked-hull grid with
   the validity mask as an action mask), left as follow-up.
 
+## 6d. ViewTree tree on OST-Bench (full, 2026-08-28) + technical report
+
+Full depth-1 tree (D_10k adapter + human views + matched head) over OST-Bench
+image histories (`scripts/run_tree_ost.py`; 154 items with mixed-resolution
+histories failed VGGT reconstruction and are excluded from all systems;
+paired n = 5,403):
+
+| system | overall | Agent_object_spatial (2,692) | Agent_state (748) | Agent_visible_info (1,963) |
+|---|---|---|---|---|
+| zero-shot | 0.540 | 0.413 | 0.503 | 0.728 |
+| SFT-plain | 0.524 | 0.392 | 0.485 | 0.719 |
+| SFT+GRPO-plain | 0.514 | 0.384 | 0.485 | 0.703 |
+| SFT-v2 / D_10k adapter, single pass | 0.550 / 0.550 | 0.431 / 0.430 | 0.497 / 0.499 | 0.734 / 0.733 |
+| **ViewTree tree** | 0.541 | 0.425 | 0.489 | 0.720 |
+
+Tree − SFT-plain **+1.8 [+0.4, +3.0]**, − SFT+GRPO-plain **+2.8 [+1.3, +4.1]**,
+− zero-shot +0.1 (n.s.). Path mix: direct 2,033 · fallback 1,729 ·
+consensus 1,102 · fused 539. The tree beats the no-memory baselines but
+not its own adapter answering directly (−0.9): OST asks about the agent's
+own trajectory and what it has already seen — temporal facts that a render
+of the current reconstruction cannot add — so the head falls back to the
+direct answer on most explored items. Scene memory pays off on room
+geometry (VSI), not on agent history.
+
+**Technical report** (method from the beginning, per-task tables vs
+SFT-plain / SFT+GRPO-plain on VSI and OST, 3 reasoning trees per task):
+`report/REPORT.md`, `report/REPORT.pdf` (built by `scripts/build_report.py`;
+figures `figures/tree_rep_vsi_*.png`, `figures/tree_rep_ost_*.png`).
+
 ## 6b. Data-leakage audit (2026-08-24)
 
 Checked empirically: **MindCube train ↔ tinybench overlap = 0** at id, question-
