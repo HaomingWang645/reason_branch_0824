@@ -77,12 +77,13 @@ def instance(t, tag, label):
     fig, ax = plt.subplots(figsize=(14, 11), dpi=170); ax.set_xlim(0, 14); ax.set_ylim(0, 11); ax.axis("off")
     ok = t["score"] > .5
     ax.text(0.2, 10.85, f"{label}  ·  #{qid}  ·  {t['qtype'].replace('_',' ')}  ·  {t['scene']}", fontsize=9, color=MUT, va="top")
-    ax.text(0.2, 10.55, textwrap.fill(t["question"].split("\n")[0], 160), fontsize=10, fontweight="bold", va="top")
-    ax.text(0.2, 10.2, f"path taken: {mode}   →   final {t['final'].strip()}   (GT {t['gt']})   {'CORRECT' if ok else 'WRONG'}", fontsize=10, color=OK if ok else BAD, fontweight="bold", va="top")
-    ax.text(0.2, 9.9, "each node shows the images the controller sees at that node; [ ] = confidence-head v2 score", fontsize=8, color=MUT, va="top", style="italic")
+    qlines = textwrap.wrap(t["question"].split("\n")[0], 150)[:2]
+    ax.text(0.2, 10.55, "\n".join(qlines), fontsize=10, fontweight="bold", va="top")
+    ax.text(0.2, 10.2 - 0.25 * (len(qlines) - 1), f"path taken: {mode}   →   final {t['final'].strip()}   (GT {t['gt']})   {'CORRECT' if ok else 'WRONG'}", fontsize=10, color=OK if ok else BAD, fontweight="bold", va="top")
+    ax.text(0.2, 9.9 - 0.25 * (len(qlines) - 1), "each node shows the images the controller sees at that node; [ ] = confidence-head v2 score", fontsize=8, color=MUT, va="top", style="italic")
     d = t["direct"]; gate_yes = "YES" in t["gate"].upper(); dwin = mode in ("direct", "fused_fallback_direct")
     # ROOT card: 4 of 8 frames
-    card(ax, 2.2, 8.75, 4.1, 1.5, "ROOT STATE: 8 video frames (4 shown) + question", fc="#eef3fb", ec=BLUE, lw=1.6)
+    card(ax, 2.2, 8.75, 4.1, 1.5, ("ROOT STATE: 8 video frames (4 shown) + question" if t["scene"] != "OST-Bench" else "ROOT STATE: observed images so far (4 of 8 shown) + question"), fc="#eef3fb", ec=BLUE, lw=1.6)
     strip(ax, TR, qid, 0.35, 8.55, w=0.85, gap=0.08)
     # GATE
     box(ax, 6.4, 8.75, 2.0, 0.7, f"GATE → {t['gate']}", fc="#fff6e8", ec=ORANGE, lw=1.6, weight="bold")

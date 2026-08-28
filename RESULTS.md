@@ -507,6 +507,18 @@ https://claude.ai/code/artifact/eef6c539-65b0-49b2-8407-eaa64a02a8e5
 SFT ladder, renderer sweep, and six per-trace montages — are in `figures/`
 (`figures/viewtree_traces.html` is the interactive version).
 
+**Reasoning trees on OST-Bench (2026-08-28):** `figures/tree_ost_ost_{8553,6899,4880,2764,3294,314}.png`
+— the same depth-1 tree run on OST exploration histories (VGGT reconstruction
+of the observed images → human-constrained branches → prune/fuse/arbitrate),
+two samples per OST class, D_10k + human views + matched head
+(`scripts/trace_ost.py`). 4/6 correct in this sample: gate YES on 4 (the
+observed images already suffice for state/visibility questions); #ost_2764
+(object left/right) reaches consensus on branches side-4 + top-down at
+0.708 > direct 0.683; #ost_4880 ("newly discovered object") is a failure the
+tree cannot fix — every branch says B (correct) at ≤0.26 but the head
+trusts direct A at 0.466, because renders of the *current* scene cannot
+encode "had not appeared before" (a temporal, not spatial, question).
+
 **Reasoning paths of the NEW system (2026-08-28)** — tree v4 + D_highcost
 10k + human-camera views + matched head (`conf_head_v2_human.pt`):
 `figures/tree_human_{29,585,769,1010,503}.png` (image-bearing tree, one per
