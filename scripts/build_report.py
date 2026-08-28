@@ -81,6 +81,61 @@ if tree_ost:
     omodes = collections.Counter(tree_ost[i]["mode"] for i in ost_ids)
 ost_note = "" if tree_ost else "*(ViewTree tree evaluation on OST-Bench in progress — table will be completed.)*"
 
+
+# ---------------- STI-Bench ----------------
+STI = collections.OrderedDict([
+    ("Qwen2.5-VL-7B zero-shot", load("results/newbench/sti_direct_zeroshot_s*.jsonl")),
+    ("SFT-plain", load("results/newbench/sti_direct_sft_plain_s*.jsonl")),
+    ("SFT+GRPO-plain", load("results/newbench/sti_direct_grpo_plain_s*.jsonl")),
+    ("SFT-v2 adapter, single pass", load("results/newbench/sti_direct_sft2_s*.jsonl")),
+    ("D_10k adapter, single pass", load("results/newbench/sti_direct_d10k_s*.jsonl")),
+    ("**ViewTree (best): reasoning tree**", load("results/newbench/sti_tree_s*.jsonl")),
+])
+STI = collections.OrderedDict((k, v) for k, v in STI.items() if len(v) >= 2000)  # only systems with (near-)complete coverage
+sti_md = ""
+if "SFT+GRPO-plain" in STI and "**ViewTree (best): reasoning tree**" in STI:
+    sti_ids = [i for i in STI["SFT-plain"] if all(i in v for v in STI.values())]
+    ref = STI["SFT-plain"]; stasks = sorted({ref[i]["qtype"] for i in sti_ids}); ssrc = sorted({ref[i]["source"] for i in sti_ids})
+    tree = STI["**ViewTree (best): reasoning tree**"]
+    tab = ["| system | overall | " + " | ".join(f"{t} ({sum(ref[i]['qtype']==t for i in sti_ids)})" for t in stasks) + " |", "|---|---|" + "---|" * len(stasks)]
+    for k, v in STI.items():
+        tab.append(f"| {k} | **{np.mean([v[i]['score'] for i in sti_ids]):.3f}** | " + " | ".join(f"{np.mean([v[i]['score'] for i in sti_ids if ref[i]['qtype']==t]):.3f}" for t in stasks) + " |")
+    tab2 = ["| system | " + " | ".join(f"{c} ({sum(ref[i]['source']==c for i in sti_ids)})" for c in ssrc) + " |", "|---|" + "---|" * len(ssrc)]
+    for k, v in STI.items():
+        tab2.append(f"| {k} | " + " | ".join(f"{np.mean([v[i]['score'] for i in sti_ids if ref[i]['source']==c]):.3f}" for c in ssrc) + " |")
+    sg = collections.defaultdict(list)
+    for i in sti_ids: sg[ref[i]["scene"]].append(i)  # bootstrap over videos
+    acc = lambda d: (lambda sel: np.mean([d[i]["score"] for i in sel]))
+    cis = []
+    for k in ("SFT-plain", "SFT+GRPO-plain", "Qwen2.5-VL-7B zero-shot"):
+        if k in STI:
+            lo, hi = boot_ci(acc(tree), acc(STI[k]), sg); cis.append(f"- ViewTree − {k}: **{acc(tree)(sti_ids)-acc(STI[k])(sti_ids):+.3f}** [{lo:+.3f}, {hi:+.3f}] (video-bootstrap 95 % CI)")
+    smodes = collections.Counter(tree[i]["mode"] for i in sti_ids)
+    sti_md = f"""
+## 3b. STI-Bench (spatial-temporal understanding from video, 2,064 single-choice items, 8 tasks)
+
+Videos come from ScanNet (indoor walkthroughs), Waymo (outdoor driving) and Omni6DPose (desktop object manipulation); every question
+refers to a time window of the video. All systems see the same 16 frames sampled inside the queried window (±1 s for instantaneous
+questions). Only 2 of the 150 ScanNet videos overlap the scenes used to train our confidence head; results are on all items
+(paired n = {len(sti_ids)}). No model was retrained for this benchmark.
+
+{chr(10).join(tab)}
+
+By video source:
+
+{chr(10).join(tab2)}
+
+{chr(10).join(cis)}
+
+ViewTree path mix: {" · ".join(f"{k} {v}" for k, v in smodes.items())}.
+
+**Reading.** STI-Bench is dominated by *temporal-quantitative* tasks (speed, displacement, trajectory, pose over time) for which a
+static scene memory is the wrong tool, and two of its three sources (driving, desktop manipulation) are outside the indoor-room domain
+of every training set used here. The table therefore measures robustness rather than the method's target skill: the tree should
+not fall below the no-memory baselines, and where it differs by task (dimensional measurement, spatial relation, 3-D grounding
+vs speed/trajectory) the pattern matches the VSI/OST findings — geometry questions benefit from the memory, motion questions do not.
+"""
+
 # ---------------- figures ----------------
 def tree_figs(tag, tr_json):
     if not os.path.exists(tr_json): return {}
@@ -150,6 +205,17 @@ could have taken — instead of answering from whatever frames it was given.
 *Figure 2. Legacy proposer (outside/above the room, 39° pitch) vs the human-camera constraint (inside the walked region, eye level,
 roll 0°) on held-out VSI scenes; the top-down bird's-eye view is shared.*
 
+
+### 1.4 Frame budgets (fixed for every evaluation)
+
+| benchmark | frames fed to VGGT (3-D memory) | frames the controller sees per call | notes |
+|---|---|---|---|
+| VSI-Bench (video) | 32 uniformly sampled frames | 8 of those 32 (uniform subset) + 1 render per branch, 2 renders at fuse | memory ≈ 7.8 GB + 0.22 GB × 32 ≈ 14.8 GB per reconstruction; static-memory baseline: 16-frame reconstruction, 12 frames + 5 renders; no-memory baselines: 16 frames |
+| OST-Bench (image history) | all observed images (latest 12) | up to 8 of them + renders | identical input to the single-pass baselines |
+| STI-Bench | 16 frames inside the queried time window | all 16 + renders | ±1 s window for instantaneous questions |
+| VSTI-Bench | 32 uniform frames | all 32 + renders | questions cite "frame k of 32" |
+| MindCube (training) | all given views (≤ 4) → one top-down render | 1…k views as the ladder policy acquires them | |
+
 ### 1.3 What is being compared
 - **SFT-plain** — the same base model LoRA-fine-tuned on the benchmark's own training split (all 10,000 MindCube train items;
   input = all given views + question, target = answer letter). No memory, no renders, no control.
@@ -192,6 +258,7 @@ rows use the same adapters answering directly from the image history.
 
 {"ViewTree path mix on OST-Bench: " + " · ".join(f"{k} {v}" for k, v in omodes.items()) + "." if tree_ost else ""}
 
+{sti_md}
 ## 4. Visualized reasoning trees
 
 Each figure is one question run through the best system. Every node shows the images the controller sees at that node
