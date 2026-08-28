@@ -20,7 +20,7 @@ def letter(t):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--adapter", required=True); ap.add_argument("--conf-head", required=True)
-    ap.add_argument("--tag", default="ost"); ap.add_argument("--n", type=int, default=6); ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--tag", default="ost"); ap.add_argument("--n", type=int, default=6); ap.add_argument("--seed", type=int, default=0); ap.add_argument("--ids", nargs="*", default=None)
     a = ap.parse_args()
     OUT = os.path.join(REPO, "results", "traces", a.tag); os.makedirs(OUT, exist_ok=True)
     save = lambda img, n: cv2.imwrite(os.path.join(OUT, n), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
@@ -29,6 +29,8 @@ def main():
     by_type = {}
     for it in items: by_type.setdefault(it[4], []).append(it)
     picks = []
+    if a.ids:
+        byid = {it[0]: it for it in load_ost()}; picks = [byid[i] for i in a.ids]
     while len(picks) < a.n:
         for t in sorted(by_type):
             if len(picks) < a.n: picks.append(by_type[t][int(rng.integers(len(by_type[t])))])
