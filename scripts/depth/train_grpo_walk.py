@@ -46,7 +46,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--init", required=True); ap.add_argument("--out", required=True); ap.add_argument("--qa", default=os.path.join(REPO, "data/train3r/qa_all.jsonl"))
     ap.add_argument("--bank", default=os.path.join(REPO, "data/posebank")); ap.add_argument("--items", type=int, default=120000); ap.add_argument("--per-scene", type=int, default=80)
     ap.add_argument("--group", type=int, default=6); ap.add_argument("--lr", type=float, default=2e-6); ap.add_argument("--accum-items", type=int, default=8)
-    ap.add_argument("--step-budget", type=float, default=1.2); ap.add_argument("--cost", type=float, default=0.2); ap.add_argument("--max-depth", type=int, default=3); ap.add_argument("--curriculum", type=float, default=0.3)
+    ap.add_argument("--step-budget", type=float, default=1.2); ap.add_argument("--cost", type=float, default=0.2); ap.add_argument("--max-depth", type=int, default=3); ap.add_argument("--curriculum", type=float, default=0.3); ap.add_argument("--skip-frac", type=float, default=0.0)
     a = ap.parse_args()
     ddp = "RANK" in os.environ; rank = int(os.environ.get("RANK", 0)); world = int(os.environ.get("WORLD_SIZE", 1))
     if ddp: torch.cuda.set_device(0); dist.init_process_group("nccl", timeout=timedelta(minutes=60))
@@ -61,7 +61,7 @@ def main():
         src = "scannet" if os.path.exists(os.path.join(a.bank, "scannet", scene, "bank.json")) else ("scannetppv2" if os.path.exists(os.path.join(a.bank, "scannetppv2", scene, "bank.json")) else None)
         if src is None: continue
         qs = by_scene[scene][:]; rng.shuffle(qs); items += [(src, r) for r in qs[: a.per_scene]]
-    rng.shuffle(items); items = items[: a.items]; per = len(items) // world; items = items[rank::world][:per]
+    rng.shuffle(items); items = items[: a.items]; items = items[int(len(items) * a.skip_frac):]; per = len(items) // world; items = items[rank::world][:per]
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=a.lr); lam, eta = 0.0, 0.02
     stats = {"acc": [], "steps": [], "masked": []}; n_steps = 0; banks = {}
     for idx, (src, r) in enumerate(items):
