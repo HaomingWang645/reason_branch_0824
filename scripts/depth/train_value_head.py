@@ -18,7 +18,7 @@ def main():
         for l in open(f):
             r = json.loads(l); fp = os.path.join(a.feats, r["id"].replace("::", "_") + ".pt")
             if not os.path.exists(fp): continue
-            fe = torch.load(fp)
+            fe = torch.load(fp, map_location="cpu")
             for s in r["states"]:
                 k = json.dumps(s["path"])
                 if k in fe: X.append(fe[k].float()); y.append(float(s["correct"] >= 0.5)); g.append(r["scene"])
@@ -26,7 +26,7 @@ def main():
             if a.max_items and n >= a.max_items: break
     X = torch.stack(X); y = torch.tensor(y); scenes = sorted(set(g)); random.Random(0).shuffle(scenes); val = set(scenes[: max(1, len(scenes) // 10)])
     vm = torch.tensor([s in val for s in g]); print("states", len(y), "pos rate %.3f" % y.mean(), "val states", int(vm.sum()))
-    ck = torch.load(a.init, weights_only=False); head = nn.Sequential(nn.Linear(X.shape[1], 512), nn.ReLU(), nn.Linear(512, 1)); head.load_state_dict(ck["head"])
+    ck = torch.load(a.init, weights_only=False, map_location="cpu"); head = nn.Sequential(nn.Linear(X.shape[1], 512), nn.GELU(), nn.Dropout(0.1), nn.Linear(512, 1)); head.load_state_dict(ck["head"])
     opt = torch.optim.AdamW(head.parameters(), lr=a.lr, weight_decay=1e-4); Xtr, ytr = X[~vm], y[~vm]; Xva, yva = X[vm], y[vm]
     for ep in range(a.epochs):
         perm = torch.randperm(len(ytr))
