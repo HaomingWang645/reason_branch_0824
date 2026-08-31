@@ -206,6 +206,59 @@ recorded camera, not about the room. The clean subset gives the same numbers wit
 the scenes does not drive the result.
 """
 
+# ---------------- ViewTree-D (depth <= 3) ----------------
+DEP = collections.OrderedDict([
+    ("Qwen2.5-VL-7B zero-shot (16 frames)", load("results/frames16_s*.jsonl")),
+    ("SFT-plain (16 frames, MindCube)", load("results/plain/sft_plain_frames16_s*.jsonl")),
+    ("ViewTree depth-1 (best of §2)", load("results/human/tree_d10k_headH_s*.jsonl")),
+    ("**corpus frames-only SFT (data-matched, no memory)**", load("results/depth/frames16_sftframes_s*.jsonl")),
+    ("SFT-A walk-trained answerer, frames only at test", load("results/depth/frames16_sfta.jsonl")),
+    ("depth-1 tree with SFT-A + value head", load("results/depth/tree1_sfta_s*.jsonl")),
+    ("**ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)**", load("results/depth/treeD_sftc_s*.jsonl")),
+    ("ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam", load("results/depth/treeD_grpoI_s*.jsonl")),
+    ("**ViewTree-D, GRPO adapter (final) + beam**", load("results/depth/treeD_grpo_s*.jsonl")),
+])
+DEP = collections.OrderedDict((k, v) for k, v in DEP.items() if len(v) >= 2400)
+dep_ids = [i for i in rows if (rows[i]["dataset"], rows[i]["scene_name"]) in odd and all(i in v for v in DEP.values())]
+dep_ref = "**corpus frames-only SFT (data-matched, no memory)**"
+dep_tab, dep_note, dep_modes = [], "", {}
+if dep_ref in DEP:
+    dg = collections.defaultdict(list)
+    for i in dep_ids: dg[(rows[i]["dataset"], rows[i]["scene_name"])].append(i)
+    dmot = lambda d: (lambda sel: np.mean([np.mean([d[i]["score"] for i in sel if rows[i]["question_type"] == t]) for t in types]))
+    dep_tab = ["| system | mean of types | Δ vs data-matched baseline [95 % CI] | " + " | ".join(TN[t] for t in types) + " | calls | depth |", "|---|---|---|" + "---|" * len(types) + "---|---|"]
+    for k, v in DEP.items():
+        per = [np.mean([v[i]["score"] for i in dep_ids if rows[i]["question_type"] == t]) for t in types]
+        lo, hi = boot_ci(dmot(v), dmot(DEP[dep_ref]), dg)
+        calls = np.mean([v[i].get("calls", np.nan) for i in dep_ids]); dep = np.mean([v[i].get("depth", np.nan) for i in dep_ids])
+        cs = "" if np.isnan(calls) else f"{calls:.1f}"; ds = "" if np.isnan(dep) else f"{dep:.2f}"
+        dep_tab.append(f"| {k} | **{np.mean(per):.3f}** | {dmot(v)(dep_ids)-dmot(DEP[dep_ref])(dep_ids):+.3f} [{lo:+.3f}, {hi:+.3f}] | " + " | ".join(f"{x:.3f}" for x in per) + f" | {cs} | {ds} |")
+        if "mode" in next(iter(v.values())) and "path" in next(iter(v.values())): dep_modes[k] = collections.Counter(v[i]["mode"] for i in dep_ids)
+    dep_note = f"paired n = {len(dep_ids)} on the held-out odd half; " + "; ".join(f"{k.strip('*')}: " + ", ".join(f"{m} {c}" for m, c in sorted(dep_modes[k].items(), key=lambda x: -x[1])) for k in dep_modes)
+# transfer of the corpus-trained adapters (single pass) to OST and VSTI
+def _acc_tab(sysd, key, classes, cls_of, score):
+    t = ["| system | overall | " + " | ".join(classes) + " |", "|---|---|" + "---|" * len(classes)]
+    for k, v in sysd.items():
+        t.append(f"| {k} | **{np.mean([score(v[i]) for i in key]):.3f}** | " + " | ".join(f"{np.mean([score(v[i]) for i in key if cls_of(i) == c]):.3f}" for c in classes) + " |")
+    return t
+DOST = collections.OrderedDict([(k, OSTB[k]) for k in ("Qwen2.5-VL-7B zero-shot", "SFT-plain", "D_10k adapter, single pass") if k in OSTB])
+if tree_ost: DOST["ViewTree depth-1 tree"] = tree_ost
+DOST["corpus frames-only SFT, single pass"] = load("results/depth/ost_sft_frames_s*.jsonl"); DOST["SFT-A (walk-trained), single pass"] = load("results/depth/ost_sft_a_s*.jsonl")
+DOST = collections.OrderedDict((k, v) for k, v in DOST.items() if len(v) >= 5000)
+dost_ids = [i for i in ost_ids if all(i in v for v in DOST.values())]
+dost_tab = _acc_tab(DOST, dost_ids, oclasses, lambda i: OSTB["SFT-plain"][i]["qtype"], lambda r: r["correct"]) if dost_ids else []
+DV = collections.OrderedDict([(k, VSTI[k]) for k in ("Qwen2.5-VL-7B zero-shot", "SFT-plain", "**ViewTree (best): reasoning tree**") if k in VSTI])
+DV["corpus frames-only SFT, single pass"] = load("results/depth/vsti_sft_frames_s*.jsonl"); DV["SFT-A (walk-trained), single pass"] = load("results/depth/vsti_sft_a_s*.jsonl")
+DV = collections.OrderedDict((k.replace("**ViewTree (best): reasoning tree**", "ViewTree depth-1 tree"), v) for k, v in DV.items() if len(v) >= 5000)
+dv_ids = [i for i in DV["SFT-plain"] if all(i in v for v in DV.values())] if "SFT-plain" in DV else []
+dv_types = sorted({DV["SFT-plain"][i]["qtype"] for i in dv_ids}) if dv_ids else []
+dv_tab = []
+if dv_ids:
+    dv_tab = ["| system | mean of 9 types | " + " | ".join(t.replace("camera_", "cam ").replace("obj_obj_relative_pos_", "obj-obj ").replace("obj_rel_dist_", "obj rel ").replace("_", " ") for t in dv_types) + " |", "|---|---|" + "---|" * len(dv_types)]
+    for k, v in DV.items():
+        per = [np.mean([v[i]["score"] for i in dv_ids if DV["SFT-plain"][i]["qtype"] == t]) for t in dv_types]
+        dv_tab.append(f"| {k} | **{np.mean(per):.3f}** | " + " | ".join(f"{x:.3f}" for x in per) + " |")
+
 # ---------------- figures ----------------
 def tree_figs(tag, tr_json):
     if not os.path.exists(tr_json): return {}
@@ -349,7 +402,64 @@ adapter answering directly from the image history: OST questions are about the a
 (temporal facts), which a rendered view of the current reconstruction cannot add — the head correctly falls back to the direct
 answer on most explored items. The memory helps where the question is about the room's geometry (VSI), not about the agent's history.
 
-## 5. Summary
+## 5. ViewTree-D: multi-step view acquisition (depth ≤ 3), trained from scratch on a 494k-QA corpus
+
+The depth-1 tree of §1 renders five candidate views *once*; it cannot look again after seeing a render, move locally toward the
+object the question is about, or learn when to stop. ViewTree-D (design: `DESIGN_DEPTH.md`, log: RESULTS.md §8) makes the camera
+itself the action space and trains the controller in phases on a corpus 50× MindCube.
+
+**Reasoning path = a walk in the memory.** A state is (question, 8 context frames, renders seen so far, current camera pose). One
+step = one camera action + one render: `TURN_LEFT`/`TURN_RIGHT` (yaw ±45°), `FORWARD` (one walkable cell), `NEXT_SPOT` (next
+farthest-point standing position, facing the room centre), `LOOK_AROUND` (+180°), `BIRD_EYE` (top-down, allowed only as the last
+acquisition), `STOP`. The human-camera constraints of §1.2 are a hard action mask (positions inside the walked hull at eye level,
+roll 0, coverage ≥ 45 %). Every scene has a pre-rendered **pose bank** (12 positions × 8 yaws + top-down = 97 views), so training
+never renders online; at test time only the poses the beam visits are rendered.
+
+**Training corpus.** VLM-3R `vsibench_train` + `vstibench_train` and VSI-590K (ScanNet + ScanNet++ v2 videos we hold):
+493,663 QA on 1,709 scenes, 176k numeric; every VSI-Bench, VSTI-Bench, STI, OST and MindCube evaluation scene excluded at room level.
+
+**Phases.** 0 — pose banks; 1 — *SFT-A* answerer on ~100k random-walk states (frames + 0…3 renders → answer; 33k frames-only);
+2 — *oracle walks*: beam-2 depth-3 search over the bank with the SFT-A answerer on 8,639 QA (direct correct 54 %, best walk 68 %),
+a *value head* (same MLP as §1.2, GELU/dropout, AUROC 0.723 held-out) on walk states, and *SFT-C* imitation of the oracle actions
+(the prompt lists the valid moves); 3 — *GRPO over walks* (group 6, reward = MRA/accuracy − step cost, dual λ on the mean step
+budget, masked actions penalised). **Inference** = gate, then beam search over camera moves (branch 3 by policy logit, keep 2 by
+the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration), ≤ 12 VLM calls.
+
+### 5.1 VSI-Bench held-out odd half (paired, scene-bootstrap CIs vs the data-matched baseline)
+
+The corpus alone changes the picture: a frames-only SFT on it reaches ~0.51 (vs 0.367 for the best MindCube-trained system),
+because VLM-3R's training QA uses VSI-Bench's own templates on disjoint rooms. Every ViewTree-D number is therefore read against
+that **data-matched, no-memory baseline** (bold), not against §2.
+
+DEP_TAB_PLACEHOLDER
+
+DEP_NOTE_PLACEHOLDER
+
+**Reading.**
+- Multi-step acquisition adds a borderline **+2.1** over the data-matched baseline at 4.5 calls/question (the gate answers directly
+  on 71 %). The gain is where a second viewpoint changes the geometry the model sees — relative direction hard/medium, relative
+  distance, appearance order — and is negative on counting, room size and route planning, where extra renders distract.
+- Same answerer and head, depth 1 vs depth ≤ 3: +0.8 vs +2.1, with *fewer* calls for the deeper beam because its gate stops more
+  often; the ordering baseline < depth-1 < depth-≤3 holds on the relational/directional types.
+- The GRPO policy drifted toward STOP-at-depth-0 (mean steps 0.18 → 0.07, λ never activated) — the pre-registered collapse risk;
+  the beam explores regardless, so the RL adapter acts mainly through its answer tokens (rows above when present).
+
+### 5.2 Transfer of the corpus-trained adapters (single pass, no tree)
+
+OST-Bench (paired n = DOST_N):
+
+DOST_TAB_PLACEHOLDER
+
+VSTI-Bench (paired n = DV_N; VSTI rooms are ScanNet *val*, 0 shared with the corpus, but the corpus contains `vstibench_train`'s templates):
+
+DV_TAB_PLACEHOLDER
+
+**Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
+the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are
+significantly below zero-shot (−2.4 / −2.2, driven by Agent_visible_info), while the MindCube-trained D_10k adapter and the depth-1
+tree stay at or above it. The ViewTree-D claim is a VSI-family claim until a mixed corpus with OST-style exploration QA is trained.
+
+## 6. Summary
 - ViewTree's contribution is **cross-benchmark transfer and view efficiency**: on benchmarks other than the one it was trained on it is
   the best system by a significant margin, while using few extra views (the controller answers directly on ~23 % of VSI questions and
   stops after consensus on another third).
@@ -357,10 +467,15 @@ answer on most explored items. The memory helps where the question is about the 
   tinybench) — reported in RESULTS.md §1c; the memory system's value is not peak accuracy there but the acquisition trade-off.
 - The human-camera constraint costs nothing (100 % valid views, +0.4) and, with a head that can read eye-level views, gives the best
   held-out result (0.367), the first significant win of the adaptive tree over static memory prompting (+2.6 [+0.5, +4.7]).
+- **Scale and depth (§5).** Training on a 494k-QA corpus of VSI-template questions lifts the frames-only model to ~0.51 on VSI
+  (+14); multi-step acquisition (ViewTree-D, depth ≤ 3) adds a further borderline +2.1 on top of that data-matched baseline, on
+  relational/directional questions, at 4.5 calls per question — but the corpus gain is template-specific (VSI/VSTI up, OST down).
 
 *Reproducibility: all numbers are computed from result files in the repository by `scripts/build_report.py`; full experiment log in
 RESULTS.md, design decisions in DECISIONS.md.*
 """
+md = md.replace("DEP_TAB_PLACEHOLDER", "\n".join(dep_tab) or "*(pending)*").replace("DEP_NOTE_PLACEHOLDER", ("*Path mix — " + dep_note + ".*") if dep_note else "")
+md = md.replace("DOST_TAB_PLACEHOLDER", "\n".join(dost_tab) or "*(pending)*").replace("DOST_N", str(len(dost_ids))).replace("DV_TAB_PLACEHOLDER", "\n".join(dv_tab) or "*(pending)*").replace("DV_N", str(len(dv_ids)))
 open(os.path.join(OUT, "REPORT.md"), "w").write(md)
 # ---------------- PDF ----------------
 import markdown, weasyprint

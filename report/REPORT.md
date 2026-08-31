@@ -1,6 +1,6 @@
 # ViewTree: Spatial Reasoning over an Explicit Scene Memory with a Human-Camera Reasoning Tree
 
-*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-08-28.*
+*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-08-31.*
 
 ## 1. Introduction: the method from the beginning
 
@@ -418,7 +418,85 @@ adapter answering directly from the image history: OST questions are about the a
 (temporal facts), which a rendered view of the current reconstruction cannot add — the head correctly falls back to the direct
 answer on most explored items. The memory helps where the question is about the room's geometry (VSI), not about the agent's history.
 
-## 5. Summary
+## 5. ViewTree-D: multi-step view acquisition (depth ≤ 3), trained from scratch on a 494k-QA corpus
+
+The depth-1 tree of §1 renders five candidate views *once*; it cannot look again after seeing a render, move locally toward the
+object the question is about, or learn when to stop. ViewTree-D (design: `DESIGN_DEPTH.md`, log: RESULTS.md §8) makes the camera
+itself the action space and trains the controller in phases on a corpus 50× MindCube.
+
+**Reasoning path = a walk in the memory.** A state is (question, 8 context frames, renders seen so far, current camera pose). One
+step = one camera action + one render: `TURN_LEFT`/`TURN_RIGHT` (yaw ±45°), `FORWARD` (one walkable cell), `NEXT_SPOT` (next
+farthest-point standing position, facing the room centre), `LOOK_AROUND` (+180°), `BIRD_EYE` (top-down, allowed only as the last
+acquisition), `STOP`. The human-camera constraints of §1.2 are a hard action mask (positions inside the walked hull at eye level,
+roll 0, coverage ≥ 45 %). Every scene has a pre-rendered **pose bank** (12 positions × 8 yaws + top-down = 97 views), so training
+never renders online; at test time only the poses the beam visits are rendered.
+
+**Training corpus.** VLM-3R `vsibench_train` + `vstibench_train` and VSI-590K (ScanNet + ScanNet++ v2 videos we hold):
+493,663 QA on 1,709 scenes, 176k numeric; every VSI-Bench, VSTI-Bench, STI, OST and MindCube evaluation scene excluded at room level.
+
+**Phases.** 0 — pose banks; 1 — *SFT-A* answerer on ~100k random-walk states (frames + 0…3 renders → answer; 33k frames-only);
+2 — *oracle walks*: beam-2 depth-3 search over the bank with the SFT-A answerer on 8,639 QA (direct correct 54 %, best walk 68 %),
+a *value head* (same MLP as §1.2, GELU/dropout, AUROC 0.723 held-out) on walk states, and *SFT-C* imitation of the oracle actions
+(the prompt lists the valid moves); 3 — *GRPO over walks* (group 6, reward = MRA/accuracy − step cost, dual λ on the mean step
+budget, masked actions penalised). **Inference** = gate, then beam search over camera moves (branch 3 by policy logit, keep 2 by
+the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration), ≤ 12 VLM calls.
+
+### 5.1 VSI-Bench held-out odd half (paired, scene-bootstrap CIs vs the data-matched baseline)
+
+The corpus alone changes the picture: a frames-only SFT on it reaches ~0.51 (vs 0.367 for the best MindCube-trained system),
+because VLM-3R's training QA uses VSI-Bench's own templates on disjoint rooms. Every ViewTree-D number is therefore read against
+that **data-matched, no-memory baseline** (bold), not against §2.
+
+| system | mean of types | Δ vs data-matched baseline [95 % CI] | obj appearance order | abs distance | counting | dir easy | dir hard | dir medium | rel distance | size | room size | route planning | calls | depth |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot (16 frames) | **0.313** | -0.196 [-0.222, -0.167] | 0.289 | 0.088 | 0.254 | 0.478 | 0.203 | 0.420 | 0.391 | 0.340 | 0.357 | 0.308 |  |  |
+| SFT-plain (16 frames, MindCube) | **0.327** | -0.181 [-0.205, -0.155] | 0.213 | 0.140 | 0.339 | 0.496 | 0.330 | 0.382 | 0.344 | 0.420 | 0.330 | 0.279 |  |  |
+| ViewTree depth-1 (best of §2) | **0.367** | -0.141 [-0.169, -0.113] | 0.314 | 0.131 | 0.313 | 0.522 | 0.387 | 0.406 | 0.402 | 0.432 | 0.410 | 0.356 |  |  |
+| **corpus frames-only SFT (data-matched, no memory)** | **0.509** | +0.000 [+0.000, +0.000] | 0.628 | 0.361 | 0.667 | 0.504 | 0.462 | 0.435 | 0.515 | 0.649 | 0.558 | 0.308 |  |  |
+| SFT-A walk-trained answerer, frames only at test | **0.524** | +0.015 [-0.004, +0.034] | 0.607 | 0.376 | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | 0.659 | 0.606 | 0.365 |  |  |
+| depth-1 tree with SFT-A + value head | **0.517** | +0.008 [-0.012, +0.027] | 0.632 | 0.357 | 0.689 | 0.531 | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 |  |  |
+| **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | +0.021 [-0.000, +0.043] | 0.674 | 0.346 | 0.653 | 0.522 | 0.524 | 0.502 | 0.565 | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
+
+*Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48.*
+
+**Reading.**
+- Multi-step acquisition adds a borderline **+2.1** over the data-matched baseline at 4.5 calls/question (the gate answers directly
+  on 71 %). The gain is where a second viewpoint changes the geometry the model sees — relative direction hard/medium, relative
+  distance, appearance order — and is negative on counting, room size and route planning, where extra renders distract.
+- Same answerer and head, depth 1 vs depth ≤ 3: +0.8 vs +2.1, with *fewer* calls for the deeper beam because its gate stops more
+  often; the ordering baseline < depth-1 < depth-≤3 holds on the relational/directional types.
+- The GRPO policy drifted toward STOP-at-depth-0 (mean steps 0.18 → 0.07, λ never activated) — the pre-registered collapse risk;
+  the beam explores regardless, so the RL adapter acts mainly through its answer tokens (rows above when present).
+
+### 5.2 Transfer of the corpus-trained adapters (single pass, no tree)
+
+OST-Bench (paired n = 5403):
+
+| system | overall | Agent_object_spatial | Agent_state | Agent_visible_info |
+|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | **0.540** | 0.413 | 0.503 | 0.728 |
+| SFT-plain | **0.524** | 0.392 | 0.485 | 0.719 |
+| D_10k adapter, single pass | **0.550** | 0.430 | 0.499 | 0.733 |
+| ViewTree depth-1 tree | **0.541** | 0.425 | 0.489 | 0.720 |
+| corpus frames-only SFT, single pass | **0.516** | 0.403 | 0.513 | 0.671 |
+| SFT-A (walk-trained), single pass | **0.518** | 0.416 | 0.491 | 0.668 |
+
+VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the corpus, but the corpus contains `vstibench_train`'s templates):
+
+| system | mean of 9 types | cam displacement | cam movement direction | cam obj abs dist | cam obj rel v1 | cam obj rel v2 | cam obj rel v3 | obj-obj lr | obj-obj nf | obj-obj ud |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-VL-7B zero-shot | **0.523** | 0.134 | 0.510 | 0.149 | 0.615 | 0.667 | 0.689 | 0.567 | 0.622 | 0.748 |
+| SFT-plain | **0.456** | 0.056 | 0.440 | 0.135 | 0.396 | 0.497 | 0.612 | 0.618 | 0.574 | 0.777 |
+| ViewTree depth-1 tree | **0.505** | 0.034 | 0.483 | 0.169 | 0.484 | 0.635 | 0.646 | 0.640 | 0.647 | 0.806 |
+| corpus frames-only SFT, single pass | **0.674** | 0.225 | 0.503 | 0.517 | 0.725 | 0.789 | 0.834 | 0.716 | 0.833 | 0.928 |
+| SFT-A (walk-trained), single pass | **0.685** | 0.226 | 0.529 | 0.511 | 0.780 | 0.793 | 0.832 | 0.734 | 0.831 | 0.930 |
+
+**Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
+the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are
+significantly below zero-shot (−2.4 / −2.2, driven by Agent_visible_info), while the MindCube-trained D_10k adapter and the depth-1
+tree stay at or above it. The ViewTree-D claim is a VSI-family claim until a mixed corpus with OST-style exploration QA is trained.
+
+## 6. Summary
 - ViewTree's contribution is **cross-benchmark transfer and view efficiency**: on benchmarks other than the one it was trained on it is
   the best system by a significant margin, while using few extra views (the controller answers directly on ~23 % of VSI questions and
   stops after consensus on another third).
@@ -426,6 +504,9 @@ answer on most explored items. The memory helps where the question is about the 
   tinybench) — reported in RESULTS.md §1c; the memory system's value is not peak accuracy there but the acquisition trade-off.
 - The human-camera constraint costs nothing (100 % valid views, +0.4) and, with a head that can read eye-level views, gives the best
   held-out result (0.367), the first significant win of the adaptive tree over static memory prompting (+2.6 [+0.5, +4.7]).
+- **Scale and depth (§5).** Training on a 494k-QA corpus of VSI-template questions lifts the frames-only model to ~0.51 on VSI
+  (+14); multi-step acquisition (ViewTree-D, depth ≤ 3) adds a further borderline +2.1 on top of that data-matched baseline, on
+  relational/directional questions, at 4.5 calls per question — but the corpus gain is template-specific (VSI/VSTI up, OST down).
 
 *Reproducibility: all numbers are computed from result files in the repository by `scripts/build_report.py`; full experiment log in
 RESULTS.md, design decisions in DECISIONS.md.*
