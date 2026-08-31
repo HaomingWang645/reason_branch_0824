@@ -815,7 +815,7 @@ scene-bootstrap CIs vs the data-matched baseline):**
 | SFT-A frames-only (walk-trained answerer, no renders at test) | 0.524 | +1.5 [−0.4, +3.4] | 0.607 | **0.376** | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | **0.659** | **0.606** | **0.365** | 1 | 0 |
 | **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | **+2.1 [−0.0, +4.3]** | **0.674** | 0.346 | 0.653 | **0.522** | **0.524** | **0.502** | **0.565** | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
 | ViewTree-D, GRPO walks + beam | *training* | | | | | | | | | | | | | |
-| depth-1 tree with SFT-A + value head | *evaluating* | | | | | | | | | | | | | |
+| depth-1 tree with SFT-A + value head | 0.517 | +0.8 [−1.2, +2.7] | 0.632 | 0.357 | **0.689** | **0.531** | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 | ≤ 8 | 1 |
 
 Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
 379/157/52 · best-state 48 · fallback 106.
@@ -832,6 +832,13 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   relative direction hard/medium (+6.2/+6.7), relative distance (+5.0),
   appearance order (+4.6) — and it is *negative* on counting, room size
   and route planning, where the extra renders distract.
+- **Depth 1 vs depth ≤ 3 with the same answerer and head:** the depth-1
+  tree built on SFT-A gives +0.8 (0.517); the depth-≤3 beam gives +2.1
+  (0.530) with *fewer* calls (4.5 vs ≤ 8) because its gate stops on 71 %
+  of questions. The extra +1.3 is the contribution of walking beyond one
+  view (consensus at depth 2/3 on 209 questions); not individually
+  significant, but the ordering baseline < depth-1 < depth-≤3 holds on the
+  relational/directional types where the geometry changes with viewpoint.
 - Walk-trained answering alone (SFT-A, no renders at test) already gives
   +1.5: training with rendered context makes the frames-only answer
   slightly better, i.e. part of "depth" is a training-data effect.
