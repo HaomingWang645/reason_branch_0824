@@ -793,6 +793,53 @@ odd-scene subset; (4) frozen VGGT / Qwen pretraining may have seen these scene
 corpora — unauditable, affects all conditions equally, so paired deltas remain
 valid while absolute numbers inherit backbone exposure.
 
+## 8. ViewTree-D: multi-step (depth ≤ 3) view acquisition — interim (2026-08-31)
+
+Design: DESIGN_DEPTH.md. Trained from scratch on the combined corpus
+(493,663 QA / 1,709 ScanNet + ScanNet++ scenes, all evaluation scenes
+excluded): Phase 0 pose banks (97 views/scene) → Phase 1 SFT-A answerer
+(~100k random-walk examples) → Phase 2 oracle walks (8,639 QA; direct
+correct 54 %, best-of-walk 68 %) → value head (AUROC 0.723) → SFT-C
+controller imitation → Phase 3 GRPO over walks (running). Inference = gate +
+beam search over camera moves (b = 3, keep 2, depth ≤ 3, ≤ 12 calls).
+
+**VSI-Bench held-out odd half (2,557 q, mean of 10 types, paired,
+scene-bootstrap CIs vs the data-matched baseline):**
+
+| system | mean | Δ | app_order | abs_dist | count | dir easy | dir hard | dir med | rel_dist | size | room | route | calls | depth |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| zero-shot frames16 | 0.313 | −19.6 | 0.289 | 0.088 | 0.254 | 0.478 | 0.203 | 0.420 | 0.391 | 0.340 | 0.357 | 0.308 | | |
+| SFT-plain frames16 (MindCube) | 0.327 | −18.1 | 0.213 | 0.140 | 0.339 | 0.496 | 0.330 | 0.382 | 0.344 | 0.420 | 0.330 | 0.279 | | |
+| depth-1 tree, D_10k + human views + matched head (§6c best) | 0.367 | −14.1 | 0.314 | 0.131 | 0.313 | 0.522 | 0.387 | 0.406 | 0.402 | 0.432 | 0.410 | 0.356 | ≤ 8 | 1 |
+| **corpus frames-only SFT (data-matched, no memory)** | **0.509** | — | 0.628 | 0.361 | **0.667** | 0.504 | 0.462 | 0.435 | 0.515 | 0.649 | 0.558 | 0.308 | 1 | 0 |
+| SFT-A frames-only (walk-trained answerer, no renders at test) | 0.524 | +1.5 [−0.4, +3.4] | 0.607 | **0.376** | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | **0.659** | **0.606** | **0.365** | 1 | 0 |
+| **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | **+2.1 [−0.0, +4.3]** | **0.674** | 0.346 | 0.653 | **0.522** | **0.524** | **0.502** | **0.565** | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
+| ViewTree-D, GRPO walks + beam | *training* | | | | | | | | | | | | | |
+| depth-1 tree with SFT-A + value head | *evaluating* | | | | | | | | | | | | | |
+
+Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
+379/157/52 · best-state 48 · fallback 106.
+
+**Findings so far:**
+- **The corpus is worth +14 pts on its own.** VLM-3R's training QA is
+  generated with VSI-Bench's own templates (scenes disjoint — all 288 VSI
+  scenes are excluded), so a frames-only SFT on it reaches 0.509 vs 0.367
+  for the best MindCube-trained system. Every ViewTree-D number must be
+  read against this data-matched baseline, not against §6c.
+- **Depth adds a borderline +2.1** (CI touches 0) at 4.5 VLM calls per
+  question (mean depth 0.38: the gate answers directly on 71 %). The gain
+  is where a second viewpoint changes the geometry the model sees —
+  relative direction hard/medium (+6.2/+6.7), relative distance (+5.0),
+  appearance order (+4.6) — and it is *negative* on counting, room size
+  and route planning, where the extra renders distract.
+- Walk-trained answering alone (SFT-A, no renders at test) already gives
+  +1.5: training with rendered context makes the frames-only answer
+  slightly better, i.e. part of "depth" is a training-data effect.
+- The GRPO policy drifted toward STOP-at-depth-0 (mean 0.18 → 0.06 steps,
+  λ never activated) — the pre-registered collapse risk; the beam
+  inference explores regardless, so the RL adapter's contribution will be
+  mainly through the answer tokens. Evaluation pending.
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now
