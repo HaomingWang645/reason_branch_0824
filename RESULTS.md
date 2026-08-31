@@ -847,6 +847,28 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   inference explores regardless, so the RL adapter's contribution will be
   mainly through the answer tokens. Evaluation pending.
 
+**Cross-benchmark transfer of the corpus-trained models — OST-Bench (single
+pass, paired n = 5403; OST templates never seen in training):**
+
+| system | overall | Agent_object_spatial (2692) | Agent_state (748) | Agent_visible_info (1963) |
+|---|---|---|---|---|
+| zero-shot | **0.540** | 0.413 | 0.503 | 0.728 |
+| SFT-plain (MindCube) | **0.524** | 0.392 | 0.485 | 0.719 |
+| D_10k adapter single pass | **0.550** | 0.430 | 0.499 | 0.733 |
+| ViewTree depth-1 tree (§6d) | **0.541** | 0.425 | 0.489 | 0.720 |
+| corpus frames-only SFT | **0.516** | 0.403 | 0.513 | 0.671 |
+| SFT-A (walk-trained) | **0.518** | 0.416 | 0.491 | 0.668 |
+
+corpus frames-only SFT − zero-shot: -0.024 [-0.038, -0.012]; SFT-A (walk-trained) − zero-shot: -0.022 [-0.036, -0.010] (bootstrap over item blocks).
+
+- The +14-pt VSI jump does **not** carry to OST: the corpus-trained
+  adapters land at zero-shot level (frames-only) or slightly above (SFT-A),
+  well below the ViewTree depth-1 tree / MindCube adapters on
+  Agent_object_spatial. The corpus teaches VSI's question format and
+  in-domain room geometry, not the trajectory/visibility reasoning OST
+  asks for — the same skill-specificity seen with MindCube training in
+  §1c/§6a, now in the other direction.
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now
