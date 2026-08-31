@@ -861,13 +861,15 @@ pass, paired n = 5403; OST templates never seen in training):**
 
 corpus frames-only SFT − zero-shot: -0.024 [-0.038, -0.012]; SFT-A (walk-trained) − zero-shot: -0.022 [-0.036, -0.010] (bootstrap over item blocks).
 
-- The +14-pt VSI jump does **not** carry to OST: the corpus-trained
-  adapters land at zero-shot level (frames-only) or slightly above (SFT-A),
-  well below the ViewTree depth-1 tree / MindCube adapters on
-  Agent_object_spatial. The corpus teaches VSI's question format and
-  in-domain room geometry, not the trajectory/visibility reasoning OST
-  asks for — the same skill-specificity seen with MindCube training in
-  §1c/§6a, now in the other direction.
+- The +14-pt VSI jump does **not** carry to OST — it reverses: both
+  corpus-trained adapters are *below* zero-shot (−2.4 / −2.2, significant),
+  driven by Agent_visible_info (0.728 → 0.67), while the MindCube-trained
+  D_10k adapter and the depth-1 tree stay at or above zero-shot. The corpus
+  teaches VSI's question format and in-domain room geometry, not the
+  trajectory/visibility reasoning OST asks for — the same skill-specificity
+  seen with MindCube training in §1c/§6a, now in the other direction. Any
+  ViewTree-D claim is therefore a VSI-family claim until a mixed corpus
+  (OST-style exploration QA included) is trained.
 
 ## 7. Next milestones
 
