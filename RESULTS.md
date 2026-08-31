@@ -849,7 +849,12 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   mainly through the answer tokens. **Interim checkpoint (72 % of the
   budget): 0.525, i.e. −0.5 [−2.1, +1.2] vs the no-RL beam** — no gain so
   far; path mix nearly identical (direct 1,841 · consensus d1/d2/d3
-  349/140/61 · best-state 41 · fallback 125). Final checkpoint pending.
+  349/140/61 · best-state 41 · fallback 125). But the same interim
+  adapter answering **frames-only scores 0.536** (+2.7 [+0.7, +5.0] vs the
+  data-matched baseline, the largest frames-only gain of any adapter) —
+  better than its own beam (0.525): the RL reward did improve the answer
+  distribution, while walking with the collapsed policy *subtracts* value.
+  Final checkpoint pending.
 
 **Cross-benchmark transfer of the corpus-trained models — OST-Bench (single
 pass, paired n = 5403; OST templates never seen in training):**
