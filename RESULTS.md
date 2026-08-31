@@ -847,7 +847,7 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   λ never activated) — the pre-registered collapse risk; the beam
   inference explores regardless, so the RL adapter's contribution is
   mainly through the answer tokens. **Interim checkpoint (72 % of the
-  budget): 0.525, i.e. −0.5 [−2.8, +1.9] vs the no-RL beam** — no gain so
+  budget): 0.525, i.e. −0.5 [−2.1, +1.2] vs the no-RL beam** — no gain so
   far; path mix nearly identical (direct 1,841 · consensus d1/d2/d3
   349/140/61 · best-state 41 · fallback 125). Final checkpoint pending.
 
