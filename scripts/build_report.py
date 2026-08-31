@@ -423,7 +423,7 @@ never renders online; at test time only the poses the beam visits are rendered.
 a *value head* (same MLP as §1.2, GELU/dropout, AUROC 0.723 held-out) on walk states, and *SFT-C* imitation of the oracle actions
 (the prompt lists the valid moves); 3 — *GRPO over walks* (group 6, reward = MRA/accuracy − step cost, dual λ on the mean step
 budget, masked actions penalised). **Inference** = gate, then beam search over camera moves (branch 3 by policy logit, keep 2 by
-the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration), ≤ 12 VLM calls.
+the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration). Cost: 2 calls when the gate fires, mean 4.5 calls per question, up to ~20 for a full depth-3 walk (answer + action-proposal calls).
 
 ### 5.1 VSI-Bench held-out odd half (paired, scene-bootstrap CIs vs the data-matched baseline)
 
@@ -454,6 +454,16 @@ VSTI-Bench (paired n = DV_N; VSTI rooms are ScanNet *val*, 0 shared with the cor
 
 DV_TAB_PLACEHOLDER
 
+### 5.3 Visualized ViewTree-D reasoning walks — three per VSI task (no-RL system: SFT-C + value head + beam)
+
+Each figure shows the 8 context frames (4 drawn), the gate, the direct answer with its value-head score, then one column per
+beam level: every explored state with the rendered view the walk produced, the camera action that led to it, its answer and value
+(blue border = kept, grey = pruned, red dashed = invalid view, coverage < 45 %), and the final decision (consensus at depth *d*,
+best state, or fall-back to the direct answer). Examples were sampled to show multi-step walks (depth 2–3) where they occurred,
+plus the gate stopping at depth 0.
+
+TREED_FIGS_PLACEHOLDER
+
 **Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
 the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are
 significantly below zero-shot (−2.4 / −2.2, driven by Agent_visible_info), while the MindCube-trained D_10k adapter and the depth-1
@@ -474,6 +484,19 @@ tree stay at or above it. The ViewTree-D claim is a VSI-family claim until a mix
 *Reproducibility: all numbers are computed from result files in the repository by `scripts/build_report.py`; full experiment log in
 RESULTS.md, design decisions in DECISIONS.md.*
 """
+
+treed_tr = {}
+if os.path.exists(os.path.join(R, "results/depth/treeD_trace.jsonl")):
+    for l in open(os.path.join(R, "results/depth/treeD_trace.jsonl")): t = json.loads(l); treed_tr[t["id"]] = t
+treed_md = ""
+for t in types:
+    ents = [treed_tr[i] for i in sorted(treed_tr) if treed_tr[i]["question_type"] == t and os.path.exists(os.path.join(R, f"figures/treeD_{t}_{i}.png"))][:3]
+    treed_md += f"\n#### {TN[t]}\n\n"
+    if not ents: treed_md += "*(pending)*\n"; continue
+    for e in ents:
+        ok = "correct" if e["score"] >= 0.5 else ("partial" if e["score"] > 0 else "wrong")
+        treed_md += f"![](figures/treeD_{t}_{e['id']}.png)\n\n*#{e['id']} — {e['question'].split(chr(10))[0][:140]} — gate {e['gate']}, mode `{e['mode']}`, depth {e['depth']}, {e['calls']} calls, final **{e['pred']}** (GT {e['gt']}) → {ok}.*\n\n"
+md = md.replace("TREED_FIGS_PLACEHOLDER", treed_md)
 md = md.replace("DEP_TAB_PLACEHOLDER", "\n".join(dep_tab) or "*(pending)*").replace("DEP_NOTE_PLACEHOLDER", ("*Path mix — " + dep_note + ".*") if dep_note else "")
 md = md.replace("DOST_TAB_PLACEHOLDER", "\n".join(dost_tab) or "*(pending)*").replace("DOST_N", str(len(dost_ids))).replace("DV_TAB_PLACEHOLDER", "\n".join(dv_tab) or "*(pending)*").replace("DV_N", str(len(dv_ids)))
 open(os.path.join(OUT, "REPORT.md"), "w").write(md)

@@ -801,7 +801,7 @@ excluded): Phase 0 pose banks (97 views/scene) → Phase 1 SFT-A answerer
 (~100k random-walk examples) → Phase 2 oracle walks (8,639 QA; direct
 correct 54 %, best-of-walk 68 %) → value head (AUROC 0.723) → SFT-C
 controller imitation → Phase 3 GRPO over walks (running). Inference = gate +
-beam search over camera moves (b = 3, keep 2, depth ≤ 3, ≤ 12 calls).
+beam search over camera moves (b = 3, keep 2, depth ≤ 3; mean 4.5 calls, up to ~20 at full depth).
 
 **VSI-Bench held-out odd half (2,557 q, mean of 10 types, paired,
 scene-bootstrap CIs vs the data-matched baseline):**

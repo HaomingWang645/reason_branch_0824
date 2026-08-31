@@ -439,7 +439,7 @@ never renders online; at test time only the poses the beam visits are rendered.
 a *value head* (same MLP as §1.2, GELU/dropout, AUROC 0.723 held-out) on walk states, and *SFT-C* imitation of the oracle actions
 (the prompt lists the valid moves); 3 — *GRPO over walks* (group 6, reward = MRA/accuracy − step cost, dual λ on the mean step
 budget, masked actions penalised). **Inference** = gate, then beam search over camera moves (branch 3 by policy logit, keep 2 by
-the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration), ≤ 12 VLM calls.
+the value head, depth ≤ 3, early stop on agreement, direct-vs-walk arbitration). Cost: 2 calls when the gate fires, mean 4.5 calls per question, up to ~20 for a full depth-3 walk (answer + action-proposal calls).
 
 ### 5.1 VSI-Bench held-out odd half (paired, scene-bootstrap CIs vs the data-matched baseline)
 
@@ -490,6 +490,166 @@ VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the cor
 | ViewTree depth-1 tree | **0.505** | 0.034 | 0.483 | 0.169 | 0.484 | 0.635 | 0.646 | 0.640 | 0.647 | 0.806 |
 | corpus frames-only SFT, single pass | **0.674** | 0.225 | 0.503 | 0.517 | 0.725 | 0.789 | 0.834 | 0.716 | 0.833 | 0.928 |
 | SFT-A (walk-trained), single pass | **0.685** | 0.226 | 0.529 | 0.511 | 0.780 | 0.793 | 0.832 | 0.734 | 0.831 | 0.930 |
+
+### 5.3 Visualized ViewTree-D reasoning walks — three per VSI task (no-RL system: SFT-C + value head + beam)
+
+Each figure shows the 8 context frames (4 drawn), the gate, the direct answer with its value-head score, then one column per
+beam level: every explored state with the rendered view the walk produced, the camera action that led to it, its answer and value
+(blue border = kept, grey = pruned, red dashed = invalid view, coverage < 45 %), and the final decision (consensus at depth *d*,
+best state, or fall-back to the direct answer). Examples were sampled to show multi-step walks (depth 2–3) where they occurred,
+plus the gate stopping at depth 0.
+
+
+#### obj appearance order
+
+![](figures/treeD_obj_appearance_order_2750.png)
+
+*#2750 — What will be the first-time appearance order of the following categories in the video: laptop, shoe rack, toilet, heater? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **A** (GT A) → correct.*
+
+![](figures/treeD_obj_appearance_order_3918.png)
+
+*#3918 — What will be the first-time appearance order of the following categories in the video: door, window, trash bin, monitor? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **C** (GT A) → wrong.*
+
+![](figures/treeD_obj_appearance_order_4177.png)
+
+*#4177 — What will be the first-time appearance order of the following categories in the video: lamp, table, printer, backpack? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT B) → correct.*
+
+
+#### abs distance
+
+![](figures/treeD_object_abs_distance_925.png)
+
+*#925 — Measuring from the closest point of each object, what is the distance between the sofa and the chair (in meters)? — gate EXPLORE, mode `consensus_d2`, depth 2, 12 calls, final **0.5** (GT 3.2) → wrong.*
+
+![](figures/treeD_object_abs_distance_1740.png)
+
+*#1740 — Measuring from the closest point of each object, what is the distance between the microwave and the power strip (in meters)? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **4.0** (GT 3.4) → correct.*
+
+![](figures/treeD_object_abs_distance_1757.png)
+
+*#1757 — Measuring from the closest point of each object, what is the distance between the tv and the refrigerator (in meters)? — gate YES, mode `direct`, depth 0, 2 calls, final **2.1** (GT 3.1) → partial.*
+
+
+#### counting
+
+![](figures/treeD_object_counting_2553.png)
+
+*#2553 — How many door(s) are in this room? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **2** (GT 4) → wrong.*
+
+![](figures/treeD_object_counting_2554.png)
+
+*#2554 — How many chair(s) are in this room? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **4** (GT 2) → wrong.*
+
+![](figures/treeD_object_counting_2607.png)
+
+*#2607 — How many door(s) are in this room? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **2** (GT 2) → correct.*
+
+
+#### dir easy
+
+![](figures/treeD_object_rel_direction_easy_1253.png)
+
+*#1253 — If I am standing by the tv and facing the bed, is the table to the left or the right of the bed? — gate YES, mode `direct`, depth 0, 2 calls, final **A** (GT B) → wrong.*
+
+![](figures/treeD_object_rel_direction_easy_2445.png)
+
+*#2445 — If I am standing by the telephone and facing the door, is the keyboard to the left or the right of the door? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **A** (GT B) → wrong.*
+
+![](figures/treeD_object_rel_direction_easy_3718.png)
+
+*#3718 — If I am standing by the chair and facing the bed, is the mirror to the left or the right of the bed? — gate YES, mode `direct`, depth 0, 2 calls, final **A** (GT A) → correct.*
+
+
+#### dir hard
+
+![](figures/treeD_object_rel_direction_hard_1014.png)
+
+*#1014 — If I am standing by the fireplace and facing the tv, is the washer to my front-left, front-right, back-left, or back-right? — gate YES, mode `direct`, depth 0, 2 calls, final **B** (GT B) → correct.*
+
+![](figures/treeD_object_rel_direction_hard_1844.png)
+
+*#1844 — If I am standing by the exhaust fan and facing the door, is the computer mouse to my front-left, front-right, back-left, or back-right? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT A) → wrong.*
+
+![](figures/treeD_object_rel_direction_hard_3622.png)
+
+*#3622 — If I am standing by the bed and facing the table, is the closet to my front-left, front-right, back-left, or back-right? — gate YES, mode `direct`, depth 0, 2 calls, final **C** (GT D) → wrong.*
+
+
+#### dir medium
+
+![](figures/treeD_object_rel_direction_medium_1571.png)
+
+*#1571 — If I am standing by the ceiling light and facing the chair, is the door to my left, right, or back? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT A) → wrong.*
+
+![](figures/treeD_object_rel_direction_medium_1581.png)
+
+*#1581 — If I am standing by the pillow and facing the ceiling light, is the chair to my left, right, or back? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT B) → correct.*
+
+![](figures/treeD_object_rel_direction_medium_4313.png)
+
+*#4313 — If I am standing by the window and facing the door, is the mirror to my left, right, or back? — gate YES, mode `direct`, depth 0, 2 calls, final **C** (GT B) → wrong.*
+
+
+#### rel distance
+
+![](figures/treeD_object_rel_distance_2027.png)
+
+*#2027 — Measuring from the closest point of each object, which of these objects (heater, trash can, door, cup) is the closest to the microwave? — gate EXPLORE, mode `consensus_d3`, depth 3, 18 calls, final **D** (GT D) → correct.*
+
+![](figures/treeD_object_rel_distance_2088.png)
+
+*#2088 — Measuring from the closest point of each object, which of these objects (door, basket, table, bed) is the closest to the pan? — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **A** (GT B) → wrong.*
+
+![](figures/treeD_object_rel_distance_3099.png)
+
+*#3099 — Measuring from the closest point of each object, which of these objects (backpack, pillow, bed, lamp) is the closest to the table? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **D** (GT D) → correct.*
+
+
+#### size
+
+![](figures/treeD_object_size_estimation_319.png)
+
+*#319 — What is the length of the longest dimension (length, width, or height) of the tv, measured in centimeters? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **140** (GT 107) → partial.*
+
+![](figures/treeD_object_size_estimation_2205.png)
+
+*#2205 — What is the length of the longest dimension (length, width, or height) of the laptop, measured in centimeters? — gate EXPLORE, mode `consensus_d2`, depth 2, 13 calls, final **40** (GT 40) → correct.*
+
+![](figures/treeD_object_size_estimation_2288.png)
+
+*#2288 — What is the length of the longest dimension (length, width, or height) of the exhaust fan, measured in centimeters? — gate EXPLORE, mode `consensus_d2`, depth 2, 11 calls, final **14** (GT 12) → correct.*
+
+
+#### room size
+
+![](figures/treeD_room_size_estimation_661.png)
+
+*#661 — What is the size of this room (in square meters)?  — gate EXPLORE, mode `consensus_d2`, depth 2, 12 calls, final **6.4** (GT 12.1) → partial.*
+
+![](figures/treeD_room_size_estimation_2700.png)
+
+*#2700 — What is the size of this room (in square meters)?  — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **20.4** (GT 15.5) → partial.*
+
+![](figures/treeD_room_size_estimation_3822.png)
+
+*#3822 — What is the size of this room (in square meters)?  — gate EXPLORE, mode `consensus_d3`, depth 3, 19 calls, final **14.5** (GT 15.6) → correct.*
+
+
+#### route planning
+
+![](figures/treeD_route_planning_4966.png)
+
+*#4966 — You are a robot beginning at the blue chair and facing the fan beside the boxes. You want to navigate to the trash bin. You will perform the — gate EXPLORE, mode `consensus_d3`, depth 3, 18 calls, final **C** (GT A) → wrong.*
+
+![](figures/treeD_route_planning_4974.png)
+
+*#4974 — You are a robot beginning at the door and facing the boxes. You want to navigate to the counter. You will perform the following actions (Not — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **C** (GT B) → wrong.*
+
+![](figures/treeD_route_planning_5003.png)
+
+*#5003 — You are a robot beginning at the window and facing the waste bin. You want to navigate to the bathroom. You will perform the following actio — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT B) → correct.*
+
+
 
 **Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
 the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are
