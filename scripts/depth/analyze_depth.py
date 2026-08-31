@@ -21,9 +21,12 @@ SYS = collections.OrderedDict([
     ("SFT-A frames-only", "results/depth/frames16_sfta.jsonl"),
     ("depth-1 tree with SFT-A + value head", "results/depth/tree1_sfta_s*.jsonl"),
     ("ViewTree-D no-RL: SFT-C + value head + beam (d<=3)", "results/depth/treeD_sftc_s*.jsonl"),
+    ("ViewTree-D: GRPO interim ckpt (idx 5000) + value head + beam (d<=3)", "results/depth/treeD_grpoI_s*.jsonl"),
+    ("GRPO interim ckpt frames-only", "results/depth/frames16_grpoI.jsonl"),
     ("ViewTree-D: GRPO walks + value head + beam (d<=3)", "results/depth/treeD_grpo_s*.jsonl"),
+    ("GRPO final frames-only", "results/depth/frames16_grpo.jsonl"),
 ])
-D = collections.OrderedDict((k, load(v)) for k, v in SYS.items()); D = collections.OrderedDict((k, v) for k, v in D.items() if v)
+D = collections.OrderedDict((k, load(v)) for k, v in SYS.items()); D = collections.OrderedDict((k, v) for k, v in D.items() if len(v) >= 2400)
 ids = [i for i in rows if (rows[i]["dataset"], rows[i]["scene_name"]) in odd and all(i in v for v in D.values())]
 types = sorted({rows[i]["question_type"] for i in ids}); print(f"paired odd-half n = {len(ids)}; systems = {list(D)}")
 g = collections.defaultdict(list)

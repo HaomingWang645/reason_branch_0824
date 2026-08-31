@@ -456,8 +456,9 @@ that **data-matched, no-memory baseline** (bold), not against §2.
 | SFT-A walk-trained answerer, frames only at test | **0.524** | +0.015 [-0.004, +0.034] | 0.607 | 0.376 | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | 0.659 | 0.606 | 0.365 |  |  |
 | depth-1 tree with SFT-A + value head | **0.517** | +0.008 [-0.012, +0.027] | 0.632 | 0.357 | 0.689 | 0.531 | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 |  |  |
 | **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | +0.021 [-0.000, +0.043] | 0.674 | 0.346 | 0.653 | 0.522 | 0.524 | 0.502 | 0.565 | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
+| ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam | **0.525** | +0.016 [-0.008, +0.042] | 0.665 | 0.382 | 0.654 | 0.540 | 0.458 | 0.469 | 0.545 | 0.650 | 0.550 | 0.337 | 4.5 | 0.36 |
 
-*Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48.*
+*Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41.*
 
 **Reading.**
 - Multi-step acquisition adds a borderline **+2.1** over the data-matched baseline at 4.5 calls/question (the gate answers directly

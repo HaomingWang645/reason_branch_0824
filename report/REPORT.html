@@ -1051,9 +1051,26 @@ that <strong>data-matched, no-memory baseline</strong> (bold), not against §2.<
 <td>4.5</td>
 <td>0.38</td>
 </tr>
+<tr>
+<td>ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam</td>
+<td><strong>0.525</strong></td>
+<td>+0.016 [-0.008, +0.042]</td>
+<td>0.665</td>
+<td>0.382</td>
+<td>0.654</td>
+<td>0.540</td>
+<td>0.458</td>
+<td>0.469</td>
+<td>0.545</td>
+<td>0.650</td>
+<td>0.550</td>
+<td>0.337</td>
+<td>4.5</td>
+<td>0.36</td>
+</tr>
 </tbody>
 </table></div>
-<p><em>Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48.</em></p>
+<p><em>Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41.</em></p>
 <p><strong>Reading.</strong>
 - Multi-step acquisition adds a borderline <strong>+2.1</strong> over the data-matched baseline at 4.5 calls/question (the gate answers directly
   on 71 %). The gain is where a second viewpoint changes the geometry the model sees — relative direction hard/medium, relative
