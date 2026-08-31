@@ -871,6 +871,33 @@ corpus frames-only SFT − zero-shot: -0.024 [-0.038, -0.012]; SFT-A (walk-train
   ViewTree-D claim is therefore a VSI-family claim until a mixed corpus
   (OST-style exploration QA included) is trained.
 
+**VSTI-Bench (single pass, 5,736 items, 9 types, paired; VSTI-Bench rooms are
+ScanNet *val*, the corpus is ScanNet train + ScanNet++ — 0 shared rooms; the
+corpus does contain VLM-3R's `vstibench_train`, i.e. the same QA templates):**
+
+| system | mean of 9 | cam displ | cam move dir | cam-obj abs | cam-obj rel v1/v2/v3 | obj-obj lr / nf / ud |
+|---|---|---|---|---|---|---|
+| zero-shot | 0.523 | 0.134 | 0.510 | 0.149 | 0.615 / 0.667 / 0.689 | 0.567 / 0.622 / 0.748 |
+| SFT-plain (MindCube) | 0.456 | 0.056 | 0.440 | 0.135 | 0.396 / 0.497 / 0.612 | 0.618 / 0.574 / 0.777 |
+| ViewTree depth-1 tree (§6f) | 0.505 | 0.034 | 0.483 | 0.169 | 0.484 / 0.635 / 0.646 | 0.640 / 0.647 / 0.806 |
+| corpus frames-only SFT | 0.674 | 0.225 | 0.503 | **0.517** | 0.725 / 0.789 / **0.834** | 0.716 / **0.833** / 0.928 |
+| **SFT-A (walk-trained)** | **0.685** | **0.226** | **0.529** | 0.511 | **0.780** / **0.793** / 0.832 | **0.734** / 0.831 / **0.930** |
+
+SFT-A − zero-shot **+16.1 [+14.6, +17.8]**, − SFT-plain +21.3, − ViewTree
+depth-1 tree +17.3; SFT-A − corpus frames-only +0.6 [−0.3, +1.4]. Clean
+subset (4,866 items, rooms never seen by the head) gives the same numbers
+within ±0.5 pt.
+
+- Template-matched data is the whole story again: both corpus adapters gain
+  ~+15 pts on VSTI as on VSI, with the largest jumps on the numeric types
+  (cam-obj abs dist 0.15 → 0.52, cam displacement 0.13 → 0.23) that the
+  MindCube-trained systems never learned to answer in metres. The
+  walk-trained answerer is +0.6 over the frames-only SFT (n.s.), consistent
+  with its +1.5 on VSI. Camera-movement direction stays ~0.5 for everyone —
+  neither corpus nor renders describe the recorded trajectory.
+- Together with the OST table: the corpus helps exactly where its templates
+  match (VSI, VSTI) and hurts where they do not (OST).
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now
