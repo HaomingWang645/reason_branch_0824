@@ -1068,9 +1068,26 @@ that <strong>data-matched, no-memory baseline</strong> (bold), not against §2.<
 <td>4.5</td>
 <td>0.36</td>
 </tr>
+<tr>
+<td><strong>ViewTree-D, GRPO adapter (final) + beam</strong></td>
+<td><strong>0.522</strong></td>
+<td>+0.014 [-0.011, +0.040]</td>
+<td>0.649</td>
+<td>0.384</td>
+<td>0.653</td>
+<td>0.522</td>
+<td>0.462</td>
+<td>0.459</td>
+<td>0.540</td>
+<td>0.646</td>
+<td>0.550</td>
+<td>0.356</td>
+<td>4.6</td>
+<td>0.38</td>
+</tr>
 </tbody>
 </table></div>
-<p><em>Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41.</em></p>
+<p><em>Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41; ViewTree-D, GRPO adapter (final) + beam: direct 1806, consensus_d1 357, consensus_d2 157, fallback_direct 130, consensus_d3 61, best_state 46.</em></p>
 <p><strong>Reading.</strong>
 - Multi-step acquisition adds a borderline <strong>+2.1</strong> over the data-matched baseline at 4.5 calls/question (the gate answers directly
   on 71 %). The gain is where a second viewpoint changes the geometry the model sees — relative direction hard/medium, relative
@@ -1078,7 +1095,7 @@ that <strong>data-matched, no-memory baseline</strong> (bold), not against §2.<
 - Same answerer and head, depth 1 vs depth ≤ 3: +0.8 vs +2.1, with <em>fewer</em> calls for the deeper beam because its gate stops more
   often; the ordering baseline &lt; depth-1 &lt; depth-≤3 holds on the relational/directional types.
 - The GRPO policy drifted toward STOP-at-depth-0 (mean steps 0.18 → 0.07, λ never activated) — the pre-registered collapse risk;
-  the beam explores regardless, so the RL adapter acts mainly through its answer tokens (rows above when present).</p>
+  the beam explores regardless. The final adapter confirms the split: its frames-only pass gains +2.5 (significant) while its beam is −0.8 vs the no-RL beam (n.s.) — RL moved the answer tokens, not the camera policy, so the deployed controller is the imitation-trained one.</p>
 <h3 id="52-transfer-of-the-corpus-trained-adapters-single-pass-no-tree">5.2 Transfer of the corpus-trained adapters (single pass, no tree)</h3>
 <p>OST-Bench (paired n = 5403):</p>
 <div class="tw"><table>

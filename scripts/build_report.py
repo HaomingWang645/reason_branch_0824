@@ -442,7 +442,7 @@ DEP_NOTE_PLACEHOLDER
 - Same answerer and head, depth 1 vs depth ≤ 3: +0.8 vs +2.1, with *fewer* calls for the deeper beam because its gate stops more
   often; the ordering baseline < depth-1 < depth-≤3 holds on the relational/directional types.
 - The GRPO policy drifted toward STOP-at-depth-0 (mean steps 0.18 → 0.07, λ never activated) — the pre-registered collapse risk;
-  the beam explores regardless, so the RL adapter acts mainly through its answer tokens (rows above when present).
+  the beam explores regardless. The final adapter confirms the split: its frames-only pass gains +2.5 (significant) while its beam is −0.8 vs the no-RL beam (n.s.) — RL moved the answer tokens, not the camera policy, so the deployed controller is the imitation-trained one.
 
 ### 5.2 Transfer of the corpus-trained adapters (single pass, no tree)
 

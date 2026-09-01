@@ -793,7 +793,7 @@ odd-scene subset; (4) frozen VGGT / Qwen pretraining may have seen these scene
 corpora — unauditable, affects all conditions equally, so paired deltas remain
 valid while absolute numbers inherit backbone exposure.
 
-## 8. ViewTree-D: multi-step (depth ≤ 3) view acquisition — interim (2026-08-31)
+## 8. ViewTree-D: multi-step (depth ≤ 3) view acquisition (final, 2026-08-31)
 
 Design: DESIGN_DEPTH.md. Trained from scratch on the combined corpus
 (493,663 QA / 1,709 ScanNet + ScanNet++ scenes, all evaluation scenes
@@ -815,7 +815,8 @@ scene-bootstrap CIs vs the data-matched baseline):**
 | SFT-A frames-only (walk-trained answerer, no renders at test) | 0.524 | +1.5 [−0.4, +3.4] | 0.607 | **0.376** | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | **0.659** | **0.606** | **0.365** | 1 | 0 |
 | **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | **+2.1 [−0.0, +4.3]** | **0.674** | 0.346 | 0.653 | **0.522** | **0.524** | **0.502** | **0.565** | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
 | ViewTree-D, GRPO walks (interim ckpt, idx 5,000 of 6,960/rank ≈ 72 % of budget) + beam | 0.525 | +1.6 [−0.8, +4.2] | 0.665 | 0.382 | 0.654 | 0.540 | 0.458 | 0.469 | 0.545 | 0.650 | 0.550 | 0.337 | 4.5 | 0.36 |
-| ViewTree-D, GRPO walks (final) + beam | *training* | | | | | | | | | | | | | |
+| ViewTree-D, GRPO walks (final, 30k budget) + beam | 0.522 | +1.4 [−1.5, +4.0] | 0.649 | 0.384 | 0.653 | 0.522 | 0.462 | 0.459 | 0.540 | 0.646 | 0.550 | 0.356 | 4.6 | 0.38 |
+| GRPO final adapter, frames-only (no tree) | 0.534 | +2.5 [+0.3, +5.0] | 0.623 | 0.404 | 0.664 | 0.522 | 0.472 | 0.473 | 0.529 | 0.672 | 0.597 | 0.385 | | |
 | depth-1 tree with SFT-A + value head | 0.517 | +0.8 [−1.2, +2.7] | 0.632 | 0.357 | **0.689** | **0.531** | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 | ≤ 8 | 1 |
 
 Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
@@ -854,7 +855,16 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   data-matched baseline, the largest frames-only gain of any adapter) —
   better than its own beam (0.525): the RL reward did improve the answer
   distribution, while walking with the collapsed policy *subtracts* value.
-  Final checkpoint pending.
+- **Final checkpoint (30k budget) confirms it:** beam 0.522 = −0.8
+  [−2.2, +0.7] vs the no-RL beam (n.s.); frames-only 0.534 = +2.5
+  [+0.3, +5.0] vs the data-matched baseline (significant) and the beam sits
+  *below* its own frames-only pass (−1.2 [−3.1, +0.8]). Path mix is
+  unchanged (direct 1,806 · consensus d1/d2/d3 357/157/61 · best-state 46 ·
+  fallback 130). **Conclusion: RL over walks moved the answer tokens, not
+  the camera policy; the deployed ViewTree-D controller is the
+  imitation-trained SFT-C (no-RL beam, 0.530).** Pre-registered ablation
+  answer: deeper-is-better holds for search (beam > depth-1 > baseline on
+  relational types) but RL on top of the collapsed policy does not add.
 
 **Cross-benchmark transfer of the corpus-trained models — OST-Bench (single
 pass, paired n = 5403; OST templates never seen in training):**
