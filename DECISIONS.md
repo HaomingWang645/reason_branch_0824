@@ -348,3 +348,26 @@ be separated from "just fine-tune on the data":
 Evaluated exactly like the memory systems: MindCube tiny/rest evidence
 ladder (1 view … all views), VSI-Bench held-out half with 16 frames only,
 ViewSpatial / OST / OmniSpatial / BLINK. Results in RESULTS.md §1c.
+
+## 11. VLM backbone scale study — Qwen2.5-VL 3B / 7B / 32B (added 2026-08-31)
+
+Reduced-scope by design (user request: "not full scale"). The 7B-trained LoRA
+adapters and confidence/value heads cannot transfer across backbones (hidden
+sizes 2048 / 3584 / 5120), so the cross-scale comparison uses only components
+that exist at every size:
+
+| condition | 3B | 7B | 32B |
+|---|---|---|---|
+| frames16 zero-shot (VSI odd half) | run | exists (0.313) | run |
+| ViewTree-lite training-free tree (human poses, token confidence, odd half) | run | run (re-run: §7.3's 0.331 was all-VSI + legacy poses) | run |
+| corpus frames-only SFT, 30k-subset (seed 0 of `frames_only.jsonl`) → frames16 | run | exists at 100k (0.509) | **skipped** |
+
+32B SFT skipped: 66 GB bf16 weights per DDP rank leave no activation headroom
+on 80 GB cards even with LoRA + checkpointing; a sharded-training setup is out
+of scope for a reduced study. 32B inference runs sharded over 2 GPUs via a new
+`VIEWTREE_DEVICE_MAP=auto` switch in `viewtree/vlm.py`.
+Pipeline `scripts/depth/pipeline/scale_study.sh`, queued behind the new-model
+benchmark evaluations; outputs `results/scalevlm/`. Caveat pre-registered: the
+3B 30k-SFT row is not comparable to the 7B 100k row (data size differs 3×) —
+it tests whether corpus data moves a mobile-class backbone at all, not a
+scaling law.
