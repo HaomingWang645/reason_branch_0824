@@ -999,6 +999,50 @@ only on room-geometry questions under-covered by the input frames; a
 deployment should gate the walk by benchmark/question family, or train the
 gate/arbitration per domain.
 
+### 8c. Backbone scale study — Qwen2.5-VL 3B / 7B / 32B (2026-09-01, complete)
+
+Design: DECISIONS §11 (reduced scope; 7B adapters/heads cannot transfer, so
+the grid uses frames16 zero-shot, the training-free ViewTree-lite tree with
+token confidence + human poses, and a 30k-subset corpus SFT on 3B). VSI
+held-out odd half, paired n = 2,557, scene-bootstrap CIs. 32B ran sharded
+over 2 GPUs (`VIEWTREE_DEVICE_MAP=auto`).
+
+| system | mean | app order | abs dist | count | dir easy | dir hard | dir med | rel dist | size | room | route |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 3B frames16 | 0.321 | 0.184 | 0.183 | 0.304 | 0.531 | 0.429 | 0.493 | 0.342 | 0.196 | 0.253 | 0.298 |
+| 3B + lite tree | 0.314 | 0.230 | 0.144 | 0.275 | 0.522 | 0.415 | 0.459 | 0.366 | 0.205 | 0.219 | 0.308 |
+| **3B + corpus SFT 30k, frames16** | **0.497** | 0.623 | 0.358 | 0.669 | 0.487 | 0.425 | 0.507 | 0.534 | 0.611 | 0.515 | 0.240 |
+| 7B frames16 | 0.313 | 0.289 | 0.088 | 0.254 | 0.478 | 0.203 | 0.420 | 0.391 | 0.340 | 0.357 | 0.308 |
+| 7B + lite tree | 0.341 | 0.331 | 0.099 | 0.309 | 0.496 | 0.236 | 0.459 | 0.399 | 0.357 | 0.424 | 0.298 |
+| 32B frames16 | 0.380 | 0.305 | 0.257 | 0.286 | 0.549 | 0.288 | 0.304 | 0.501 | 0.500 | 0.472 | 0.337 |
+| 32B + lite tree | 0.348 | 0.356 | 0.219 | 0.270 | 0.504 | 0.236 | 0.246 | 0.457 | 0.472 | 0.383 | 0.337 |
+
+Lite tree − frames16: 3B **−0.7 [−2.6, +1.3]** · 7B **+2.8 [+1.0, +4.7]** ·
+32B **−3.2 [−5.2, −1.1]**. 32B − 7B zero-shot **+6.7 [+4.4, +9.5]**; 3B − 7B
+zero-shot +0.8 [−1.7, +3.3]. 3B SFT30k − 3B zero-shot **+17.6 [+15.3, +19.9]**.
+
+- **The training-free tree's benefit is 7B-specific.** At 3B it is neutral
+  (−0.7): the small model answers weakly from renders, so consensus rarely
+  beats its direct answer. At 32B it *hurts* (−3.2, significant): 32B's
+  direct answers are strong (0.380 zero-shot — already above the best
+  trained 7B depth-1 system, 0.367) and the token-confidence prune lets
+  render-limited consensus override them (gate answers directly on only
+  432/2,557). Adaptive exploration needs per-backbone calibration (a trained
+  gate/head), not a transplanted recipe.
+- **The corpus moves a mobile-class backbone dramatically: 3B + 30k
+  examples → 0.497**, statistically at the 7B/100k data-matched baseline
+  (0.509) with 3.3× less data and a 2.3× smaller model. The VSI-template
+  skill lives in the data, not the capacity — strong support for the
+  Jetson plan's assumption that a small on-device model can carry the
+  answerer role. (Caveat pre-registered in DECISIONS §11: 30k vs 100k rows
+  differ in data size; this is not a clean scaling law.)
+- **Zero-shot scale ordering is non-monotonic per type:** 32B wins on
+  numeric/metric types (abs dist 0.257, rel dist 0.501, size 0.500) while
+  *3B* wins relative-direction hard/medium (0.429/0.493 vs 32B's
+  0.288/0.304) — answer-style artifacts dominate at the small end.
+
+Outputs: `results/scalevlm/`, adapter `checkpoints/scalevlm/sft3b_30k`.
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now

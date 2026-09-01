@@ -495,6 +495,23 @@ VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the cor
 | SFT-A (walk-trained), single pass | **0.685** | 0.226 | 0.529 | 0.511 | 0.780 | 0.793 | 0.832 | 0.734 | 0.831 | 0.930 |
 | ViewTree-D beam | **0.680** | 0.234 | 0.533 | 0.503 | 0.769 | 0.799 | 0.825 | 0.724 | 0.811 | 0.924 |
 
+### 5.4 Backbone scale: Qwen2.5-VL 3B / 7B / 32B (reduced scope)
+
+Zero-shot frames, the training-free lite tree (token confidence, human poses), and a 30k-subset corpus SFT on 3B — the
+components that exist at every size (trained 7B adapters/heads do not transfer). VSI held-out odd half, paired n = 2,557:
+
+| system | mean of types | Δ lite − frames16 |
+|---|---|---|
+| 3B frames16 / + lite tree / **+ corpus SFT 30k** | 0.321 / 0.314 / **0.497** | −0.7 [−2.6, +1.3] |
+| 7B frames16 / + lite tree | 0.313 / 0.341 | **+2.8 [+1.0, +4.7]** |
+| 32B frames16 / + lite tree | 0.380 / 0.348 | **−3.2 [−5.2, −1.1]** |
+
+The training-free tree helps only at 7B: at 3B the model reads renders too poorly for consensus to beat its direct
+answer; at 32B the direct answers are strong enough (0.380 zero-shot — above the best trained 7B system) that
+render-limited consensus overrides them. Adaptive exploration needs per-backbone calibration. Meanwhile 3B + 30k corpus
+examples reaches 0.497 ≈ the 7B/100k baseline — the VSI-template skill lives in the data, not the capacity, supporting a
+mobile-class answerer.
+
 ### 5.3 Visualized ViewTree-D reasoning walks — three per VSI task (no-RL system: SFT-C + value head + beam)
 
 Each figure shows the 8 context frames (4 drawn), the gate, the direct answer with its value-head score, then one column per
