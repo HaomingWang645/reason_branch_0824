@@ -1,6 +1,6 @@
 # ViewTree: Spatial Reasoning over an Explicit Scene Memory with a Human-Camera Reasoning Tree
 
-*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-08-31.*
+*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-09-01.*
 
 ## 1. Introduction: the method from the beginning
 
@@ -457,8 +457,9 @@ that **data-matched, no-memory baseline** (bold), not against §2.
 | depth-1 tree with SFT-A + value head | **0.517** | +0.008 [-0.012, +0.027] | 0.632 | 0.357 | 0.689 | 0.531 | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 |  |  |
 | **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | +0.021 [-0.000, +0.043] | 0.674 | 0.346 | 0.653 | 0.522 | 0.524 | 0.502 | 0.565 | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
 | ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam | **0.525** | +0.016 [-0.008, +0.042] | 0.665 | 0.382 | 0.654 | 0.540 | 0.458 | 0.469 | 0.545 | 0.650 | 0.550 | 0.337 | 4.5 | 0.36 |
+| **ViewTree-D, GRPO adapter (final) + beam** | **0.522** | +0.014 [-0.011, +0.040] | 0.649 | 0.384 | 0.653 | 0.522 | 0.462 | 0.459 | 0.540 | 0.646 | 0.550 | 0.356 | 4.6 | 0.38 |
 
-*Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41.*
+*Path mix — paired n = 2557 on the held-out odd half; ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3): direct 1815, consensus_d1 379, consensus_d2 157, fallback_direct 106, consensus_d3 52, best_state 48; ViewTree-D, GRPO adapter (interim, ~70 % of budget) + beam: direct 1841, consensus_d1 349, consensus_d2 140, fallback_direct 125, consensus_d3 61, best_state 41; ViewTree-D, GRPO adapter (final) + beam: direct 1806, consensus_d1 357, consensus_d2 157, fallback_direct 130, consensus_d3 61, best_state 46.*
 
 **Reading.**
 - Multi-step acquisition adds a borderline **+2.1** over the data-matched baseline at 4.5 calls/question (the gate answers directly
@@ -467,7 +468,7 @@ that **data-matched, no-memory baseline** (bold), not against §2.
 - Same answerer and head, depth 1 vs depth ≤ 3: +0.8 vs +2.1, with *fewer* calls for the deeper beam because its gate stops more
   often; the ordering baseline < depth-1 < depth-≤3 holds on the relational/directional types.
 - The GRPO policy drifted toward STOP-at-depth-0 (mean steps 0.18 → 0.07, λ never activated) — the pre-registered collapse risk;
-  the beam explores regardless, so the RL adapter acts mainly through its answer tokens (rows above when present).
+  the beam explores regardless. The final adapter confirms the split: its frames-only pass gains +2.5 (significant) while its beam is −0.8 vs the no-RL beam (n.s.) — RL moved the answer tokens, not the camera policy, so the deployed controller is the imitation-trained one.
 
 ### 5.2 Transfer of the corpus-trained adapters (single pass, no tree)
 
@@ -481,6 +482,7 @@ OST-Bench (paired n = 5403):
 | ViewTree depth-1 tree | **0.541** | 0.425 | 0.489 | 0.720 |
 | corpus frames-only SFT, single pass | **0.516** | 0.403 | 0.513 | 0.671 |
 | SFT-A (walk-trained), single pass | **0.518** | 0.416 | 0.491 | 0.668 |
+| ViewTree-D beam | **0.496** | 0.415 | 0.491 | 0.610 |
 
 VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the corpus, but the corpus contains `vstibench_train`'s templates):
 
@@ -491,6 +493,7 @@ VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the cor
 | ViewTree depth-1 tree | **0.505** | 0.034 | 0.483 | 0.169 | 0.484 | 0.635 | 0.646 | 0.640 | 0.647 | 0.806 |
 | corpus frames-only SFT, single pass | **0.674** | 0.225 | 0.503 | 0.517 | 0.725 | 0.789 | 0.834 | 0.716 | 0.833 | 0.928 |
 | SFT-A (walk-trained), single pass | **0.685** | 0.226 | 0.529 | 0.511 | 0.780 | 0.793 | 0.832 | 0.734 | 0.831 | 0.930 |
+| ViewTree-D beam | **0.680** | 0.234 | 0.533 | 0.503 | 0.769 | 0.799 | 0.825 | 0.724 | 0.811 | 0.924 |
 
 ### 5.3 Visualized ViewTree-D reasoning walks — three per VSI task (no-RL system: SFT-C + value head + beam)
 
@@ -651,6 +654,11 @@ plus the gate stopping at depth 0.
 *#5003 — You are a robot beginning at the window and facing the waste bin. You want to navigate to the bathroom. You will perform the following actio — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT B) → correct.*
 
 
+
+The ViewTree-D beam run on each benchmark (same system as §5.1) confirms the split: STI 0.345 (+3.8 over the old
+depth-1 tree, +0.4 n.s. over its own single pass), VSTI 0.680 (−0.5 n.s. vs single pass at 5.6× the calls), OST 0.496
+(**−2.1 significant** — consensus among renders overrides direct answers on trajectory/visibility questions).
+Multi-step acquisition earns its cost only on room-geometry questions (VSI relational types).
 
 **Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
 the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are

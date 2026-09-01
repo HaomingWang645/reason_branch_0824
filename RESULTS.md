@@ -793,7 +793,7 @@ odd-scene subset; (4) frozen VGGT / Qwen pretraining may have seen these scene
 corpora — unauditable, affects all conditions equally, so paired deltas remain
 valid while absolute numbers inherit backbone exposure.
 
-## 8. ViewTree-D: multi-step (depth ≤ 3) view acquisition — interim (2026-08-31)
+## 8. ViewTree-D: multi-step (depth ≤ 3) view acquisition (final, 2026-08-31)
 
 Design: DESIGN_DEPTH.md. Trained from scratch on the combined corpus
 (493,663 QA / 1,709 ScanNet + ScanNet++ scenes, all evaluation scenes
@@ -815,7 +815,8 @@ scene-bootstrap CIs vs the data-matched baseline):**
 | SFT-A frames-only (walk-trained answerer, no renders at test) | 0.524 | +1.5 [−0.4, +3.4] | 0.607 | **0.376** | 0.670 | 0.478 | 0.481 | 0.459 | 0.537 | **0.659** | **0.606** | **0.365** | 1 | 0 |
 | **ViewTree-D, no RL: SFT-C + value head + beam (d ≤ 3)** | **0.530** | **+2.1 [−0.0, +4.3]** | **0.674** | 0.346 | 0.653 | **0.522** | **0.524** | **0.502** | **0.565** | 0.652 | 0.536 | 0.327 | 4.5 | 0.38 |
 | ViewTree-D, GRPO walks (interim ckpt, idx 5,000 of 6,960/rank ≈ 72 % of budget) + beam | 0.525 | +1.6 [−0.8, +4.2] | 0.665 | 0.382 | 0.654 | 0.540 | 0.458 | 0.469 | 0.545 | 0.650 | 0.550 | 0.337 | 4.5 | 0.36 |
-| ViewTree-D, GRPO walks (final) + beam | *training* | | | | | | | | | | | | | |
+| ViewTree-D, GRPO walks (final, 30k budget) + beam | 0.522 | +1.4 [−1.5, +4.0] | 0.649 | 0.384 | 0.653 | 0.522 | 0.462 | 0.459 | 0.540 | 0.646 | 0.550 | 0.356 | 4.6 | 0.38 |
+| GRPO final adapter, frames-only (no tree) | 0.534 | +2.5 [+0.3, +5.0] | 0.623 | 0.404 | 0.664 | 0.522 | 0.472 | 0.473 | 0.529 | 0.672 | 0.597 | 0.385 | | |
 | depth-1 tree with SFT-A + value head | 0.517 | +0.8 [−1.2, +2.7] | 0.632 | 0.357 | **0.689** | **0.531** | 0.486 | 0.464 | 0.529 | 0.633 | 0.533 | 0.317 | ≤ 8 | 1 |
 
 Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
@@ -854,7 +855,16 @@ Path mix (no-RL ViewTree-D): direct 1,815 · consensus at depth 1/2/3
   data-matched baseline, the largest frames-only gain of any adapter) —
   better than its own beam (0.525): the RL reward did improve the answer
   distribution, while walking with the collapsed policy *subtracts* value.
-  Final checkpoint pending.
+- **Final checkpoint (30k budget) confirms it:** beam 0.522 = −0.8
+  [−2.2, +0.7] vs the no-RL beam (n.s.); frames-only 0.534 = +2.5
+  [+0.3, +5.0] vs the data-matched baseline (significant) and the beam sits
+  *below* its own frames-only pass (−1.2 [−3.1, +0.8]). Path mix is
+  unchanged (direct 1,806 · consensus d1/d2/d3 357/157/61 · best-state 46 ·
+  fallback 130). **Conclusion: RL over walks moved the answer tokens, not
+  the camera policy; the deployed ViewTree-D controller is the
+  imitation-trained SFT-C (no-RL beam, 0.530).** Pre-registered ablation
+  answer: deeper-is-better holds for search (beam > depth-1 > baseline on
+  relational types) but RL on top of the collapsed policy does not add.
 
 **Cross-benchmark transfer of the corpus-trained models — OST-Bench (single
 pass, paired n = 5403; OST templates never seen in training):**
@@ -906,6 +916,88 @@ within ±0.5 pt.
   neither corpus nor renders describe the recorded trajectory.
 - Together with the OST table: the corpus helps exactly where its templates
   match (VSI, VSTI) and hurts where they do not (OST).
+
+### 8b. New-model (corpus-trained) evaluation on every benchmark (2026-09-01, complete)
+
+The §8 models were only evaluated on VSI (full) and OST/VSTI (single pass).
+This subsection completes the grid: ViewTree-D beam (SFT-C + value head,
+b = 3, keep 2, d ≤ 3, human poses) on STI / VSTI / OST with each benchmark's
+own frame budget, plus the corpus adapters' single passes on STI.
+
+**STI-Bench (paired n = 2,062, 8 tasks, block-bootstrap by video):**
+
+| system | overall | 3D grounding | dim meas | displ/path | ego orient | pose est | spat rel | speed/acc | traj desc |
+|---|---|---|---|---|---|---|---|---|---|
+| zero-shot | **0.371** | 0.315 | 0.301 | 0.240 | **0.454** | **0.535** | 0.527 | 0.309 | 0.462 |
+| SFT-plain (MindCube) | 0.261 | 0.240 | 0.260 | 0.221 | 0.108 | 0.281 | 0.466 | 0.291 | 0.308 |
+| D_10k single pass | 0.311 | 0.274 | 0.228 | 0.232 | 0.265 | 0.415 | 0.473 | 0.321 | 0.410 |
+| ViewTree depth-1 tree (§6e) | 0.306 | 0.271 | 0.239 | 0.249 | 0.178 | 0.415 | 0.466 | 0.324 | 0.397 |
+| corpus frames-only SFT | 0.343 | **0.344** | **0.318** | **0.271** | 0.141 | 0.423 | 0.438 | **0.379** | 0.538 |
+| SFT-A single pass | 0.341 | 0.309 | 0.301 | 0.215 | 0.276 | 0.404 | **0.541** | 0.370 | **0.564** |
+| **ViewTree-D beam** | **0.345** | 0.312 | 0.298 | 0.251 | 0.303 | 0.432 | 0.534 | 0.352 | 0.397 |
+
+ViewTree-D beam − old depth-1 tree **+3.8 [+2.0, +5.6]**; − SFT-A single pass
++0.4 [−1.0, +1.8] (n.s.); − zero-shot **−2.6 [−4.4, −0.7]**. SFT-A −
+SFT-plain +8.0. Beam path mix: direct 1,496 · consensus d1/d2/d3 174/39/32 ·
+fallback 308 · best-state 13; mean 4.5 calls, depth 0.18 (gate answers 73 %).
+
+- The corpus closes most of the fine-tuning gap on STI (0.26 → 0.34) but not
+  all of it: every tuned system is still below zero-shot (−2.6 for the beam),
+  driven by ego-centric orientation and pose estimation on Waymo/Omni6DPose
+  domains the indoor corpus cannot teach. The walk adds nothing significant
+  over the adapter's single pass here — as on VSI, exploration only pays on
+  room-geometry questions, which STI mostly lacks.
+
+**VSTI-Bench (paired n = 5,736, mean of 9 types, scene bootstrap):**
+
+| system | mean | cam displ | cam move dir | cam-obj abs | rel v1/v2/v3 | obj-obj lr / nf / ud |
+|---|---|---|---|---|---|---|
+| zero-shot | 0.523 | 0.134 | 0.510 | 0.149 | 0.615 / 0.667 / 0.689 | 0.567 / 0.622 / 0.748 |
+| ViewTree depth-1 tree (§6f) | 0.505 | 0.034 | 0.483 | 0.169 | 0.484 / 0.635 / 0.646 | 0.640 / 0.647 / 0.806 |
+| corpus frames-only SFT | 0.674 | 0.225 | 0.503 | **0.517** | 0.725 / 0.789 / **0.834** | 0.716 / **0.833** / **0.928** |
+| SFT-A single pass | **0.685** | 0.226 | 0.529 | 0.511 | **0.780** / 0.793 / 0.832 | **0.734** / 0.831 / 0.930 |
+| ViewTree-D beam | 0.680 | **0.234** | **0.533** | 0.503 | 0.769 / **0.799** / 0.825 | 0.724 / 0.811 / 0.924 |
+
+Beam − SFT-A single pass **−0.5 [−1.2, +0.2]** (n.s.), − corpus frames-only
++0.6 [−0.4, +1.6], − zero-shot +15.8, − old depth-1 tree +17.5. Clean subset
+0.681. Path mix: direct 3,297 · consensus d1/d2/d3 1,251/360/177 · fallback
+616 · best-state 35; mean 5.6 calls, depth 0.45 (gate answers 57 %).
+
+- Same verdict as STI and VSI-transfer: the corpus does the work; **the walk
+  adds nothing over the adapter's single pass on VSTI** while costing 5.6×
+  the calls. Multi-step acquisition pays only where the question is about
+  room geometry the input frames under-cover (VSI relational/directional
+  types) — not on camera-motion/temporal templates.
+
+**OST-Bench (paired n = 5,403, item-block bootstrap):**
+
+| system | overall | Agent_object_spatial | Agent_state | Agent_visible_info |
+|---|---|---|---|---|
+| zero-shot | **0.540** | 0.413 | 0.503 | **0.728** |
+| D_10k single pass | **0.550** | **0.430** | 0.499 | 0.733 |
+| ViewTree depth-1 tree (§6d) | 0.541 | 0.425 | 0.489 | 0.720 |
+| corpus frames-only SFT | 0.516 | 0.403 | **0.513** | 0.671 |
+| SFT-A single pass | 0.518 | 0.416 | 0.491 | 0.668 |
+| ViewTree-D beam | 0.496 | 0.415 | 0.491 | 0.610 |
+
+Beam − SFT-A single pass **−2.1 [−3.1, −1.2]**, − zero-shot **−4.4
+[−6.0, −2.7]**, − old depth-1 tree **−4.5 [−6.0, −2.9]**. Path mix: direct
+3,019 · consensus d1/d2/d3 1,245/360/83 · fallback 655 · best-state 41; mean
+5.1 calls, depth 0.43 (gate 56 %).
+
+- **On OST the walk actively hurts** — the only benchmark where it is
+  significantly below its own single pass. OST questions are about the
+  agent's trajectory and what it has seen; a consensus among rendered views
+  of the *current* reconstruction overrides direct answers that were more
+  often right (Agent_visible_info 0.668 → 0.610). The old depth-1 tree
+  avoided this via a better-calibrated arbitration for its adapter.
+
+**Grid summary (new corpus-trained system vs its own single pass):** VSI
++2.1 (borderline, relational types) · STI +0.4 (n.s.) · VSTI −0.5 (n.s.) ·
+OST −2.1 (significant harm). Multi-step view acquisition earns its cost
+only on room-geometry questions under-covered by the input frames; a
+deployment should gate the walk by benchmark/question family, or train the
+gate/arbitration per domain.
 
 ## 7. Next milestones
 

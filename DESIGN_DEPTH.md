@@ -1,7 +1,9 @@
 # ViewTree-D: multi-step (depth > 1) view acquisition — experiment design
 
-*Drafted 2026-08-28. Status: corpus assembled (493,663 QA / 1,709 scenes, see §2
-update); Phase 0 pose-bank generation queued behind the STI/VSTI evaluation.*
+*Drafted 2026-08-28. Status: **completed 2026-08-31** — all phases run (Phase 4
+cross-domain hardening dropped: Phase 3 GRPO collapsed to STOP and added nothing
+over SFT-C). Final numbers in RESULTS.md §8; deployed controller = SFT-C + value
+head + beam (0.530 on VSI held-out, +2.1 vs the data-matched baseline).*
 
 ## 0. Why a new design is needed
 

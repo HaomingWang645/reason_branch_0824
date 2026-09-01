@@ -12,9 +12,16 @@ class QwenVL:
                  max_pixels=448 * 448, adapter=None):
         from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
-        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            model_path, dtype=torch.bfloat16, attn_implementation="sdpa"
-        ).to(device).eval()
+        import os
+        dm = os.environ.get("VIEWTREE_DEVICE_MAP")
+        if dm:  # e.g. "auto" to shard a large model over the visible GPUs
+            self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                model_path, dtype=torch.bfloat16, attn_implementation="sdpa", device_map=dm
+            ).eval()
+        else:
+            self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                model_path, dtype=torch.bfloat16, attn_implementation="sdpa"
+            ).to(device).eval()
         if adapter:
             from peft import PeftModel
 
