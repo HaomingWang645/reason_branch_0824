@@ -917,6 +917,40 @@ within ±0.5 pt.
 - Together with the OST table: the corpus helps exactly where its templates
   match (VSI, VSTI) and hurts where they do not (OST).
 
+### 8b. New-model (corpus-trained) evaluation on every benchmark (2026-09-01, running)
+
+The §8 models were only evaluated on VSI (full) and OST/VSTI (single pass).
+This subsection completes the grid: ViewTree-D beam (SFT-C + value head,
+b = 3, keep 2, d ≤ 3, human poses) on STI / VSTI / OST with each benchmark's
+own frame budget, plus the corpus adapters' single passes on STI.
+
+**STI-Bench (paired n = 2,062, 8 tasks, block-bootstrap by video):**
+
+| system | overall | 3D grounding | dim meas | displ/path | ego orient | pose est | spat rel | speed/acc | traj desc |
+|---|---|---|---|---|---|---|---|---|---|
+| zero-shot | **0.371** | 0.315 | 0.301 | 0.240 | **0.454** | **0.535** | 0.527 | 0.309 | 0.462 |
+| SFT-plain (MindCube) | 0.261 | 0.240 | 0.260 | 0.221 | 0.108 | 0.281 | 0.466 | 0.291 | 0.308 |
+| D_10k single pass | 0.311 | 0.274 | 0.228 | 0.232 | 0.265 | 0.415 | 0.473 | 0.321 | 0.410 |
+| ViewTree depth-1 tree (§6e) | 0.306 | 0.271 | 0.239 | 0.249 | 0.178 | 0.415 | 0.466 | 0.324 | 0.397 |
+| corpus frames-only SFT | 0.343 | **0.344** | **0.318** | **0.271** | 0.141 | 0.423 | 0.438 | **0.379** | 0.538 |
+| SFT-A single pass | 0.341 | 0.309 | 0.301 | 0.215 | 0.276 | 0.404 | **0.541** | 0.370 | **0.564** |
+| **ViewTree-D beam** | **0.345** | 0.312 | 0.298 | 0.251 | 0.303 | 0.432 | 0.534 | 0.352 | 0.397 |
+
+ViewTree-D beam − old depth-1 tree **+3.8 [+2.0, +5.6]**; − SFT-A single pass
++0.4 [−1.0, +1.8] (n.s.); − zero-shot **−2.6 [−4.4, −0.7]**. SFT-A −
+SFT-plain +8.0. Beam path mix: direct 1,496 · consensus d1/d2/d3 174/39/32 ·
+fallback 308 · best-state 13; mean 4.5 calls, depth 0.18 (gate answers 73 %).
+
+- The corpus closes most of the fine-tuning gap on STI (0.26 → 0.34) but not
+  all of it: every tuned system is still below zero-shot (−2.6 for the beam),
+  driven by ego-centric orientation and pose estimation on Waymo/Omni6DPose
+  domains the indoor corpus cannot teach. The walk adds nothing significant
+  over the adapter's single pass here — as on VSI, exploration only pays on
+  room-geometry questions, which STI mostly lacks.
+
+**VSTI-Bench beam and OST-Bench beam: running** (7-way resharded VSTI ETA
+~5 h; OST follows on GPUs 0–3).
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now
