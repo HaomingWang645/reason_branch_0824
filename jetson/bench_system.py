@@ -136,17 +136,44 @@ class Bench:
         return v, time.monotonic() - t0
 
 
-def load_models():
-    from viewtree.vlm import QwenVL
+class BenchVLM:
+    """QwenVL-compatible loader with optional 4-bit quantization / offload
+    (needed for 32B, which does not fit in 64 GB unified memory in bf16)."""
+
+    def __init__(self, model_path, quant="none", max_pixels=448 * 448):
+        from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+        kw = dict(dtype=torch.bfloat16, attn_implementation="sdpa")
+        if quant == "4bit":
+            from transformers import BitsAndBytesConfig
+            kw["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True)
+            kw["device_map"] = "cuda:0"
+        elif quant == "offload":
+            kw["device_map"] = "auto"
+            kw["max_memory"] = {0: "40GiB", "cpu": "80GiB"}
+        m = Qwen2_5_VLForConditionalGeneration.from_pretrained(model_path, **kw)
+        if quant == "none":
+            m = m.to("cuda")
+        self.model = m.eval()
+        self.processor = AutoProcessor.from_pretrained(model_path)
+        self.device = "cuda"
+        self.max_pixels = max_pixels
+
+
+def load_models(model_path="Qwen/Qwen2.5-VL-7B-Instruct", quant="none"):
     t0 = time.monotonic()
-    vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct")
+    vlm = BenchVLM(model_path, quant=quant)
     t_vlm = time.monotonic() - t0
     t0 = time.monotonic()
     from viewtree.reconstruct import _get_model
     _get_model("cuda")
     t_vggt = time.monotonic() - t0
+    cfg = vlm.model.config
+    hid = getattr(getattr(cfg, "text_config", cfg), "hidden_size",
+                  getattr(cfg, "hidden_size", 3584))
     head = torch.nn.Sequential(
-        torch.nn.Linear(3584, 512), torch.nn.GELU(), torch.nn.Dropout(0.1),
+        torch.nn.Linear(hid, 512), torch.nn.GELU(), torch.nn.Dropout(0.1),
         torch.nn.Linear(512, 1)).to("cuda").float().eval()
     return vlm, head, t_vlm, t_vggt
 
@@ -190,6 +217,8 @@ def main():
     ap.add_argument("--micro-reps", type=int, default=3)
     ap.add_argument("--skip-micro", action="store_true")
     ap.add_argument("--methods", default="frames16,memory32,tree1,vtd")
+    ap.add_argument("--model", default="Qwen/Qwen2.5-VL-7B-Instruct")
+    ap.add_argument("--quant", default="none", choices=["none", "4bit", "offload"])
     a = ap.parse_args()
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
 
@@ -198,12 +227,13 @@ def main():
     tel.start()
     bench = Bench(tel, a.out)
     bench.log(kind="meta", idle_total_w=idle_w, powermode="MAXN",
-              device="Jetson AGX Orin 64GB", ts=time.strftime("%F %T"))
+              device="Jetson AGX Orin 64GB", ts=time.strftime("%F %T"),
+              model=a.model, quant=a.quant)
 
     # ---- load models ----
     torch.cuda.reset_peak_memory_stats()
     with tel.window("load_models"):
-        vlm, head, t_vlm, t_vggt = load_models()
+        vlm, head, t_vlm, t_vggt = load_models(a.model, a.quant)
     bench.log(kind="phase", label="load_models", vlm_load_s=t_vlm,
               vggt_load_s=t_vggt, cuda_peak_gb=cuda_mem_gb(),
               **last_win(tel))

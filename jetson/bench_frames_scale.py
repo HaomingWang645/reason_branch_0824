@@ -23,6 +23,8 @@ def main():
         "frames_scale_raw.json"))
     ap.add_argument("--reps", type=int, default=2)
     ap.add_argument("--counts", default="")
+    ap.add_argument("--model", default="Qwen/Qwen2.5-VL-7B-Instruct")
+    ap.add_argument("--quant", default="none", choices=["none", "4bit", "offload"])
     a = ap.parse_args()
     global COUNTS
     if a.counts:
@@ -33,9 +35,9 @@ def main():
     tel.start()
     bench = Bench(tel, a.out)
     bench.log(kind="meta", idle_total_w=idle_w, powermode="MAXN",
-              device="Jetson AGX Orin 64GB", ts=time.strftime("%F %T"))
+              device="Jetson AGX Orin 64GB", ts=time.strftime("%F %T"), model=a.model, quant=a.quant)
 
-    vlm, head, t_vlm, t_vggt = load_models()
+    vlm, head, t_vlm, t_vggt = load_models(a.model, a.quant)
     frames = make_frames(128)
     bench.vlm_call(vlm, frames[:2], "warmup " + QUESTION, 4, label="warmup")
 

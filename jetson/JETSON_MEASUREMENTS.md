@@ -256,14 +256,131 @@ exhausted unified-memory allocation, rather than a clean
    study never ran them head-to-head either (DESIGN_IMPLEMENTATION.md §
    "external reimplementations were not run").
 
-## 9. Reproduce
+## 9. Model-size comparison: Qwen2.5-VL 3B / 7B / 32B
+
+Same experiments repeated with the 3B and 32B backbones (harness args
+`--model`, `--quant`; raw data `bench_raw_3b.json`, `frames_scale_3b*.json`,
+`bench_raw_32b.json`, `frames_scale_32b_raw.json`).
+
+**32B feasibility:** bf16 weights are ≈ 66 GB — **more than the 64 GB unified
+memory**, so the full-precision model cannot run on this device at all
+(§9.4). 32B numbers are therefore measured with bitsandbytes **NF4 4-bit**
+quantization (~19 GB weights; bnb 0.50.2 has working aarch64 wheels). NF4
+dequantizes on the fly, so its latency is *not* comparable to an optimized
+W4A16 engine — treat 32B rows as "what 4-bit torch costs today," an upper
+bound that TensorRT-LLM would improve substantially.
+
+### 9.1 Per-question, expected at the server path mix
+
+| method | 3B bf16 | 7B bf16 | 32B NF4 |
+|---|---:|---:|---:|
+| frames16 (1 call) | 8.4 s / 338 J | 11.7 s / 529 J | 32.2 s / 1690 J |
+| memory32 (1 call) | 8.0 s / 319 J | 11.4 s / 518 J | 31.4 s / 1673 J |
+| depth-1 tree | 35.3 s / 1321 J | 46.3 s / 2110 J | 126.5 s / 6717 J |
+| **ViewTree-D (ours)** | **17.6 s / 681 J** | **24.5 s / 1104 J** | **69.6 s / 3690 J** |
+
+The cost *ratios* between methods are model-size-invariant (ViewTree-D ≈ 2.1×
+the static baselines and ≈ 1.8–2.0× cheaper than the depth-1 tree at every
+size); only the absolute scale moves (3B ≈ 0.7×, 32B-NF4 ≈ 2.8× the 7B
+numbers).
+
+### 9.2 Per-route (median), 3B
+
+| route | calls | latency s | energy J | GPU-rail J |
+|---|---:|---:|---:|---:|
+| vtd depth 0 | 2 | 6.9 | 266 | 181 |
+| vtd depth 1 | 5 | 19.4 | 748 | 505 |
+| vtd depth 2 | 13 | 52.6 | 2037 | 1387 |
+| vtd depth 3 | 20 | 81.1 | 3176 | 2174 |
+| tree1 direct | 2 | 8.7 | 330 | 219 |
+| tree1 full | 8 | 45.2 | 1695 | 1112 |
+
+3B is only ≈ 1.4× faster than 7B (not the 2.3× parameter ratio): the shared
+vision tower, CPU preprocessing, and short decodes don't shrink with the LM.
+Method ordering is unchanged — ViewTree-D ≈ 2.1× the static baselines and
+≈ 2× cheaper than the depth-1 tree at every model size measured.
+
+### 9.3 Frames-scaling, 3B (frames-only baseline until OOM)
+
+| frames | prompt tok | latency s | energy J | peak CUDA GB | peak sys RAM GB |
+|---:|---:|---:|---:|---:|---:|
+| 16 | 4,130 | 8.7 | 340 | 13.5 | 27.2 |
+| 32 | 8,194 | 14.7 | 629 | 14.4 | 28.6 |
+| 64 | 16,322 | 28.8 | 1,276 | 16.1 | 31.1 |
+| 128 | 32,578 | 58.4 | 2,744 | 19.5 | 36.5 |
+| 256 | 65,090 | 132.0 | 6,464 | 26.3 | 47.0 |
+| 384 | 97,602 | 216.4 | 11,183 | 33.1 | 56.4 |
+| 512 | 130,114 | 318.9 | 16,794 | 39.9 | 60.6 |
+| **768** | ~195,266 | **OOM** | — | 43.6 at failure | exhausted |
+
+3B's ceiling is 512 frames (~130k tokens) vs 7B's 384 — the same allocator
+assert at the 64 GB unified-memory wall. Memory slope ≈ 52 MB/frame
+(vs 7B's ≈ 55 — KV shrinks, ViT activations don't). Latency ≈ 0.55 → 0.62
+s/frame, ~70 % of 7B's at every count.
+
+### 9.4 32B results (NF4 4-bit)
+
+**bf16 infeasible, measured:** loading `Qwen2.5-VL-32B-Instruct` in bf16 fails
+after 256 s at the unified-memory wall (CUDA allocator assert while
+materializing ≈ 66 GB of weights on a 61 GB-usable device).
+
+**bitsandbytes on Jetson:** the PyPI aarch64 wheel (0.50.2) targets SBSA
+datacenter GPUs (sm_90) and dies with `named symbol not found` on Orin (sm_87).
+Fix: build from source — `cmake -DCOMPUTE_BACKEND=cuda
+-DCMAKE_CUDA_ARCHITECTURES=87` (source at `/mnt/data/bnb_src`, installed as
+0.50.3.dev0). NF4 kernels then work.
+
+Per-route (median, nq = 2; ~19 GB weights, quantize-on-load ≈ minutes):
+
+| route | calls | latency s | energy J | GPU-rail J |
+|---|---:|---:|---:|---:|
+| vtd depth 0 | 2 | 27.2 | 1443 | 1028 |
+| vtd depth 1 | 5 | 75.6 | 4020 | 2860 |
+| vtd depth 2 | 13 | 200.7 | 10663 | 7609 |
+| vtd depth 3 | 20 | 331.7 | 17573 | 12514 |
+| tree1 direct | 2 | 32.7 | 1721 | 1224 |
+| tree1 full | 8 | 162.3 | 8624 | 6129 |
+| frames16 | 1 | 32.2 | 1690 | 1206 |
+| memory32 | 1 | 31.4 | 1673 | 1192 |
+
+Frames-scaling (1 rep):
+
+| frames | prompt tok | latency s | energy J | peak CUDA GB | peak sys RAM GB |
+|---:|---:|---:|---:|---:|---:|
+| 16 | 4,130 | 32.4 | 1,661 | 26.8 | 35.1 |
+| 32 | 8,194 | 58.9 | 3,049 | 28.8 | 37.4 |
+| 64 | 16,322 | 116.5 | 6,176 | 32.8 | 41.8 |
+| 128 | 32,578 | 241.7 | 13,233 | 40.9 | 51.4 |
+| 192 | 48,834 | 383.7 | 21,306 | 49.1 | 60.5 |
+| **256** | ~65,090 | **OOM** | — | 45.7 at failure | exhausted |
+
+Observations:
+
+- NF4-torch is ≈ 2.8× slower than 7B bf16 per token (dequant-on-the-fly
+  dominates; an optimized W4A16 engine would narrow this a lot — treat these as
+  an upper bound). Sustained draw is ≈ 51–55 W (memory-bound dequant keeps the
+  GPU busier than bf16's 45 W).
+- Memory slope is steep: ≈ 127 MB/frame (32B's KV is ≈ 262 KB/token bf16 —
+  4.6× the 7B's 57 KB/token — GQA 8 kv-heads × 64 layers). OOM ceiling:
+  **192 frames (~49k tokens)**, half the 7B ceiling and ~2.7× below 3B's.
+- ViewTree-D's gated route still beats one frames16 call (27.2 vs 32.2 s) even
+  at 32B.
+
+**OOM ceilings across sizes (frames-only baseline, 64 GB unified memory):**
+3B bf16 → 512 frames (~130k tok); 7B bf16 → 384 (~98k); 32B NF4 → 192 (~49k).
+
+## 10. Reproduce
 
 ```bash
-# full suite (micro + end-to-end, ~30 min at MAXN)
+# full suite (micro + end-to-end, ~30 min at MAXN for 7B)
 HF_HOME=/mnt/data/hf_cache VIEWTREE_POSES=human \
-  python jetson/bench_system.py --nq 3 --micro-reps 3
-python jetson/summarize.py            # -> jetson/results/REPORT.md
+  python jetson/bench_system.py --nq 3 --micro-reps 3   # --model ... --quant 4bit
+python jetson/summarize.py <raw.json> <report.md>
 
-# frames-scaling study
-HF_HOME=/mnt/data/hf_cache python jetson/bench_frames_scale.py
+# frames-scaling study (base + OOM extension)
+HF_HOME=/mnt/data/hf_cache python jetson/bench_frames_scale.py  # --counts ...
+python jetson/summarize_frames_scale.py <raw.json>
+
+# whole campaigns per model size (download-wait + suite + scaling chained)
+zsh jetson/run_3b.sh ; zsh jetson/run_32b.sh
 ```

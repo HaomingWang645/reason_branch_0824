@@ -10,6 +10,7 @@ import json, sys
 import numpy as np
 
 RAW = sys.argv[1] if len(sys.argv) > 1 else "jetson/results/bench_raw.json"
+OUT = sys.argv[2] if len(sys.argv) > 2 else "jetson/results/REPORT.md"
 recs = json.load(open(RAW))
 
 def med(xs):
@@ -33,7 +34,7 @@ GE = "VDD_GPU_SOC_energy_j"
 
 lines = []
 meta = rows("meta")[0]
-lines.append("# Jetson AGX Orin system measurements (W0 bring-up, torch bf16)\n")
+lines.append(f"# Jetson AGX Orin system measurements — {meta.get('model','Qwen2.5-VL-7B')} ({meta.get('quant','none')})\n")
 lines.append(f"Device: {meta['device']}, power mode {meta['powermode']}, "
              f"idle draw {meta['idle_total_w']:.1f} W (sum of VDD_GPU_SOC + VDD_CPU_CV + VIN_SYS_5V0; energy figures below are the same 3-rail sum, a lower bound on board power). "
              f"Run: {meta['ts']}.\n")
@@ -137,5 +138,5 @@ if recon:
                  f"**{(rl+vl)/17.8:.1f} s per question** (upfront {rl+vl:.0f} s).")
     lines.append(f"- frames16 adds nothing (no reconstruction).")
 
-open("jetson/results/REPORT.md", "w").write("\n".join(lines) + "\n")
+open(OUT, "w").write("\n".join(lines) + "\n")
 print("\n".join(lines))
