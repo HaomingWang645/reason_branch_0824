@@ -948,8 +948,28 @@ fallback 308 · best-state 13; mean 4.5 calls, depth 0.18 (gate answers 73 %).
   over the adapter's single pass here — as on VSI, exploration only pays on
   room-geometry questions, which STI mostly lacks.
 
-**VSTI-Bench beam and OST-Bench beam: running** (7-way resharded VSTI ETA
-~5 h; OST follows on GPUs 0–3).
+**VSTI-Bench (paired n = 5,736, mean of 9 types, scene bootstrap):**
+
+| system | mean | cam displ | cam move dir | cam-obj abs | rel v1/v2/v3 | obj-obj lr / nf / ud |
+|---|---|---|---|---|---|---|
+| zero-shot | 0.523 | 0.134 | 0.510 | 0.149 | 0.615 / 0.667 / 0.689 | 0.567 / 0.622 / 0.748 |
+| ViewTree depth-1 tree (§6f) | 0.505 | 0.034 | 0.483 | 0.169 | 0.484 / 0.635 / 0.646 | 0.640 / 0.647 / 0.806 |
+| corpus frames-only SFT | 0.674 | 0.225 | 0.503 | **0.517** | 0.725 / 0.789 / **0.834** | 0.716 / **0.833** / **0.928** |
+| SFT-A single pass | **0.685** | 0.226 | 0.529 | 0.511 | **0.780** / 0.793 / 0.832 | **0.734** / 0.831 / 0.930 |
+| ViewTree-D beam | 0.680 | **0.234** | **0.533** | 0.503 | 0.769 / **0.799** / 0.825 | 0.724 / 0.811 / 0.924 |
+
+Beam − SFT-A single pass **−0.5 [−1.2, +0.2]** (n.s.), − corpus frames-only
++0.6 [−0.4, +1.6], − zero-shot +15.8, − old depth-1 tree +17.5. Clean subset
+0.681. Path mix: direct 3,297 · consensus d1/d2/d3 1,251/360/177 · fallback
+616 · best-state 35; mean 5.6 calls, depth 0.45 (gate answers 57 %).
+
+- Same verdict as STI and VSI-transfer: the corpus does the work; **the walk
+  adds nothing over the adapter's single pass on VSTI** while costing 5.6×
+  the calls. Multi-step acquisition pays only where the question is about
+  room geometry the input frames under-cover (VSI relational/directional
+  types) — not on camera-motion/temporal templates.
+
+**OST-Bench beam: running** (GPUs 0–3).
 
 ## 7. Next milestones
 
