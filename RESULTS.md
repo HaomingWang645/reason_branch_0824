@@ -917,7 +917,7 @@ within ±0.5 pt.
 - Together with the OST table: the corpus helps exactly where its templates
   match (VSI, VSTI) and hurts where they do not (OST).
 
-### 8b. New-model (corpus-trained) evaluation on every benchmark (2026-09-01, running)
+### 8b. New-model (corpus-trained) evaluation on every benchmark (2026-09-01, complete)
 
 The §8 models were only evaluated on VSI (full) and OST/VSTI (single pass).
 This subsection completes the grid: ViewTree-D beam (SFT-C + value head,
@@ -969,7 +969,35 @@ Beam − SFT-A single pass **−0.5 [−1.2, +0.2]** (n.s.), − corpus frames-o
   room geometry the input frames under-cover (VSI relational/directional
   types) — not on camera-motion/temporal templates.
 
-**OST-Bench beam: running** (GPUs 0–3).
+**OST-Bench (paired n = 5,403, item-block bootstrap):**
+
+| system | overall | Agent_object_spatial | Agent_state | Agent_visible_info |
+|---|---|---|---|---|
+| zero-shot | **0.540** | 0.413 | 0.503 | **0.728** |
+| D_10k single pass | **0.550** | **0.430** | 0.499 | 0.733 |
+| ViewTree depth-1 tree (§6d) | 0.541 | 0.425 | 0.489 | 0.720 |
+| corpus frames-only SFT | 0.516 | 0.403 | **0.513** | 0.671 |
+| SFT-A single pass | 0.518 | 0.416 | 0.491 | 0.668 |
+| ViewTree-D beam | 0.496 | 0.415 | 0.491 | 0.610 |
+
+Beam − SFT-A single pass **−2.1 [−3.1, −1.2]**, − zero-shot **−4.4
+[−6.0, −2.7]**, − old depth-1 tree **−4.5 [−6.0, −2.9]**. Path mix: direct
+3,019 · consensus d1/d2/d3 1,245/360/83 · fallback 655 · best-state 41; mean
+5.1 calls, depth 0.43 (gate 56 %).
+
+- **On OST the walk actively hurts** — the only benchmark where it is
+  significantly below its own single pass. OST questions are about the
+  agent's trajectory and what it has seen; a consensus among rendered views
+  of the *current* reconstruction overrides direct answers that were more
+  often right (Agent_visible_info 0.668 → 0.610). The old depth-1 tree
+  avoided this via a better-calibrated arbitration for its adapter.
+
+**Grid summary (new corpus-trained system vs its own single pass):** VSI
++2.1 (borderline, relational types) · STI +0.4 (n.s.) · VSTI −0.5 (n.s.) ·
+OST −2.1 (significant harm). Multi-step view acquisition earns its cost
+only on room-geometry questions under-covered by the input frames; a
+deployment should gate the walk by benchmark/question family, or train the
+gate/arbitration per domain.
 
 ## 7. Next milestones
 

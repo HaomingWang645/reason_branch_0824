@@ -1,6 +1,6 @@
 # ViewTree: Spatial Reasoning over an Explicit Scene Memory with a Human-Camera Reasoning Tree
 
-*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-08-31.*
+*Technical report — best system and its comparison with no-world-memory baselines. Generated 2026-09-01.*
 
 ## 1. Introduction: the method from the beginning
 
@@ -482,6 +482,7 @@ OST-Bench (paired n = 5403):
 | ViewTree depth-1 tree | **0.541** | 0.425 | 0.489 | 0.720 |
 | corpus frames-only SFT, single pass | **0.516** | 0.403 | 0.513 | 0.671 |
 | SFT-A (walk-trained), single pass | **0.518** | 0.416 | 0.491 | 0.668 |
+| ViewTree-D beam | **0.496** | 0.415 | 0.491 | 0.610 |
 
 VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the corpus, but the corpus contains `vstibench_train`'s templates):
 
@@ -492,6 +493,7 @@ VSTI-Bench (paired n = 5736; VSTI rooms are ScanNet *val*, 0 shared with the cor
 | ViewTree depth-1 tree | **0.505** | 0.034 | 0.483 | 0.169 | 0.484 | 0.635 | 0.646 | 0.640 | 0.647 | 0.806 |
 | corpus frames-only SFT, single pass | **0.674** | 0.225 | 0.503 | 0.517 | 0.725 | 0.789 | 0.834 | 0.716 | 0.833 | 0.928 |
 | SFT-A (walk-trained), single pass | **0.685** | 0.226 | 0.529 | 0.511 | 0.780 | 0.793 | 0.832 | 0.734 | 0.831 | 0.930 |
+| ViewTree-D beam | **0.680** | 0.234 | 0.533 | 0.503 | 0.769 | 0.799 | 0.825 | 0.724 | 0.811 | 0.924 |
 
 ### 5.3 Visualized ViewTree-D reasoning walks — three per VSI task (no-RL system: SFT-C + value head + beam)
 
@@ -652,6 +654,11 @@ plus the gate stopping at depth 0.
 *#5003 — You are a robot beginning at the window and facing the waste bin. You want to navigate to the bathroom. You will perform the following actio — gate EXPLORE, mode `consensus_d1`, depth 1, 5 calls, final **B** (GT B) → correct.*
 
 
+
+The ViewTree-D beam run on each benchmark (same system as §5.1) confirms the split: STI 0.345 (+3.8 over the old
+depth-1 tree, +0.4 n.s. over its own single pass), VSTI 0.680 (−0.5 n.s. vs single pass at 5.6× the calls), OST 0.496
+(**−2.1 significant** — consensus among renders overrides direct answers on trajectory/visibility questions).
+Multi-step acquisition earns its cost only on room-geometry questions (VSI relational types).
 
 **Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
 the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are

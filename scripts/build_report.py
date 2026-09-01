@@ -87,7 +87,7 @@ def load_sti(pat):  # STI 'ID' is only unique within a video -> key by (video, i
     d = {}
     for p in glob.glob(os.path.join(R, pat)):
         for l in open(p):
-            r = json.loads(l); d[r["scene"] + "/" + r["id"]] = r
+            r = json.loads(l); d[r["scene"] + "/" + r["id"].split("_")[-1]] = r
     return d
 STI = collections.OrderedDict([
     ("Qwen2.5-VL-7B zero-shot", load_sti("results/newbench/sti_direct_zeroshot_s*.jsonl")),
@@ -243,12 +243,12 @@ def _acc_tab(sysd, key, classes, cls_of, score):
     return t
 DOST = collections.OrderedDict([(k, OSTB[k]) for k in ("Qwen2.5-VL-7B zero-shot", "SFT-plain", "D_10k adapter, single pass") if k in OSTB])
 if tree_ost: DOST["ViewTree depth-1 tree"] = tree_ost
-DOST["corpus frames-only SFT, single pass"] = load("results/depth/ost_sft_frames_s*.jsonl"); DOST["SFT-A (walk-trained), single pass"] = load("results/depth/ost_sft_a_s*.jsonl")
+DOST["corpus frames-only SFT, single pass"] = load("results/depth/ost_sft_frames_s*.jsonl"); DOST["SFT-A (walk-trained), single pass"] = load("results/depth/ost_sft_a_s*.jsonl"); DOST["ViewTree-D beam"] = load("results/depth/ost_treeD_s*.jsonl")
 DOST = collections.OrderedDict((k, v) for k, v in DOST.items() if len(v) >= 5000)
 dost_ids = [i for i in ost_ids if all(i in v for v in DOST.values())]
 dost_tab = _acc_tab(DOST, dost_ids, oclasses, lambda i: OSTB["SFT-plain"][i]["qtype"], lambda r: r["correct"]) if dost_ids else []
 DV = collections.OrderedDict([(k, VSTI[k]) for k in ("Qwen2.5-VL-7B zero-shot", "SFT-plain", "**ViewTree (best): reasoning tree**") if k in VSTI])
-DV["corpus frames-only SFT, single pass"] = load("results/depth/vsti_sft_frames_s*.jsonl"); DV["SFT-A (walk-trained), single pass"] = load("results/depth/vsti_sft_a_s*.jsonl")
+DV["corpus frames-only SFT, single pass"] = load("results/depth/vsti_sft_frames_s*.jsonl"); DV["SFT-A (walk-trained), single pass"] = load("results/depth/vsti_sft_a_s*.jsonl"); DV["ViewTree-D beam"] = load("results/depth/vsti_treeD_s*.jsonl")
 DV = collections.OrderedDict((k.replace("**ViewTree (best): reasoning tree**", "ViewTree depth-1 tree"), v) for k, v in DV.items() if len(v) >= 5000)
 dv_ids = [i for i in DV["SFT-plain"] if all(i in v for v in DV.values())] if "SFT-plain" in DV else []
 dv_types = sorted({DV["SFT-plain"][i]["qtype"] for i in dv_ids}) if dv_ids else []
@@ -463,6 +463,11 @@ best state, or fall-back to the direct answer). Examples were sampled to show mu
 plus the gate stopping at depth 0.
 
 TREED_FIGS_PLACEHOLDER
+
+The ViewTree-D beam run on each benchmark (same system as §5.1) confirms the split: STI 0.345 (+3.8 over the old
+depth-1 tree, +0.4 n.s. over its own single pass), VSTI 0.680 (−0.5 n.s. vs single pass at 5.6× the calls), OST 0.496
+(**−2.1 significant** — consensus among renders overrides direct answers on trajectory/visibility questions).
+Multi-step acquisition earns its cost only on room-geometry questions (VSI relational types).
 
 **Reading.** The corpus helps exactly where its templates match — VSI (+14) and VSTI (+16 over zero-shot, +21 over SFT-plain, with
 the numeric camera/object-distance types going from ~0.15 to ~0.5) — and *hurts* where they do not: on OST both corpus adapters are
