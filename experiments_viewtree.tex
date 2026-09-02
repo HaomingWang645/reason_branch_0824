@@ -1,0 +1,271 @@
+% ===================================================================
+% Experiment sections for ViewTree, structured after Sections 6-7 of
+% mobicom26 (2).tex (SpatialMind).  All results are left blank ("--" in
+% tables, "XX" in prose) to be filled from RESULTS.md / new runs.
+% Citation keys reused from the mobicom26 bibliography where they exist;
+% new keys (ostbench2025, vstibench2026, wang2025vggt, mindcube2025,
+% yang2025vsi590k) need bib entries.
+% ===================================================================
+
+\section{Experiment Settings}
+\label{sec:experiment_setting}
+
+We evaluate ViewTree both on a server testbed and on an embodied AI device. All controller training and large-scale benchmark evaluations run on a server with 8$\times$NVIDIA H100 GPUs; the complete inference pipeline is additionally deployed on an NVIDIA Jetson AGX Orin (64\,GB) to characterize on-device feasibility. We apply VLM backbones with various parameter sizes to match different device budgets: Qwen2.5-VL-3B, Qwen2.5-VL-7B, and Qwen2.5-VL-32B \cite{bai2025qwen2}, where the 32B model is deployed on Jetson with 4-bit weight quantization.
+
+\noindent\textbf{System setup.} On the server, all models run in PyTorch with bfloat16 precision. On Jetson AGX Orin, the VLM runs with quantized weights, and the remaining pipeline stages are executed as stage-level batches: the frozen VGGT \cite{wang2025vggt} reconstruction is computed once per scene and reused across all questions and reasoning branches; candidate views proposed at the same tree level are rendered in one point-splat pass and encoded as one batch; rendered views and their encoded tokens are cached by camera pose and scene version, so repeated requests skip both the renderer and the visual encoder. The end-to-end latency reported in Section~\ref{sec:evaluation} includes reconstruction (amortized and upfront), rendering, visual encoding, and all VLM calls of the reasoning tree.
+
+\noindent\textbf{Benchmarks.} Our experiments evaluate the spatial-cognition capabilities that ViewTree is designed to improve. Following the task grouping of Section~\ref{sec:experiment_setting}, we use \emph{Metric Measurement} (absolute distance, object size, room size), \emph{Perspective-dependent Reasoning} (relative direction, relative distance, object counting, route planning), and \emph{Spatiotemporal Tracking} (appearance order, camera-motion and camera--object relations). We evaluate on four benchmark datasets:
+\begin{itemize}
+    \item \textbf{VSI-Bench \cite{yang2025thinking}} contains $>$5{,}000 QA pairs from 288 indoor videos over 10 spatial tasks; we report absolute distance (A.D.), object size (O.S.), relative distance (R.Dt.), relative direction (R.Dr.), object count (O.C.), and appearance order (Ap.Or.). To prevent any information leakage from confidence-head fitting, all VSI-Bench numbers are reported on a held-out half of the scenes (144 scenes, 2{,}557 questions) that is never touched by any training or calibration; splits are at scene level throughout.
+    \item \textbf{STI-Bench \cite{li2025sti}} contains 300 videos and $>$2{,}000 QA pairs; we report dimensional measurement (D.Meas.) and 3D video grounding (Grd.) to complement VSI-Bench.
+    \item \textbf{VSTI-Bench \cite{vstibench2026}} contains 5{,}736 QA pairs on ScanNet validation videos over 9 spatio-temporal types; we report the camera--object relation (C.O.) and object--object relation (O.O.) groups.
+    \item \textbf{OST-Bench \cite{ostbench2025}} contains 5{,}557 multiple-choice questions probing online spatio-temporal reasoning over an agent's cumulative image history; we report the overall accuracy (Ovr.).
+\end{itemize}
+QA performance is evaluated as the percentage of correct answer choices; numerical tasks (absolute distance, object size, room size, and the numerical VSTI types) use Mean Relative Accuracy. All comparisons are paired on identical question sets, and we report scene-level bootstrap 95\% confidence intervals for the headline deltas.
+
+\noindent\textbf{Baselines.} We compare ViewTree against the following baselines, all using the same VLM backbone, visual resolution, frame budgets, and answer scorer:
+\begin{itemize}
+    \item \textbf{Direct input} uniformly downsamples the video and feeds the frames directly to the VLM.
+    \item \textbf{SFT-plain} fine-tunes the same backbone (LoRA) on the benchmark's own training split with frames-to-answer supervision, without any spatial memory.
+    \item \textbf{SFT+GRPO-plain} further applies GRPO with answer-correctness reward on top of SFT-plain.
+    \item \textbf{Static memory prompting} feeds the frames together with a fixed set of five rendered views of the reconstruction, without any adaptive acquisition, pruning, or fusion.
+\end{itemize}
+We evaluate two ViewTree variants: \textbf{ViewTree} (depth-1 tree: gate $\rightarrow$ five human-camera-constrained candidate views $\rightarrow$ confidence-guided keep-2 $\rightarrow$ fusion and arbitration) and \textbf{ViewTree-D} (multi-step walks: beam search over discrete camera actions on a pre-computed pose bank, depth $\le$ 3). In addition, we report an \textbf{oracle walk} upper bound on the training corpus: a bounded search that is allowed to compare each answer with the ground truth and keeps the best walk. Analogous to the ground-truth spatial memory oracle in Section~\ref{sec:experiment_setting}, a smaller gap to this oracle indicates that the learned controller and confidence head recover most of the achievable benefit of view acquisition.
+
+\noindent\textbf{Training setup.} The depth-1 controller is trained on MindCube \cite{mindcube2025} (10k items) through staged SFT (evidence-ladder supervision, then on-policy fusion examples) followed by GRPO with a dual-variable view budget. ViewTree-D is trained from scratch on a combined corpus of 493{,}663 QA pairs over 1{,}709 ScanNet and ScanNet++ scenes (VLM-3R training QA and VSI-590K \cite{yang2025vsi590k}), with every evaluation scene excluded at room level: Phase~1 trains the answerer on prefixes of valid camera walks; Phase~2 runs oracle search to supervise the camera controller and the outcome-calibrated confidence head; an optional RL phase over complete walks is analyzed in Section~\ref{sec:ablation}. The confidence heads are temperature-calibrated on held-out scenes.
+
+% ===================================================================
+\section{Performance Evaluation}
+\label{sec:evaluation}
+
+\subsection{Spatial Task Performance}
+\label{sec:main_results}
+
+We conducted comprehensive evaluations over the spatial cognition tasks, with VLM backbones of different parameter sizes. Results in Tables~\ref{tab:vt_main_3B}--\ref{tab:vt_main_32B} show that ViewTree enhances the spatial task performance across different VLMs and benchmark settings. In general, ViewTree outperforms the no-memory baselines by XX\% across different tasks, and the gains concentrate on the perspective-dependent tasks (R.Dr., R.Dt.) whose evidence is distributed across viewpoints, while the gate falls back to the direct answer on XX\% of the questions where the memory adds nothing.
+
+% ------------------------------------------------------------------
+\begin{table*}[h!]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{lccccccccccccc}
+			\toprule
+			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
+			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
+			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
+			\midrule
+			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree}            & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree-D}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\midrule
+			Oracle walk (upper bound)    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\bottomrule
+		\end{tabular}
+	}
+	\caption{Performance with Qwen2.5-VL-3B. Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
+	\vspace{-0.2in}
+	\label{tab:vt_main_3B}
+\end{table*}
+
+\begin{table*}[h!]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{lccccccccccccc}
+			\toprule
+			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
+			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
+			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
+			\midrule
+			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree}            & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree-D}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\midrule
+			Oracle walk (upper bound)    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\bottomrule
+		\end{tabular}
+	}
+	\caption{Performance with Qwen2.5-VL-7B. Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
+	\vspace{-0.2in}
+	\label{tab:vt_main_7B}
+\end{table*}
+
+\begin{table*}[h!]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{lccccccccccccc}
+			\toprule
+			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
+			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
+			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
+			\midrule
+			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree}            & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree-D}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\midrule
+			Oracle walk (upper bound)    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\bottomrule
+		\end{tabular}
+	}
+	\caption{Performance with Qwen2.5-VL-32B (4-bit on Jetson AGX Orin). Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
+	\vspace{-0.25in}
+	\label{tab:vt_main_32B}
+\end{table*}
+% ------------------------------------------------------------------
+
+Baselines that hand the model more context without an explicit memory (SFT-plain, SFT+GRPO-plain) show XX. Static memory prompting incorporates the reconstruction but presents all rendered views unconditionally; redundant or irrelevant views distract the VLM on tasks such as O.C., resulting in XX. In contrast, ViewTree acquires views selectively: the confidence head keeps only the branches whose evidence improves the answer and falls back to the direct answer otherwise, driving improvements on the tasks that involve multiple views. Furthermore, the remaining gap to the oracle walk is XX, indicating that XX\% of the achievable benefit of view acquisition is recovered by the learned gate, controller, and confidence head.
+
+\begin{figure*}[ht]
+	\vspace{-0.15in}
+	\centering
+	\hspace{-0.25in}
+	\subfigure[Qwen2.5-VL-3B on Jetson AGX Orin]{
+		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_3b.pdf}
+		\label{fig:vt_efficiency_3b}
+	}
+	\hspace{-0.25in}
+	\hfill
+	\subfigure[Qwen2.5-VL-7B on Jetson AGX Orin]{
+		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_7b.pdf}
+		\label{fig:vt_efficiency_7b}
+	}
+	\hspace{-0.25in}
+	\hfill
+	\subfigure[Qwen2.5-VL-32B-4bit on Jetson AGX Orin]{
+		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_32b.pdf}
+		\label{fig:vt_efficiency_32b}
+	}
+	\hspace{-0.25in}
+	\vspace{-0.15in}
+	\caption{Compute efficiency on Jetson AGX Orin with different VLM backbones}
+	\vspace{-0.1in}
+	\label{fig:vt_efficiency}
+\end{figure*}
+
+\vspace{-0.1in}
+\subsection{On-Device Compute Efficiency}
+\label{sec:efficiency}
+
+Figure~\ref{fig:vt_efficiency} presents the compute latency, energy, and memory cost of ViewTree and the baselines on Jetson AGX Orin. ViewTree's per-question cost is dominated by the VLM calls of the reasoning tree (XX calls on average; up to XX for a full depth-3 walk), while the reconstruction is amortized: one reconstruction serves all questions about the same scene, and the pose-indexed cache eliminates repeated rendering and visual encoding within and across questions. Compared with static memory prompting, ViewTree reduces the number of encoded views per question by XX\% at equal or better accuracy, because the gate answers directly on XX\% of the questions. Compared with the direct-input baseline, ViewTree incurs XX$\times$ higher latency, reflecting the additional view acquisition required to construct and query the explicit memory; our implementation therefore targets local spatial analysis rather than sub-second control. The 32B backbone is feasible on Jetson only with 4-bit quantization (bf16 weights exceed the 64\,GB unified memory), and the relative cost of ViewTree over direct input remains stable across backbone sizes (XX$\times$ at 3B, XX$\times$ at 7B, XX$\times$ at 32B).
+
+\begin{figure*}[ht]
+	\vspace{-0.1in}
+	\centering
+	\subfigure[Object Number]{
+		\includegraphics[width=0.30\linewidth]{figures/vt_object_number.pdf}
+	}
+	\hspace{-0.25in}
+	\hfill
+	\subfigure[Spatial Scale]{
+		\includegraphics[width=0.30\linewidth]{figures/vt_spatial_scale.pdf}
+	}
+	\hspace{-0.25in}
+	\hfill
+	\subfigure[Temporal Duration]{
+		\includegraphics[width=0.30\linewidth]{figures/vt_temporal_duration.pdf}
+	}
+	\vspace{-0.15in}
+	\caption{Spatial task performance with different levels of scene complexities}
+	\vspace{-0.1in}
+	\label{fig:vt_complexity}
+\end{figure*}
+
+\subsection{Performance over Different Levels of Scene Complexities}
+\label{sec:complexity}
+
+We analyze how the scene complexity affects the spatial task performance, using the Qwen2.5-VL-7B backbone on the VSI-Bench held-out split. Following Section~\ref{sec:experiment_setting}, we define the scene complexity along three aspects: (1) \emph{object number}, (2) \emph{spatial scale} measured by the room size, and (3) \emph{temporal duration} measured by the video length, and stratify the held-out questions into Low/Medium/High levels using the scene metadata. We compare ViewTree-D against the direct-input baseline and the strongest no-memory baseline identified in Section~\ref{sec:main_results}.
+
+Results in Figure~\ref{fig:vt_complexity} show XX. We expect view acquisition to matter most in large scenes, where a fixed set of input frames under-covers the room's geometry and the walk's ability to step toward the queried objects provides the missing evidence; conversely, in small cluttered scenes the direct answer is often sufficient and the gate's early exit keeps ViewTree's cost near the baseline. The computational cost of ViewTree across complexity levels is XX, since the depth of the executed walk adapts to the question rather than to the scene size.
+
+\vspace{-0.1in}
+\subsection{Ablation Studies}
+\label{sec:ablation}
+
+\noindent\textbf{Different view-acquisition strategies.} To validate the effectiveness of confidence-guided beam search over camera walks, we compare it against (1) presenting all five candidate views unconditionally (static memory), (2) a random walk of the same depth budget, and (3) greedy walk (beam width 1), on the VSI-Bench held-out split. As shown in Table~\ref{tab:vt_keyview_ablation}, presenting all views degrades the tasks where irrelevant renders distract the model; the random walk shows XX, confirming that the learned controller directs the camera toward question-relevant viewpoints; and the greedy walk loses XX by prematurely committing to a single hypothesis.
+
+\begin{table}[h]
+	\vspace{0.1in}
+	\centering
+	\small
+	\begin{minipage}[t]{0.48\textwidth}
+		\centering
+		\begin{tabular}{lcc}
+			\toprule
+			\textbf{Qwen2.5-VL-7B} & \textbf{Task accuracy} & \textbf{VLM calls} \\ \midrule
+			All views (static)          & --            & --              \\
+			Random walk                 & --            & --              \\
+			Greedy walk (b=1)           & --            & --              \\
+			\textbf{Ours (beam, b=3)}   & \textbf{--}   & --              \\ \bottomrule
+		\end{tabular}
+		\label{tab:vt_ablation_view_7B}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[t]{0.48\textwidth}
+		\centering
+		\begin{tabular}{lcc}
+			\toprule
+			\textbf{Qwen2.5-VL-32B-4bit} & \textbf{Task accuracy} & \textbf{VLM calls} \\ \midrule
+			All views (static)          & --            & --              \\
+			Random walk                 & --            & --              \\
+			Greedy walk (b=1)           & --            & --              \\
+			\textbf{Ours (beam, b=3)}   & \textbf{--}   & --              \\ \bottomrule
+		\end{tabular}
+		\label{tab:vt_ablation_view_32B}
+	\end{minipage}
+	\vspace{0.05in}
+	\caption{Ablation of view-acquisition strategies on the VSI-Bench held-out split.}
+	\label{tab:vt_keyview_ablation}
+	\vspace{-0.15in}
+\end{table}
+
+\noindent\textbf{Component ablations.} Table~\ref{tab:vt_component_ablation} isolates the contribution of each ViewTree component on the VSI-Bench held-out split: removing the exploration gate forces every question through the tree and XX; replacing the trained confidence head with answer-token probability XX, confirming that outcome-calibrated confidence ranks partial walks more reliably; removing the human-camera constraint reverts to unconstrained viewpoint proposals and XX; capping the walk depth at 1 loses XX on the relational and directional tasks where a second movement changes the visible geometry; and removing the direct-answer arbitration XX on the tasks where rendered views are misleading.
+
+\begin{table}[h]
+	\centering
+	\small
+	\begin{tabular}{lcc}
+		\toprule
+		\textbf{Variant} & \textbf{Avg accuracy} & \textbf{VLM calls} \\ \midrule
+		\textbf{ViewTree-D (full)}          & \textbf{--} & -- \\
+		\;\;w/o exploration gate            & --          & -- \\
+		\;\;w/o confidence head (token prob.)& --         & -- \\
+		\;\;w/o human-camera constraint     & --          & -- \\
+		\;\;depth capped at 1               & --          & -- \\
+		\;\;w/o direct-answer arbitration   & --          & -- \\ \bottomrule
+	\end{tabular}
+	\caption{Component ablations on the VSI-Bench held-out split (Qwen2.5-VL-7B).}
+	\label{tab:vt_component_ablation}
+	\vspace{-0.2in}
+\end{table}
+
+\subsection{Training-Based Comparison}
+\label{sec:training_baseline}
+
+In addition to the architectural baselines, we further evaluate how different forms of training affect the same VLM backbone under the same data and optimization budget: (1) \textbf{SFT-RGB}, which fine-tunes the backbone on frames-to-answer supervision from the same training corpus, without any memory; (2) \textbf{SFT-Walk}, which trains the answerer on prefixes of valid camera walks over the reconstructed memory (ViewTree-D Phase 1); (3) \textbf{SFT-Walk + Controller}, which adds the oracle-supervised camera controller and confidence head (the deployed ViewTree-D); and (4) \textbf{+GRPO}, which applies reinforcement learning over complete walks with a step-cost budget on top of the imitation-trained controller.
+
+As shown in Table~\ref{tab:vt_training_baseline}, XX. This comparison separates the effect of the training data from the effect of view acquisition: SFT-RGB captures the benefit of the corpus alone, and the increments of SFT-Walk and the controller isolate the benefit of reasoning over the explicit memory. The RL variant XX, indicating that XX.
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{lcc}
+		\toprule
+		Method & Training & Avg accuracy (\%) \\
+		\midrule
+		Base VLM (direct input)      & No  & -- \\
+		SFT-RGB                      & Yes & -- \\
+		SFT-Walk                     & Yes & -- \\
+		SFT-Walk + Controller        & Yes & -- \\
+		\;\;+GRPO over walks         & Yes & -- \\
+		\bottomrule
+	\end{tabular}
+	\caption{Comparison of training-based variants on the VSI-Bench held-out split.}
+	\label{tab:vt_training_baseline}
+	\vspace{-0.2in}
+\end{table}

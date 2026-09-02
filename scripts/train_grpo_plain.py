@@ -31,13 +31,13 @@ def letter_of(t):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--init", required=True); ap.add_argument("--out", required=True)
+    ap.add_argument("--init", required=True); ap.add_argument("--out", required=True); ap.add_argument("--model", default="Qwen/Qwen2.5-VL-7B-Instruct")
     ap.add_argument("--items", type=int, default=9995); ap.add_argument("--group", type=int, default=6)
     ap.add_argument("--lr", type=float, default=2e-6); ap.add_argument("--accum-items", type=int, default=8)
     a = ap.parse_args()
     ddp = "RANK" in os.environ; rank = int(os.environ.get("RANK", 0)); world = int(os.environ.get("WORLD_SIZE", 1))
     if ddp: torch.cuda.set_device(0); dist.init_process_group("nccl", timeout=timedelta(minutes=60))
-    vlm = QwenVL("Qwen/Qwen2.5-VL-7B-Instruct", device="cuda", adapter=a.init); model = vlm.model
+    vlm = QwenVL(a.model, device="cuda", adapter=a.init); model = vlm.model
     for n, p in model.named_parameters(): p.requires_grad = "lora" in n
     model.train(); tok = vlm.processor.tokenizer
     rows = [json.loads(l) for l in open(os.path.join(MC_ROOT, "raw", "MindCube_train.jsonl"))]
