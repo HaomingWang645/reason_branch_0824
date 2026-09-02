@@ -352,7 +352,10 @@ where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the ret
 
 	The selected trajectory provides training examples for the camera controller. At each step, the views obtained so far form the controller input, and the next camera movement is used as the target action. After the final view, the target action is \textsc{Stop}. The search also keeps the states that produce incorrect answers, which are later used to train the confidence head.
 	
-	\subsection{Learning When and Where to Explore}
+	\subsection{Learning Exploration Policy and Confidence}
+	
+	The trajectories and states collected by oracle search supervise two modules at once: the camera controller, which decides where to move and when to stop, and the confidence head, which decides which paths to trust.
+	
 	
 	The selected oracle trajectory teaches the controller both where to move and when to stop: at every prefix $h_i$ of the trajectory the controller imitates the next oracle action $a_i^{*}$, and at the final state it imitates \textsc{Stop}:
 \begin{equation}
@@ -363,7 +366,6 @@ where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the ret
 
 	Before rendering a new view, ViewTree prompts the controller to choose between \textsc{Yes} and \textsc{Explore}. This decision reuses the controller's learned stopping behavior and does not require a separate exploration classifier. \textsc{Yes} returns the direct answer, whereas \textsc{Explore} starts viewpoint-trajectory search. This initial decision determines whether another view is needed, while the subsequent controller decisions determine where the virtual camera should move.
 	
-	\subsection{Learning Confidence for Path Selection}
 	
 	During inference, ViewTree cannot compare a candidate answer with the ground truth. It must instead estimate which partial trajectory is likely to produce a correct answer. We therefore label every state visited during oracle search -- including the many unsuccessful ones -- by whether the answer produced at that state was correct, and train a small head on the VLM's internal state to predict this outcome. The predicted probability is calibrated on held-out scenes before it is used by the search~\cite{guo2017calibration}.
 
