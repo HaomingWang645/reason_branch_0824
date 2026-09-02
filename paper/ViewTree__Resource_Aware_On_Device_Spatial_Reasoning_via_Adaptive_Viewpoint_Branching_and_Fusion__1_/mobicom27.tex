@@ -160,7 +160,7 @@
 	\begin{equation}
 		\mathcal{M}=\Phi_{3D}(V),
 	\end{equation}
-	containing scene points, camera parameters, and visibility information. For a camera pose $p$, a point-splat renderer returns a 2D image and a geometric support mask:
+	where $\Phi_{3D}$ denotes the frozen reconstruction model and $\mathcal{M}$ contains scene points, camera parameters, and visibility information. For a camera pose $p$, the point-splat renderer $\mathcal{R}$ returns a 2D image $o_p$ and a geometric support mask $m_p$:
 	\begin{equation}
 		(o_p,m_p)=\mathcal{R}(\mathcal{M},p).
 		\label{eq:observe}
@@ -233,12 +233,12 @@
 	\vspace{-0.15in}
 \end{figure}
 
-	Each successor also needs a score that says how promising it is. Verbalized self-confidence and answer-token probability are known to be poorly calibrated for this purpose; instead, a small two-layer head reads the VLM's last-token hidden state $\bar{h}_b$ at the answer and predicts the probability that this answer is correct:
+	Each successor also needs a score that says how promising it is. Verbalized self-confidence and answer-token probability are known to be poorly calibrated for this purpose; instead, for each candidate path $b$, a small two-layer head reads the VLM's last-token hidden state $\bar{h}_b$ at the answer and predicts the probability that this answer is correct:
 \begin{equation}
 	c_b=\sigma\!\left(\operatorname{MLP}(\bar{h}_b)/T\right),
 	\label{eq:confidence}
 \end{equation}
-where the temperature $T$ is fitted on held-out scenes. The head is trained on the outcomes of training-time search (Section~\ref{sec:training}), so its scores are comparable across paths and depths. After expanding all active paths, \system simply keeps the two successors with the highest calibrated confidence. Retained paths share the question and context frames, but their acquired views and later reasoning remain separate, so one early wrong turn cannot contaminate a sibling path.
+where $\sigma$ is the logistic function and the temperature $T$ is fitted on held-out scenes. The head is trained on the outcomes of training-time search (Section~\ref{sec:training}), so its scores are comparable across paths and depths. After expanding all active paths, \system simply keeps the two successors with the highest calibrated confidence. Retained paths share the question and context frames, but their acquired views and later reasoning remain separate, so one early wrong turn cannot contaminate a sibling path.
 
 	\subsection{Path Stopping and Final Answer Selection}
 	\label{sec:path-evidence}
@@ -259,7 +259,7 @@ where the temperature $T$ is fitted on held-out scenes. The head is trained on t
 	k^{*}=\arg\max_{k\in\{0\}\cup\mathcal{B}_{\mathrm{final}}}c_k,
 	\label{eq:arbitration}
 \end{equation}
-where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the retained explored states. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
+where $\hat{y}$ is the returned answer, $k=0$ denotes the direct-answer state, and $\mathcal{B}_{\mathrm{final}}$ contains the retained explored states. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
 
 \begin{figure*}[t]
 	\centering
@@ -278,7 +278,7 @@ where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the ret
 		\caption{Confidence-guided ViewTree inference}
 		\label{alg:viewtree}
 		\begin{algorithmic}[1]
-			\Require Question $q$, frames $V$, memory $\mathcal{M}$
+			\Require Question $q$, frames $V$, memory $\mathcal{M}$, depth budget $D$
 			\Ensure Answer $y$
 			\State $(y_0,c_0,g)\gets\textsc{DirectAnswerAndGate}(q,V)$
 			\If{$g=\textsc{Yes}$}
@@ -335,7 +335,7 @@ where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the ret
 	
 	The correct answer alone does not tell the controller where to move the virtual camera. We therefore use a training-time search procedure to find useful camera trajectories. The search starts from the original camera view and tries camera movements that satisfy the physical constraints. After each movement, the system renders the resulting view and asks the VLM to answer the question again. Because the correct answer is known during training, the system can check whether each camera trajectory helps the VLM produce the correct answer.
 	
-	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, let $\mathcal{T}^{+}(q)$ contain the tested trajectories whose final answer is correct; the search keeps the shortest one, breaking ties by the answer margin $\operatorname{m}(\tau)$, i.e., how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle):
+	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, let $\mathcal{T}^{+}(q)$ contain the tested trajectories $\tau$ whose final answer is correct; the search keeps the shortest one, breaking ties by the answer margin $\operatorname{m}(\tau)$, i.e., how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle):
 \begin{equation}
 	\tau^{*}=\arg\max_{\tau\in\mathcal{T}^{+}(q),\;|\tau|=\min_{\tau'\in\mathcal{T}^{+}(q)}|\tau'|}\operatorname{m}(\tau).
 	\label{eq:selected-trajectory}
@@ -362,14 +362,15 @@ where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the ret
 	\mathcal{L}_{\mathrm{ctrl}}=-\sum_{i=0}^{|\tau^{*}|}\log\pi_{\theta}\!\left(a_i^{*}\mid h_i\right),\qquad
 	a^{*}_{|\tau^{*}|}=\textsc{Stop}.
 	\label{eq:ctrl}
-\end{equation} Invalid movements are removed before action prediction, so the controller only ever chooses among camera actions that can actually be executed from the current pose.
+\end{equation}
+where $\pi_{\theta}$ is the controller's distribution over camera actions. Invalid movements are removed before action prediction, so the controller only ever chooses among camera actions that can actually be executed from the current pose.
 
 	Before rendering a new view, ViewTree prompts the controller to choose between \textsc{Yes} and \textsc{Explore}. This decision reuses the controller's learned stopping behavior and does not require a separate exploration classifier. \textsc{Yes} returns the direct answer, whereas \textsc{Explore} starts viewpoint-trajectory search. This initial decision determines whether another view is needed, while the subsequent controller decisions determine where the virtual camera should move.
 	
 	
 	During inference, ViewTree cannot compare a candidate answer with the ground truth. It must instead estimate which partial trajectory is likely to produce a correct answer. We therefore label every state visited during oracle search -- including the many unsuccessful ones -- by whether the answer produced at that state was correct, and train a small head on the VLM's internal state to predict this outcome. The predicted probability is calibrated on held-out scenes before it is used by the search~\cite{guo2017calibration}.
 
-	Unlike verbal confidence or answer-token probability, $c_b$ is learned from the observed successes and failures of partial viewpoint trajectories. During inference, ViewTree uses it to rank candidate paths, retain the most promising paths, and remove weak paths. The search can stop when the retained paths agree on an answer whose confidence is higher than that of the direct answer. After exploration, ViewTree compares the direct and explored answers and returns the one with the highest calibrated confidence.
+	Unlike verbal confidence or answer-token probability, the calibrated score $c_b$ (Eq.~\ref{eq:confidence}) is learned from the observed successes and failures of partial viewpoint trajectories. During inference, ViewTree uses it to rank candidate paths, retain the most promising paths, and remove weak paths. The search can stop when the retained paths agree on an answer whose confidence is higher than that of the direct answer. After exploration, ViewTree compares the direct and explored answers and returns the one with the highest calibrated confidence.
 	
 	\subsection{Reinforcement Learning}
 	
