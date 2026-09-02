@@ -1016,6 +1016,9 @@ over 2 GPUs (`VIEWTREE_DEVICE_MAP=auto`).
 | 7B + lite tree | 0.341 | 0.331 | 0.099 | 0.309 | 0.496 | 0.236 | 0.459 | 0.399 | 0.357 | 0.424 | 0.298 |
 | 32B frames16 | 0.380 | 0.305 | 0.257 | 0.286 | 0.549 | 0.288 | 0.304 | 0.501 | 0.500 | 0.472 | 0.337 |
 | 32B + lite tree | 0.348 | 0.356 | 0.219 | 0.270 | 0.504 | 0.236 | 0.246 | 0.457 | 0.472 | 0.383 | 0.337 |
+| 3B + SFT-plain (MindCube) | 0.307 | 0.176 | 0.223 | 0.228 | 0.522 | 0.358 | 0.464 | 0.344 | 0.173 | 0.262 | 0.317 |
+| 3B + SFT+GRPO-plain | 0.306 | 0.159 | 0.230 | 0.232 | 0.522 | 0.335 | 0.478 | 0.347 | 0.187 | 0.265 | 0.308 |
+| 32B + SFT-plain (MindCube) | 0.351 | 0.293 | 0.257 | 0.343 | 0.487 | 0.170 | 0.222 | 0.501 | 0.529 | 0.401 | 0.308 |
 
 Lite tree − frames16: 3B **−0.7 [−2.6, +1.3]** · 7B **+2.8 [+1.0, +4.7]** ·
 32B **−3.2 [−5.2, −1.1]**. 32B − 7B zero-shot **+6.7 [+4.4, +9.5]**; 3B − 7B
@@ -1041,7 +1044,19 @@ zero-shot +0.8 [−1.7, +3.3]. 3B SFT30k − 3B zero-shot **+17.6 [+15.3, +19.9]
   *3B* wins relative-direction hard/medium (0.429/0.493 vs 32B's
   0.288/0.304) — answer-style artifacts dominate at the small end.
 
-Outputs: `results/scalevlm/`, adapter `checkpoints/scalevlm/sft3b_30k`.
+- **The no-memory baselines also fail to transfer across backbone size
+  (added 2026-09-02).** MindCube SFT-plain: 3B −1.4 [−3.2, +0.5] vs its
+  zero-shot (n.s. negative), GRPO-plain on top ±0.0; **32B −2.9
+  [−4.9, −0.7] (significant harm)**, driven by relative direction
+  (hard 0.288 → 0.170, medium 0.304 → 0.222) despite a counting gain
+  (+5.7). Together with the lite-tree row: *every* 7B-tuned recipe in this
+  project — training data, training-free tree — helps only the 7B backbone
+  it was developed on; per-backbone calibration is mandatory. (32B LoRA SFT
+  is feasible on one 80 GB GPU with gradient checkpointing for MindCube's
+  short ≤4-image samples — DECISIONS §11's blanket skip was too broad; the
+  30k-corpus 32B SFT with 8+ images per sample remains out of scope.)
+
+Outputs: `results/scalevlm/`, adapters `checkpoints/scalevlm/{sft3b_30k, sft_plain_3b, grpo_plain_3b, sft_plain_32b}`.
 
 ## 7. Next milestones
 
