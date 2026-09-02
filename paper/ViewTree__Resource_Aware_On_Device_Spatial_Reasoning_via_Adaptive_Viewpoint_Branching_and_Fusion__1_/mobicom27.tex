@@ -233,7 +233,12 @@
 	\vspace{-0.15in}
 \end{figure}
 
-	Each successor also needs a score that says how promising it is. Verbalized self-confidence and answer-token probability are known to be poorly calibrated for this purpose; instead, a small two-layer head reads the VLM's internal state at the answer and predicts the probability that this answer is correct. The head is trained on the outcomes of training-time search (Section~\ref{sec:training}) and calibrated on held-out scenes, so its scores are comparable across paths and depths. After expanding all active paths, \system simply keeps the two successors with the highest calibrated confidence. Retained paths share the question and context frames, but their acquired views and later reasoning remain separate, so one early wrong turn cannot contaminate a sibling path.
+	Each successor also needs a score that says how promising it is. Verbalized self-confidence and answer-token probability are known to be poorly calibrated for this purpose; instead, a small two-layer head reads the VLM's last-token hidden state $\bar{h}_b$ at the answer and predicts the probability that this answer is correct:
+\begin{equation}
+	c_b=\sigma\!\left(\operatorname{MLP}(\bar{h}_b)/T\right),
+	\label{eq:confidence}
+\end{equation}
+where the temperature $T$ is fitted on held-out scenes. The head is trained on the outcomes of training-time search (Section~\ref{sec:training}), so its scores are comparable across paths and depths. After expanding all active paths, \system simply keeps the two successors with the highest calibrated confidence. Retained paths share the question and context frames, but their acquired views and later reasoning remain separate, so one early wrong turn cannot contaminate a sibling path.
 
 	\subsection{Path Stopping and Final Answer Selection}
 	\label{sec:path-evidence}
@@ -248,7 +253,13 @@
 	\vspace{-0.15in}
 \end{figure}
 
-	The search stops in one of three ways (Figure~\ref{fig:stopping}). If the two retained paths agree on the same answer and both are more confident than the direct answer, \system stops early and returns the common answer -- agreement between independently moving paths is strong evidence. If they disagree and depth remains, both paths continue so that their next camera actions can collect discriminating evidence. Otherwise, at the depth limit or when all retained paths choose \textsc{Stop}, \system compares the calibrated confidence of the direct answer and of the retained explored answers, and returns the highest-scoring one. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
+	The search stops in one of three ways (Figure~\ref{fig:stopping}). If the two retained paths agree on the same answer and both are more confident than the direct answer, \system stops early and returns the common answer -- agreement between independently moving paths is strong evidence. If they disagree and depth remains, both paths continue so that their next camera actions can collect discriminating evidence. Otherwise, at the depth limit or when all retained paths choose \textsc{Stop}, \system compares the calibrated confidence of the direct answer and of the retained explored answers, and returns the highest-scoring one:
+\begin{equation}
+	\hat{y}=y_{k^{*}},\qquad
+	k^{*}=\arg\max_{k\in\{0\}\cup\mathcal{B}_{\mathrm{final}}}c_k,
+	\label{eq:arbitration}
+\end{equation}
+where $k=0$ denotes the direct answer and $\mathcal{B}_{\mathrm{final}}$ the retained explored states. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
 
 \begin{figure*}[t]
 	\centering
@@ -324,7 +335,11 @@
 	
 	The correct answer alone does not tell the controller where to move the virtual camera. We therefore use a training-time search procedure to find useful camera trajectories. The search starts from the original camera view and tries camera movements that satisfy the physical constraints. After each movement, the system renders the resulting view and asks the VLM to answer the question again. Because the correct answer is known during training, the system can check whether each camera trajectory helps the VLM produce the correct answer.
 	
-	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, among all tested trajectories whose final answer is correct, the search keeps the one with the fewest camera movements, breaking ties by how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle). Preferring the shortest successful trajectory bakes the acquisition cost into the supervision itself: the controller is never shown a longer walk when a shorter one suffices. Figure~\ref{fig:oracle_example} walks through one oracle trajectory.
+	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, let $\mathcal{T}^{+}(q)$ contain the tested trajectories whose final answer is correct; the search keeps the shortest one, breaking ties by the answer margin $\operatorname{m}(\tau)$, i.e., how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle):
+\begin{equation}
+	\tau^{*}=\arg\max_{\tau\in\mathcal{T}^{+}(q),\;|\tau|=\min_{\tau'\in\mathcal{T}^{+}(q)}|\tau'|}\operatorname{m}(\tau).
+	\label{eq:selected-trajectory}
+\end{equation} Preferring the shortest successful trajectory bakes the acquisition cost into the supervision itself: the controller is never shown a longer walk when a shorter one suffices. Figure~\ref{fig:oracle_example} walks through one oracle trajectory.
 
 \begin{figure}[t]
 	\centering
@@ -339,7 +354,12 @@
 	
 	\subsection{Learning When and Where to Explore}
 	
-	The selected oracle trajectory teaches the controller both where to move and when to stop: at every prefix of the trajectory the controller imitates the next oracle action, and at the final state it imitates \textsc{Stop}. Invalid movements are removed before action prediction, so the controller only ever chooses among camera actions that can actually be executed from the current pose.
+	The selected oracle trajectory teaches the controller both where to move and when to stop: at every prefix $h_i$ of the trajectory the controller imitates the next oracle action $a_i^{*}$, and at the final state it imitates \textsc{Stop}:
+\begin{equation}
+	\mathcal{L}_{\mathrm{ctrl}}=-\sum_{i=0}^{|\tau^{*}|}\log\pi_{\theta}\!\left(a_i^{*}\mid h_i\right),\qquad
+	a^{*}_{|\tau^{*}|}=\textsc{Stop}.
+	\label{eq:ctrl}
+\end{equation} Invalid movements are removed before action prediction, so the controller only ever chooses among camera actions that can actually be executed from the current pose.
 
 	Before rendering a new view, ViewTree prompts the controller to choose between \textsc{Yes} and \textsc{Explore}. This decision reuses the controller's learned stopping behavior and does not require a separate exploration classifier. \textsc{Yes} returns the direct answer, whereas \textsc{Explore} starts viewpoint-trajectory search. This initial decision determines whether another view is needed, while the subsequent controller decisions determine where the virtual camera should move.
 	
