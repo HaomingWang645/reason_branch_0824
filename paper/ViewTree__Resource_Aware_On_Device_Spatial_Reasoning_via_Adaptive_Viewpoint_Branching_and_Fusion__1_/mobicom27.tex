@@ -136,38 +136,9 @@
 	\label{sec:overview}
 	\begin{figure*}[t]
 		\centering
-		\resizebox{0.96\textwidth}{!}{%
-			\begin{tikzpicture}[
-				>=Latex,
-				flow/.style={draw=none, rounded corners=3pt, minimum height=1.08cm,
-					align=center, font=\sffamily\small\bfseries, text=white},
-				link/.style={draw=blue!60!black, line width=1.05pt, -{Latex[length=2.5mm]}},
-				loop/.style={draw=blue!60!black, line width=1.05pt, -{Latex[length=2.5mm]}, rounded corners=2pt}
-				]
-				\node[flow, fill=blue!65, text width=2.35cm] (history) at (0,2.2) {History frames};
-				\node[flow, fill=purple!70, text width=2.65cm] (vggt) at (3.35,2.2) {Frozen VGGT\\reconstruction};
-				\node[flow, fill=purple!70, text width=2.65cm] (memory) at (6.85,2.2) {Explicit 3D\\world memory};
-				\node[flow, fill=orange!82!black, text width=3.15cm, minimum height=1.35cm] (policy) at (10.65,2.2) {Confidence-guided\\expand / keep\\stop / arbitrate};
-				
-				\node[flow, fill=blue!65, text width=2.35cm] (query) at (0,0) {Query + current\\camera view};
-				\node[flow, fill=blue!45!black, text width=2.8cm, minimum height=1.25cm] (vlm) at (3.35,0) {Fine-tuned VLM\\controller};
-				\node[flow, fill=teal!65!black, text width=2.35cm] (camera) at (6.85,0) {Virtual camera\\action};
-				\node[flow, fill=teal!65!black, text width=3.0cm] (render) at (10.65,0) {Render + encode\\new viewpoint};
-				
-				\draw[link] (history) -- (vggt);
-				\draw[link] (vggt) -- (memory);
-				\draw[link] (query) -- (vlm);
-				\draw[link] (vlm) -- (camera);
-				\draw[link] (memory) -- (camera);
-				\draw[link] (camera) -- (render);
-				\draw[link] (render) -- (policy);
-				\draw[link] (policy) -- (memory);
-				\draw[loop] (render.south) |- ($(vlm.south)+(0,-0.85)$) -- (vlm.south);
-				\node[font=\sffamily\small\bfseries, text=black!65] at (5.35,-1.18)
-				{Closed-loop active spatial reasoning over an explicit scene memory};
-		\end{tikzpicture}}
-		\caption{This is a placeholder figure}
-		
+		\includegraphics[width=0.97\textwidth]{figures/fig_overview.pdf}
+		\vspace{-0.12in}
+		\caption{\system overview on a real scene. The recent frames are reconstructed once into an explicit scene memory that can render validity-checked views from discrete camera poses (1); a learned gate answers directly when the frames suffice (2); otherwise confidence-guided camera walks acquire the missing views, stop early on agreement, and a final arbitration chooses between the direct and explored answers (3).}
 		\label{fig:overview}
 	\end{figure*}
 	
@@ -239,7 +210,16 @@
 
 	\subsection{Deciding When to Explore}
 	\label{sec:confidence}
-	Not every question requires a new viewpoint. When the original frames already contain the answer, rendering additional views adds unnecessary computation and may introduce irrelevant or incomplete visual information that reduces answer accuracy. \system therefore first produces a direct answer from the original frames and, in the same breath, asks the model a single learned gating question: do these frames alone contain enough information to answer? If the gate answers \textsc{Yes}, the direct answer is returned immediately after only two short VLM calls; across our evaluation this happens on 71\% of questions. Only when the gate answers \textsc{Explore} does \system start the search: the camera controller scores the actions allowed at the current pose, and beam search creates alternative reasoning paths from the highest-scoring ones. The gate decides whether a search tree is needed at all, while the controller decides how each path should move through the scene.
+	Not every question requires a new viewpoint. When the original frames already contain the answer, rendering additional views adds unnecessary computation and may introduce irrelevant or incomplete visual information that reduces answer accuracy. \system therefore first produces a direct answer from the original frames and, in the same breath, asks the model a single learned gating question: do these frames alone contain enough information to answer? If the gate answers \textsc{Yes}, the direct answer is returned immediately after only two short VLM calls; across our evaluation this happens on 71\% of questions. Only when the gate answers \textsc{Explore} does \system start the search: the camera controller scores the actions allowed at the current pose, and beam search creates alternative reasoning paths from the highest-scoring ones. The gate decides whether a search tree is needed at all, while the controller decides how each path should move through the scene. Figure~\ref{fig:gate_example} shows both outcomes on real questions.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_gate_example.pdf}
+	\vspace{-0.25in}
+	\caption{The exploration gate on two real questions. Top: the frames cover the queried areas, so the direct answer is returned after two calls. Bottom: the object's size cannot be judged from distant frames, so the gate starts the search.}
+	\label{fig:gate_example}
+	\vspace{-0.15in}
+\end{figure}
 
 	\subsection{Confidence-Guided Path Expansion and Pruning}
 	Figure~\ref{fig:control_prompt} shows one controller step. The controller receives the context frames, the views acquired so far with their pose tags, the question, and the list of currently valid moves, and replies with exactly one action token. \system reads the scores of all valid actions directly from this single forward pass, expands the three highest-scoring actions, and creates a separate successor path for each: a movement action renders the new view and asks the VLM for an updated answer, while \textsc{Stop} marks the path as terminal without another render.
@@ -259,7 +239,16 @@
 	\label{sec:path-evidence}
 	Views are accumulated within each camera walk rather than combined across sibling paths: at every step, the VLM of a path sees the original frames followed by that path's views in acquisition order, each preceded by its pose tag. The ordered tags tell the VLM how the camera moved, which lets a later step reuse evidence collected earlier along the same walk. Figure~\ref{fig:search_example} traces a real \system search: the retained paths approach the queried objects from different directions and converge on the same answer at depth three.
 
-	The search stops in one of three ways. If the two retained paths agree on the same answer and both are more confident than the direct answer, \system stops early and returns the common answer -- agreement between independently moving paths is strong evidence. If they disagree and depth remains, both paths continue so that their next camera actions can collect discriminating evidence. Otherwise, at the depth limit or when all retained paths choose \textsc{Stop}, \system compares the calibrated confidence of the direct answer and of the retained explored answers, and returns the highest-scoring one. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_stopping.pdf}
+	\vspace{-0.28in}
+	\caption{How a search ends: early stop on confident agreement, deeper exploration on disagreement, and final arbitration otherwise.}
+	\label{fig:stopping}
+	\vspace{-0.15in}
+\end{figure}
+
+	The search stops in one of three ways (Figure~\ref{fig:stopping}). If the two retained paths agree on the same answer and both are more confident than the direct answer, \system stops early and returns the common answer -- agreement between independently moving paths is strong evidence. If they disagree and depth remains, both paths continue so that their next camera actions can collect discriminating evidence. Otherwise, at the depth limit or when all retained paths choose \textsc{Stop}, \system compares the calibrated confidence of the direct answer and of the retained explored answers, and returns the highest-scoring one. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
 
 \begin{figure*}[t]
 	\centering
@@ -335,7 +324,16 @@
 	
 	The correct answer alone does not tell the controller where to move the virtual camera. We therefore use a training-time search procedure to find useful camera trajectories. The search starts from the original camera view and tries camera movements that satisfy the physical constraints. After each movement, the system renders the resulting view and asks the VLM to answer the question again. Because the correct answer is known during training, the system can check whether each camera trajectory helps the VLM produce the correct answer.
 	
-	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, among all tested trajectories whose final answer is correct, the search keeps the one with the fewest camera movements, breaking ties by how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle). Preferring the shortest successful trajectory bakes the acquisition cost into the supervision itself: the controller is never shown a longer walk when a shorter one suffices.
+	Concretely, an answer counts as correct when its evaluation score (exact match for multiple choice, relative accuracy for numerical answers) exceeds one half. If the VLM already answers correctly from the original frames, the selected trajectory is empty and the target action is \textsc{Stop}; these depth-zero examples are the most frequent labels and are what teach the controller not to over-explore. Otherwise, among all tested trajectories whose final answer is correct, the search keeps the one with the fewest camera movements, breaking ties by how strongly the VLM favors the correct answer at the end (Figure~\ref{fig:training_pipeline}, middle). Preferring the shortest successful trajectory bakes the acquisition cost into the supervision itself: the controller is never shown a longer walk when a shorter one suffices. Figure~\ref{fig:oracle_example} walks through one oracle trajectory.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_oracle_example.pdf}
+	\vspace{-0.25in}
+	\caption{An oracle trajectory on a real training question. The direct answer is wrong; one \textsc{Forward} movement fixes it, so the controller's targets are \textsc{Forward} then \textsc{Stop}, and every visited state is labelled by answer correctness for the confidence head.}
+	\label{fig:oracle_example}
+	\vspace{-0.15in}
+\end{figure}
 
 	The selected trajectory provides training examples for the camera controller. At each step, the views obtained so far form the controller input, and the next camera movement is used as the target action. After the final view, the target action is \textsc{Stop}. The search also keeps the states that produce incorrect answers, which are later used to train the confidence head.
 	
