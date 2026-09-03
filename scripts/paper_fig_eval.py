@@ -30,7 +30,7 @@ def eff_methods():
     meth = ["Direct\ninput", "Static\nmemory", "Tree d=1\n(non-adpt.)", "ViewTree\n(ours)"]
     lat = [11.7, 11.4, 46.3, 24.5]
     en = [529, 518, 2110, 1104]
-    fig, ax = plt.subplots(figsize=(2.55, 1.9))
+    fig, ax = plt.subplots(figsize=(2.8, 1.9))
     x = np.arange(4)
     b1 = ax.bar(x - 0.19, lat, 0.38, color=TEALD, label="latency (s)")
     ax.set_ylabel("latency (s)", color=TEALD)
@@ -39,9 +39,9 @@ def eff_methods():
     b2 = ax2.bar(x + 0.19, [e / 1000 for e in en], 0.38, color=RED, label="energy (kJ)")
     ax2.set_ylabel("energy (kJ)", color=RED)
     ax2.tick_params(axis="y", labelcolor=RED)
-    ax.set_xticks(x); ax.set_xticklabels(meth, fontsize=6.0)
-    for xi, v in zip(x, lat): ax.text(xi - 0.21, v + 1.2, f"{v:.0f}s", ha="center", fontsize=6.0, color=TEALD)
-    for xi, v in zip(x, en): ax2.text(xi + 0.21, v / 1000 + 0.06, f"{v/1000:.1f}", ha="center", fontsize=6.0, color=RED)
+    ax.set_xticks(x); ax.set_xticklabels(meth, fontsize=5.7)
+    for xi, v in zip(x, lat): ax.text(xi - 0.24, v + 1.2, f"{v:.0f}s", ha="center", fontsize=5.7, color=TEALD)
+    for xi, v in zip(x, en): ax2.text(xi + 0.24, v / 1000 + 0.06, f"{v/1000:.1f}", ha="center", fontsize=5.7, color=RED)
     ax.set_ylim(0, 55); ax2.set_ylim(0, 2.5)
     fig.tight_layout()
     fig.savefig(f"{OUT}/vt_eff_methods.pdf"); fig.savefig(f"{OUT}/vt_eff_methods.png", dpi=170); plt.close(fig)
@@ -54,12 +54,11 @@ def eff_routes():
     x = np.arange(4)
     bars = ax.bar(x, lat, 0.55, color=TEALD)
     for xi, v, s in zip(x, lat, share):
-        ax.text(xi, v + 2.5, f"{v:.0f}s", ha="center", fontsize=6.6, color=INK)
+        ax.text(xi, v + 3.2, f"{v:.0f}s", ha="center", fontsize=6.4, color=INK)
         ax.text(xi, 3.5, f"{s:.0f}%", ha="center", fontsize=6.8, color="white", weight="bold")
-    ax.axhline(24.5, color=RED, lw=1.2, ls="--")
-    ax.text(-0.42, 28.5, "expected mix: 24.5 s", color=RED, fontsize=6.2, ha="left")
-    ax.axhline(11.7, color=GREY, lw=1.0, ls=":")
-    ax.text(3.42, 14.5, "one 16-frame call: 11.7 s", color=MUT, fontsize=5.8, ha="right")
+    l1 = ax.axhline(24.5, color=RED, lw=1.2, ls="--", label="ViewTree expected mix: 24.5 s")
+    l2 = ax.axhline(11.7, color=GREY, lw=1.0, ls=":", label="one 16-frame call: 11.7 s")
+    ax.legend(handles=[l1, l2], fontsize=5.5, frameon=False, loc="upper left", handlelength=1.6)
     ax.set_xticks(x); ax.set_xticklabels(routes, fontsize=6.8)
     ax.set_ylabel("latency (s)"); ax.set_ylim(0, 132)
     fig.tight_layout()
@@ -88,7 +87,7 @@ def eff_breakdown():
     import matplotlib.patches as mpatches
     leg = [mpatches.Patch(color=c, label=l) for l, c in
            [("gate", BLUE), ("render+encode", "#b26a00"), ("answer call(s)", TEALD), ("control call", RED)]]
-    ax.legend(handles=leg, fontsize=5.5, loc="upper right", frameon=False)
+    ax.legend(handles=leg, fontsize=5.3, frameon=False, loc="center right", bbox_to_anchor=(1.0, 0.52), handlelength=1.3)
     fig.tight_layout()
     fig.savefig(f"{OUT}/vt_eff_breakdown.pdf"); fig.savefig(f"{OUT}/vt_eff_breakdown.png", dpi=170); plt.close(fig)
 
