@@ -59,7 +59,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--condition", required=True,
                     choices=["current", "frames16", "frames12", "memory",
-                             "renders_only", "memory32"])
+                             "renders_only", "memory32", "cot"])
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--out", required=True)
@@ -70,6 +70,7 @@ def main():
     ap.add_argument("--parity", choices=["all", "even", "odd"], default="all")
     args = ap.parse_args()
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    explicit_cache = args.render_cache is not None
     if args.render_cache is None:
         args.render_cache = os.path.join(repo, "data", "renders")
 
@@ -111,7 +112,7 @@ def main():
             frames = sample_frames(qrows[0]["video"], n_src)
             if args.condition == "current":
                 images, pre = [frames[-1]], ""
-            elif args.condition == "frames16":
+            elif args.condition in ("frames16", "cot"):
                 images, pre = frames, FRAMES_PRE
             elif args.condition == "frames12":
                 idx = np.linspace(0, 15, 12).round().astype(int)
@@ -124,8 +125,9 @@ def main():
                        "top-down view).\n")
             elif args.condition == "memory32":
                 repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                mem_cache = args.render_cache if explicit_cache else os.path.join(repo, "data", "renders32")
                 views = get_memory_views(scene_key, frames, args, splat=2,
-                                         cache_dir=os.path.join(repo, "data", "renders32"))
+                                         cache_dir=mem_cache)
                 sel = [frames[i] for i in np.linspace(0, 31, 12).round().astype(int)]
                 images = sel + views
                 pre = MEM_PRE.format(k=len(sel), m=len(views))
@@ -143,11 +145,21 @@ def main():
             continue
         for r in qrows:
             try:
-                pred = vlm.ask(images, build_prompt(r, pre))
+                if args.condition == "cot":
+                    what = "the option's letter" if r["options"] else "a single number"
+                    prompt = build_prompt(r, pre) + (
+                        "\nReply in exactly this format:\n"
+                        "Reasoning: <at most 3 short sentences about the spatial layout>\n"
+                        f"Answer: <{what}>\n"
+                        "The Answer line is required.")
+                    pred = vlm.ask(images, prompt, max_new_tokens=224)
+                else:
+                    pred = vlm.ask(images, build_prompt(r, pre))
             except Exception:
                 traceback.print_exc()
                 pred = ""
-            s = score_row(r, pred)
+            scored_text = pred.rsplit("Answer:", 1)[-1] if (args.condition == "cot" and "Answer:" in pred) else pred
+            s = score_row(r, scored_text)
             fout.write(json.dumps({"id": r["id"], "pred": pred, "score": s,
                                    "question_type": r["question_type"]}) + "\n")
             n_done += 1

@@ -26,6 +26,58 @@
 	\fcolorbox{red}{white}{\parbox[c][#1][c]{0.91\columnwidth}{%
 			\centering\color{red}\small #2}}}
 
+
+% ---- pending eval cells (filled by the paper-fill run; -- until then) ----
+\newcommand{\pend}{--}
+\newcommand{\cotADsev}{--}
+\newcommand{\cotADthree}{--}
+\newcommand{\cotADxxxii}{--}
+\newcommand{\cotOSsev}{--}
+\newcommand{\cotOSthree}{--}
+\newcommand{\cotOSxxxii}{--}
+\newcommand{\cotRDtsev}{--}
+\newcommand{\cotRDtthree}{--}
+\newcommand{\cotRDtxxxii}{--}
+\newcommand{\cotRDrsev}{--}
+\newcommand{\cotRDrthree}{--}
+\newcommand{\cotRDrxxxii}{--}
+\newcommand{\cotOCsev}{--}
+\newcommand{\cotOCthree}{--}
+\newcommand{\cotOCxxxii}{--}
+\newcommand{\cotAOsev}{--}
+\newcommand{\cotAOthree}{--}
+\newcommand{\cotAOxxxii}{--}
+\newcommand{\cotAVGsev}{--}
+\newcommand{\cotAVGthree}{--}
+\newcommand{\cotAVGxxxii}{--}
+\newcommand{\memADsev}{--}
+\newcommand{\memADthree}{--}
+\newcommand{\memADxxxii}{--}
+\newcommand{\memOSsev}{--}
+\newcommand{\memOSthree}{--}
+\newcommand{\memOSxxxii}{--}
+\newcommand{\memRDtsev}{--}
+\newcommand{\memRDtthree}{--}
+\newcommand{\memRDtxxxii}{--}
+\newcommand{\memRDrsev}{--}
+\newcommand{\memRDrthree}{--}
+\newcommand{\memRDrxxxii}{--}
+\newcommand{\memOCsev}{--}
+\newcommand{\memOCthree}{--}
+\newcommand{\memOCxxxii}{--}
+\newcommand{\memAOsev}{--}
+\newcommand{\memAOthree}{--}
+\newcommand{\memAOxxxii}{--}
+\newcommand{\memAVGsev}{--}
+\newcommand{\memAVGthree}{--}
+\newcommand{\memAVGxxxii}{--}
+\newcommand{\abstatA}{--}
+\newcommand{\abrandA}{--}
+\newcommand{\abrandC}{--}
+\newcommand{\abgreedA}{--}
+\newcommand{\abgreedC}{--}
+\newcommand{\abviewtext}{Numbers for the alternative strategies are being finalized.}
+
 \begin{document}
 	
 	%\title{ViewTree: Spatial Reasoning over an Explicit Scene Memory via Confidence-Guided Camera Walks}
@@ -469,105 +521,88 @@ QA performance is evaluated as the percentage of correct answer choices; numeric
 \subsection{Spatial Task Performance}
 \label{sec:main_results}
 
-We conducted comprehensive evaluations over the spatial cognition tasks, with VLM backbones of different parameter sizes. Results in Tables~\ref{tab:vt_main_3B}--\ref{tab:vt_main_32B} show that ViewTree enhances 
+Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone, and Table~\ref{tab:vt_scale} the backbone-scale study on VSI-Bench; key deltas are given with scene-bootstrap 95\% confidence intervals.
+
+\noindent\textbf{Main results (7B).} On VSI-Bench, \system reaches 0.530 average over the ten task types, against 0.313 for direct frame input. Most of this gap is closed by training: the standard-SFT baseline, fine-tuned on the same corpus, reaches 0.509 without any rendered view. On top of this strongest baseline, \system's adaptive exploration adds +2.1 points [$-0.0$, $+4.3$], and the per-type columns show exactly where: relative direction ($0.467 \rightarrow 0.516$, with the hard split $+6.2$), relative distance ($+5.0$), and appearance order ($+4.6$) -- the perspective-dependent questions where a new viewpoint changes the visible geometry. On object counting and room size the extra renders \emph{reduce} accuracy slightly ($-1.4$ and $-2.2$): those types are answered best from the original frames, which is why the arbitration of Section~\ref{sec:reasoning} retains the direct answer when exploration does not raise confidence. The SFT+GRPO row confirms that answer-reward RL improves the answer distribution ($0.534$ single pass, $+2.5$ [$+0.3$, $+5.0$] over standard SFT) but, as Section~\ref{sec:ablation} shows, it does not improve the camera policy itself.
+
+\noindent\textbf{Cross-benchmark transfer.} The remaining columns give an honest picture of where view exploration pays. On VSTI-Bench, whose camera--object and object--object questions match the training templates, \system is $+19.4$ (C.O.) and $+17.4$ (O.O.) points over direct input, but its margin over the standard-SFT single pass is not significant ($-0.5$ [$-1.2$, $+0.2$] on the 9-type mean): template-matched training data does the work. On STI-Bench, every fine-tuned system sits below the zero-shot backbone (\system $-2.6$ [$-4.4$, $-0.7$] on the 8-task mean), because half of STI's tasks come from outdoor driving and object-pose domains that an indoor corpus cannot teach. On OST-Bench the walk actively hurts ($-2.1$ [$-3.1$, $-1.2$] versus its own single pass): OST asks about the agent's own trajectory and what it has seen, and a consensus among rendered views of the \emph{current} reconstruction overrides direct answers that were more often right. Multi-step view acquisition earns its cost only where the question concerns room geometry that the input frames under-cover; a deployment should gate the walk per question family, which the current gate learns only for VSI-style questions.
+
+\noindent\textbf{Backbone scale (Table~\ref{tab:vt_scale}).} The 32B backbone is the strongest zero-shot model (0.380) but every 7B-tuned recipe fails to transfer to it: benchmark-QA SFT \emph{lowers} its accuracy by 2.9 points [$-4.9$, $-0.7$], and the training-free \system~variant that gains $+2.8$ [$+1.0$, $+4.7$] at 7B loses $-3.2$ [$-5.2$, $-1.1$] at 32B, where token-confidence pruning lets render-limited consensus override strong direct answers. At the other end, the corpus moves the mobile-class 3B backbone from 0.321 to 0.497 with only a 30k-example subset -- statistically at the level of the 7B data-matched baseline (0.509) -- showing that the answering skill lives in the data rather than the capacity, while the transplanted training-free tree is neutral there ($-0.7$). Adaptive exploration therefore requires per-backbone calibration of the gate and confidence head; the full trained system is built at 7B in this paper.
 
 % ------------------------------------------------------------------
-\begin{table*}[h!]
+\begin{table*}[t]
 	\centering
 	\resizebox{\textwidth}{!}{%
-		\begin{tabular}{lccccccccccccc}
+		\begin{tabular}{lccccccc|ccc|cc|c}
 			\toprule
-			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
+			\multirow{2}{*}{\textbf{Method (Qwen2.5-VL-7B)}} & \multicolumn{7}{c|}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c|}{\textbf{STI-Bench}} & \multicolumn{2}{c|}{\textbf{VSTI-Bench}} & \textbf{OST} \\
 			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
-			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
+			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg} & C.O. & O.O. & Ovr. \\
 			\midrule
-			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Video-COT            & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			\textbf{ViewTree}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-
+			Direct input                 & 0.088 & 0.340 & 0.391 & 0.367 & 0.254 & 0.289 & 0.313 & 0.301 & 0.315 & \textbf{0.371} & 0.530 & 0.646 & \textbf{0.540} \\
+			Video-CoT                    & \cotADsev{} & \cotOSsev{} & \cotRDtsev{} & \cotRDrsev{} & \cotOCsev{} & \cotAOsev{} & \cotAVGsev{} & -- & -- & -- & -- & -- & -- \\
+			Standard SFT                 & 0.361 & 0.649 & 0.515 & 0.467 & \textbf{0.667} & 0.628 & 0.509 & \textbf{0.318} & \textbf{0.344} & 0.343 & 0.716 & \textbf{0.826} & 0.516 \\
+			Standard SFT+GRPO            & \textbf{0.404} & \textbf{0.672} & 0.529 & 0.489 & 0.664 & 0.623 & 0.534 & -- & -- & -- & -- & -- & -- \\
+			Static scene memory          & \memADsev{} & \memOSsev{} & \memRDtsev{} & \memRDrsev{} & \memOCsev{} & \memAOsev{} & \memAVGsev{} & -- & -- & -- & -- & -- & -- \\
+			\textbf{ViewTree}            & 0.346 & 0.652 & \textbf{0.565} & \textbf{0.516} & 0.653 & \textbf{0.674} & \textbf{0.530} & 0.298 & 0.312 & 0.345 & \textbf{0.724} & 0.820 & 0.496 \\
 			\bottomrule
 		\end{tabular}
 	}
-	\caption{Performance with Qwen2.5-VL-3B. Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
-	\vspace{-0.2in}
-	\label{tab:vt_main_3B}
-\end{table*}
-
-\begin{table*}[h!]
-	\centering
-	\resizebox{\textwidth}{!}{%
-		\begin{tabular}{lccccccccccccc}
-			\toprule
-			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
-			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
-			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
-			\midrule
-			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Video-COT           & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			\textbf{ViewTree}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			\bottomrule
-		\end{tabular}
-	}
-	\caption{Performance with Qwen2.5-VL-7B. Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
+	\caption{Performance with Qwen2.5-VL-7B. Task acronyms are defined in Section~\ref{sec:experiment_setting}; VSI Avg is the mean over all ten VSI task types, STI Avg over all eight STI tasks. R.Dr.\ averages the easy/medium/hard splits. Static scene memory uses the walk-trained answerer with all five rendered views attached to every question. ``--'': prompting- and render-exposure baselines are compared on VSI-Bench.}
 	\vspace{-0.2in}
 	\label{tab:vt_main_7B}
 \end{table*}
 
-\begin{table*}[h!]
+\begin{table}[t]
 	\centering
-	\resizebox{\textwidth}{!}{%
-		\begin{tabular}{lccccccccccccc}
+	\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{lccccccc}
 			\toprule
-			\multirow{2}{*}{\textbf{Method}} & \multicolumn{7}{c}{\textbf{VSI-Bench (held-out)}} & \multicolumn{3}{c}{\textbf{STI-Bench}} & \multicolumn{2}{c}{\textbf{VSTI-Bench}} & \textbf{OST} \\
-			\cmidrule(lr){2-8} \cmidrule(lr){9-11} \cmidrule(lr){12-13} \cmidrule(lr){14-14}
-			& A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} & D.Meas. & Grd. & \textbf{Avg.} & C.O. & O.O. & Ovr. \\
+			\textbf{Method} & A.D. & O.S. & R.Dt. & R.Dr. & O.C. & Ap.Or. & \textbf{Avg} \\
 			\midrule
-			Direct Input                 & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT-plain                    & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			SFT+GRPO-plain               & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Static memory                & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			Video-COT            & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
-			\textbf{ViewTree}          & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+			\multicolumn{8}{l}{\emph{Qwen2.5-VL-3B}} \\
+			Direct input        & 0.183 & 0.196 & 0.342 & \textbf{0.484} & 0.304 & 0.184 & 0.321 \\
+			Video-CoT           & \cotADthree{} & \cotOSthree{} & \cotRDtthree{} & \cotRDrthree{} & \cotOCthree{} & \cotAOthree{} & \cotAVGthree{} \\
+			Benchmark-QA SFT    & 0.223 & 0.173 & 0.344 & 0.448 & 0.228 & 0.176 & 0.307 \\
+			Benchmark-QA SFT+GRPO & 0.230 & 0.187 & 0.347 & 0.445 & 0.232 & 0.159 & 0.306 \\
+			Standard SFT (corpus, 30k) & \textbf{0.358} & \textbf{0.611} & \textbf{0.534} & 0.473 & \textbf{0.669} & \textbf{0.623} & \textbf{0.497} \\
+			Static scene memory & \memADthree{} & \memOSthree{} & \memRDtthree{} & \memRDrthree{} & \memOCthree{} & \memAOthree{} & \memAVGthree{} \\
+			ViewTree (training-free) & 0.144 & 0.205 & 0.366 & 0.465 & 0.275 & 0.230 & 0.314 \\
+			\midrule
+			\multicolumn{8}{l}{\emph{Qwen2.5-VL-32B}} \\
+			Direct input        & \textbf{0.257} & 0.500 & \textbf{0.501} & \textbf{0.380} & 0.286 & 0.305 & \textbf{0.380} \\
+			Video-CoT           & \cotADxxxii{} & \cotOSxxxii{} & \cotRDtxxxii{} & \cotRDrxxxii{} & \cotOCxxxii{} & \cotAOxxxii{} & \cotAVGxxxii{} \\
+			Benchmark-QA SFT    & \textbf{0.257} & \textbf{0.529} & \textbf{0.501} & 0.293 & \textbf{0.343} & 0.293 & 0.351 \\
+			Static scene memory & \memADxxxii{} & \memOSxxxii{} & \memRDtxxxii{} & \memRDrxxxii{} & \memOCxxxii{} & \memAOxxxii{} & \memAVGxxxii{} \\
+			ViewTree (training-free) & 0.219 & 0.472 & 0.457 & 0.329 & 0.270 & \textbf{0.356} & 0.348 \\
 			\bottomrule
 		\end{tabular}
 	}
-	\caption{Performance with Qwen2.5-VL-32B (4-bit on Jetson AGX Orin). Task acronyms are defined in Section~\ref{sec:experiment_setting}.}
-	\vspace{-0.25in}
-	\label{tab:vt_main_32B}
-\end{table*}
+	\caption{Backbone-scale study on the VSI-Bench held-out split. The trained \system~controller and confidence head are 7B-specific, so 3B/32B use the training-free variant (token-confidence pruning, human-constrained poses). Benchmark-QA SFT/GRPO train on MindCube-style QA; the 30k-subset corpus SFT is the data-matched answerer at 3B (the full corpus SFT does not fit 32B fine-tuning in our budget); static scene memory is zero-shot render exposure. GRPO at 32B was not run.}
+	\vspace{-0.2in}
+	\label{tab:vt_scale}
+\end{table}
 % ------------------------------------------------------------------
 
-Baselines ...
-
-\begin{figure*}[ht]
-	\vspace{-0.15in}
+\begin{figure*}[t]
+	\vspace{-0.05in}
 	\centering
-	\hspace{-0.25in}
-	\subfigure[Qwen2.5-VL-3B on Jetson AGX Orin]{
-		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_3b.pdf}
-		\label{fig:vt_efficiency_3b}
+	\subfigure[Per-question cost by method]{
+		\includegraphics[width=0.32\linewidth]{figures/vt_eff_methods.pdf}
+		\label{fig:vt_eff_methods}
 	}
-	\hspace{-0.25in}
 	\hfill
-	\subfigure[Qwen2.5-VL-7B on Jetson AGX Orin]{
-		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_7b.pdf}
-		\label{fig:vt_efficiency_7b}
+	\subfigure[Adaptive route mix]{
+		\includegraphics[width=0.32\linewidth]{figures/vt_eff_routes.pdf}
+		\label{fig:vt_eff_routes}
 	}
-	\hspace{-0.25in}
 	\hfill
-	\subfigure[Qwen2.5-VL-32B-4bit on Jetson AGX Orin]{
-		\includegraphics[width=0.33\linewidth]{figures/vt_efficiency_32b.pdf}
-		\label{fig:vt_efficiency_32b}
+	\subfigure[Where the time goes]{
+		\includegraphics[width=0.32\linewidth]{figures/vt_eff_breakdown.pdf}
+		\label{fig:vt_eff_breakdown}
 	}
-	\hspace{-0.25in}
 	\vspace{-0.15in}
-	\caption{Compute efficiency on Jetson AGX Orin with different VLM backbones}
+	\caption{Measured compute efficiency on Jetson AGX Orin (7B backbone; energy integrates the three INA3221 power rails).}
 	\vspace{-0.1in}
 	\label{fig:vt_efficiency}
 \end{figure*}
@@ -576,26 +611,24 @@ Baselines ...
 \subsection{On-Device Compute Efficiency}
 \label{sec:efficiency}
 
-Figure~\ref{fig:vt_efficiency} presents the compute latency, energy, and memory cost of ViewTree and the baselines on Jetson AGX Orin...
+Figure~\ref{fig:vt_efficiency} presents the measured per-question cost of \system and the baselines on Jetson AGX Orin, using the deployment of Section~\ref{sec:runtime}. At the evaluation's route mix, \system costs 24.5\,s and 1.1\,kJ per question -- about $2.1\times$ a single 16-frame call (11.7\,s, 0.53\,kJ) and $1.9\times$ \emph{cheaper} than the non-adaptive depth-one tree that renders all five candidate views for most questions (46.3\,s, 2.1\,kJ). The route mix in Figure~\ref{fig:vt_eff_routes} explains why: the exploration gate answers 71\% of questions after two short calls in 9.6\,s -- \emph{less} than the direct-input baseline, because two short-prefill calls are cheaper than one long-prefill call over 16 frames -- and the expensive depth-2/3 walks (71--117\,s) are taken on only 14\% of questions. Figure~\ref{fig:vt_eff_breakdown} decomposes the routes: VLM calls dominate, rendering and encoding the requested views costs 0.6\,s per level, and the per-scene reconstruction (11.3\,s warm) amortizes to 0.7\,s and 32\,J per question at the benchmark's 18 questions per scene. Peak memory with both the VLM and the reconstruction model resident is 25.9\,GB, leaving ample headroom on the 64\,GB device; the 32B backbone fits with 4-bit weights.
 
-\begin{figure*}[ht]
+\begin{figure*}[t]
 	\vspace{-0.1in}
 	\centering
 	\subfigure[Object Number]{
 		\includegraphics[width=0.30\linewidth]{figures/vt_object_number.pdf}
 	}
-	\hspace{-0.25in}
 	\hfill
 	\subfigure[Spatial Scale]{
 		\includegraphics[width=0.30\linewidth]{figures/vt_spatial_scale.pdf}
 	}
-	\hspace{-0.25in}
 	\hfill
 	\subfigure[Temporal Duration]{
 		\includegraphics[width=0.30\linewidth]{figures/vt_temporal_duration.pdf}
 	}
 	\vspace{-0.15in}
-	\caption{Spatial task performance with different levels of scene complexities}
+	\caption{Spatial task performance under different levels of scene complexity (VSI-Bench held-out split, 7B backbone): counting questions binned by ground-truth object count; all questions binned by the scene's room area and by video duration (tercile splits).}
 	\vspace{-0.1in}
 	\label{fig:vt_complexity}
 \end{figure*}
@@ -603,73 +636,70 @@ Figure~\ref{fig:vt_efficiency} presents the compute latency, energy, and memory 
 \subsection{Performance over Different Levels of Scene Complexities}
 \label{sec:complexity}
 
-We analyze how the scene complexity affects the spatial task performance, using the Qwen2.5-VL-7B backbone on the VSI-Bench....
+Figure~\ref{fig:vt_complexity} analyzes how scene complexity affects accuracy, using the 7B backbone on the VSI-Bench held-out split. Direct frame input degrades on every complexity axis: from 0.34 to 0.26 as rooms grow from under $14\,\mathrm{m}^2$ to over $23\,\mathrm{m}^2$, and from 0.33 to 0.28 as the walkthrough video grows beyond 96 seconds -- with a fixed frame budget, larger scenes and longer videos leave more of the room uncovered by the sampled frames. \system is the most robust system on both axes: its score \emph{rises} with video duration (0.52 $\rightarrow$ 0.55), and its margin over the standard-SFT baseline grows exactly where coverage thins -- from $-0.8$ points on short videos to $+2.9$ on long ones, and from $0.0$ in small rooms to $+2.5$ in mid-size and large rooms -- because a question about an under-covered region can be answered by walking the virtual camera there instead of hoping a sampled frame saw it. Object counting shows the opposite regime: fine-tuning dominates (direct input collapses from 0.36 to 0.06 as the count grows, while both trained systems stay near 0.32--0.35), and the rendered views add nothing for small counts; \system's arbitration keeps it within 2.5 points of the frames-only baseline while gaining a small edge on scenes with five or more target objects.
 
 \vspace{-0.1in}
 \subsection{Ablation Studies}
 \label{sec:ablation}
 
-\noindent\textbf{Different view-acquisition strategies.} To validate the effectiveness of confidence-guided beam search over camera walks, we compare it against (1) presenting all five candidate views unconditionally (static memory), (2) a random walk of the same depth budget, and (3) greedy walk (beam width 1), on the VSI-Bench held-out split. As shown in Table~\ref{tab:vt_keyview_ablation}, ...
+\noindent\textbf{View-acquisition strategies.} Table~\ref{tab:vt_keyview_ablation} (left) compares confidence-guided beam search against simpler acquisition strategies with the same trained answerer, on the VSI-Bench held-out split: presenting all five candidate views unconditionally (static memory), a random walk with the same depth budget and pruning, and a greedy walk (beam width 1). \abviewtext{}
 
-\begin{table}[h]
-	\vspace{0.1in}
+\noindent\textbf{Transplanting the recipe across backbones.} Table~\ref{tab:vt_keyview_ablation} (right) applies the training-free variant of the same search (token-confidence pruning, identical pose constraints) to all three backbones. It helps only the 7B backbone it was tuned on ($+2.8$); it is neutral at 3B, where the small model answers weakly from renders, and \emph{harmful} at 32B ($-3.2$), where the stronger model's direct answers are overridden by render-limited consensus (the gate releases only 17\% of questions for direct answering there). Adaptivity itself is not free across model sizes: the gate and confidence head must be calibrated per backbone.
+
+\begin{table}[t]
+	\vspace{0.05in}
 	\centering
 	\small
-	\begin{minipage}[t]{0.48\textwidth}
+	\begin{minipage}[t]{0.55\columnwidth}
 		\centering
+		\resizebox{\linewidth}{!}{%
 		\begin{tabular}{lcc}
 			\toprule
-			\textbf{Qwen2.5-VL-7B} & \textbf{Task accuracy} & \textbf{VLM calls} \\ \midrule
-			All views (static)          & --            & --              \\
-			Random walk                 & --            & --              \\
-			Greedy walk (b=1)           & --            & --              \\
-			\textbf{Ours }   & \textbf{--}   & --              \\ \bottomrule
-		\end{tabular}
-		\label{tab:vt_ablation_view_7B}
+			\textbf{Strategy (7B)} & \textbf{Avg} & \textbf{Calls} \\ \midrule
+			All views (static)          & \abstatA{}    & 1               \\
+			Random walk                 & \abrandA{}    & \abrandC{}      \\
+			Greedy walk (b=1)           & \abgreedA{}   & \abgreedC{}     \\
+			\textbf{Ours (b=3, keep 2)} & \textbf{0.530} & 4.5            \\ \bottomrule
+		\end{tabular}}
 	\end{minipage}
 	\hfill
-	\begin{minipage}[t]{0.48\textwidth}
+	\begin{minipage}[t]{0.42\columnwidth}
 		\centering
+		\resizebox{\linewidth}{!}{%
 		\begin{tabular}{lcc}
 			\toprule
-			\textbf{Qwen2.5-VL-32B-4bit} & \textbf{Task accuracy} & \textbf{VLM calls} \\ \midrule
-			All views (static)          & --            & --              \\
-			Random walk                 & --            & --              \\
-			Greedy walk (b=1)           & --            & --              \\
-			\textbf{Ours}   & \textbf{--}   & --              \\ \bottomrule
-		\end{tabular}
-		\label{tab:vt_ablation_view_32B}
+			\textbf{Backbone} & \textbf{Direct} & \textbf{+Tree} \\ \midrule
+			3B           & 0.321 & 0.314 \\
+			7B           & 0.313 & \textbf{0.341} \\
+			32B          & \textbf{0.380} & 0.348 \\ \bottomrule
+		\end{tabular}}
 	\end{minipage}
 	\vspace{0.05in}
-	\caption{Ablation of view-acquisition strategies on the VSI-Bench held-out split.}
+	\caption{Left: view-acquisition strategies with the same trained answerer (VSI-Bench held-out, average over ten types and VLM calls per question). Right: the training-free tree transplanted across backbone sizes.}
 	\label{tab:vt_keyview_ablation}
 	\vspace{-0.15in}
 \end{table}
 
-\noindent\textbf{Component ablations.} Table~\ref{tab:vt_component_ablation} isolates the contribution of each ViewTree component on the VSI-Bench ...
+\noindent\textbf{Component ablations.} Table~\ref{tab:vt_component_ablation} isolates the contribution of each part of \system. Capping the search at depth one costs 1.3 points despite \emph{more} VLM calls (up to 8 versus 4.5), because the gate of the full system answers 71\% of questions directly while the depth-one tree renders five views for most of them; the extra depth pays on the 209 questions that reach consensus only at depth two or three. Removing exploration entirely (the walk-trained answerer on frames alone) costs 0.6 points but is the cheapest option at one call -- this gap, concentrated on relative direction and distance, is what the walk buys. Replacing the walk-trained answerer with the plain corpus SFT costs a further 1.5 points, showing that training with rendered context improves even frames-only answering. Finally, adding GRPO to the controller does not help ($0.522$, $-0.8$ [$-2.2$, $+0.7$] versus the imitation-trained controller): the policy collapsed toward stopping early during RL, and the same adapter answering frames-only scores 0.534 -- the reward moved the answer tokens, not the camera policy, so the deployed system uses the imitation-trained controller without RL.
 
-\begin{table}[h]
+\begin{table}[t]
 	\centering
 	\small
 	\begin{tabular}{lcc}
 		\toprule
-		\textbf{Variant} & \textbf{Avg accuracy} & \textbf{VLM calls} \\ \midrule
-		\textbf{ViewTree-D (full)}          & \textbf{--} & -- \\
-		\;\;w/o exploration gate            & --          & -- \\
-		\;\;w/o confidence head (token prob.)& --         & -- \\
-		\;\;w/o human-camera constraint     & --          & -- \\
-		\;\;depth capped at 1               & --          & -- \\
-		\;\;w/o direct-answer arbitration   & --          & -- \\ \bottomrule
+		\textbf{Variant} & \textbf{Avg} & \textbf{Calls} \\ \midrule
+		\textbf{ViewTree (full)}                & \textbf{0.530} & 4.5 \\
+		\;\;depth capped at 1                   & 0.517          & $\le$8 \\
+		\;\;w/o exploration (frames only)       & 0.524          & 1 \\
+		\;\;w/o walk training (corpus SFT)      & 0.509          & 1 \\
+		\;\;w/ RL controller (GRPO over walks)  & 0.522          & 4.6 \\ \bottomrule
 	\end{tabular}
-	\caption{Component ablations on the VSI-Bench held-out split (Qwen2.5-VL-7B).}
+	\caption{Component ablations on the VSI-Bench held-out split (7B): average over the ten task types and VLM calls per question.}
 	\label{tab:vt_component_ablation}
 	\vspace{-0.2in}
 \end{table}
-	
-	
-	
-	
-	\bibliographystyle{ACM-Reference-Format}
+
+\bibliographystyle{ACM-Reference-Format}
 	\bibliography{main,mobicom26}
 	
 \end{document}

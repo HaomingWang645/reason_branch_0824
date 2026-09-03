@@ -1058,6 +1058,29 @@ zero-shot +0.8 [−1.7, +3.3]. 3B SFT30k − 3B zero-shot **+17.6 [+15.3, +19.9]
 
 Outputs: `results/scalevlm/`, adapters `checkpoints/scalevlm/{sft3b_30k, sft_plain_3b, grpo_plain_3b, sft_plain_32b}`.
 
+## 9. Paper-fill baselines for the experiments section (2026-09-03, running)
+
+The mobicom27 draft's evaluation section is being filled with real numbers; the
+missing table cells were launched on the free GPUs (user job on GPU 6 untouched),
+all on the VSI held-out odd half (2,557 q):
+
+- **Video-CoT** zero-shot prompting, 3B / 7B / 32B (`--condition cot` added to
+  `scripts/run_eval.py`). Prompt v1 (free-form "end with Answer:") failed to
+  elicit final answers at 7B (model described the layout and stopped) — replaced
+  with a required two-line Reasoning:/Answer: format, tainted partials deleted,
+  relaunched.
+- **Static scene memory, zero-shot** (memory32 + `VIEWTREE_POSES=human`, fresh
+  render cache `data/renders32_human`), 3B / 7B / 32B.
+- **Static scene memory, trained** (SFT-A answerer + the 5 human renders), 7B —
+  doubles as the "all views (static)" ablation row.
+- **Greedy walk** (beam 1, keep 1) and **random-walk policy** (`--policy random`
+  patch in `scripts/depth/run_tree_d.py`: uniform valid-action choice, same
+  value-head pruning/stopping), 7B, for the view-strategy ablation.
+
+Outputs `results/paperfill/*.jsonl`, scorer `scripts/paperfill_scores.py`,
+lane scripts `results/logs/paperfill/lanes*.sh`. Numbers to be appended here
+when complete.
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now

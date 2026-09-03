@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--parity", choices=["all", "even", "odd"], default="odd"); ap.add_argument("--shard", type=int, default=0); ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--beam", type=int, default=3); ap.add_argument("--keep", type=int, default=2); ap.add_argument("--depth", type=int, default=3); ap.add_argument("--limit-scenes", type=int, default=0)
     ap.add_argument("--num-frames", type=int, default=32)
+    ap.add_argument("--policy", choices=["ctrl", "random"], default="ctrl")
     a = ap.parse_args()
     rows = load_questions(); scenes = sorted({(r["dataset"], r["scene_name"]) for r in rows})
     if a.parity == "even": scenes = scenes[0::2]
@@ -110,10 +111,15 @@ def main():
                             if bank[cur]["kind"] == "topdown": continue
                             valid = [x for x in ACTIONS if transition(bank, fwd, cur, x, meta) is not None and (x != "BIRD_EYE" or d == a.depth - 1)]
                             if not valid: continue
-                            renders = [view(i) for _, i in path]
-                            prompt = CTRL.format(pre=PRE.format(k=8), walk=WALK.format(m=len(renders), steps=describe(bank, path)), q=r["question"], valid=", ".join(["STOP"] + valid))
-                            sc = action_scores(vlm, base + renders, prompt, ["STOP"] + valid); calls += 1
-                            top = sorted(valid, key=lambda x: -sc[x])[: a.beam]
+                            if a.policy == "random":
+                                import random as _rnd
+                                _rnd.seed(int(r["id"]) * 100 + d)
+                                top = _rnd.sample(valid, min(a.beam, len(valid)))
+                            else:
+                                renders = [view(i) for _, i in path]
+                                prompt = CTRL.format(pre=PRE.format(k=8), walk=WALK.format(m=len(renders), steps=describe(bank, path)), q=r["question"], valid=", ".join(["STOP"] + valid))
+                                sc = action_scores(vlm, base + renders, prompt, ["STOP"] + valid); calls += 1
+                                top = sorted(valid, key=lambda x: -sc[x])[: a.beam]
                             for act in top:
                                 j = transition(bank, fwd, cur, act, meta)
                                 if j is not None and j not in [i for _, i in path]: nxt.append(path + [(act, j)])
