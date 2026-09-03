@@ -141,14 +141,14 @@
 	%However, when several camera movements appear useful, an incorrect early choice may lead the VLM toward a region that does not contain the required information. Existing methods that follow a single reasoning path~\cite{cov2026,think3d2026} may also be insufficient when answering a question requires observations from different directions. To explore multiple paths efficiently, instead of expanding several camera paths at every reasoning step, the system must adaptively determine when alternative camera trajectories are necessary, which trajectories should receive computation, and when their observations should be combined, subject to the device’s latency, energy, memory constraints.
 	
 		
-	\begin{figure*}[t]
+	\begin{figure}[t]
 	\centering
-	\includegraphics[width=0.94\textwidth]{figures/fig_wm_failure.pdf}
-	\vspace{-0.12in}
-	\caption{World-model view prediction versus \system's reconstruct-then-render, on a real captured scene. From the current view, the VLM requests ``turn left $\approx$85$^\circ$'' and then ``move forward $\approx$0.7\,m''; both requested views were actually captured in the walkthrough, so the correct outcome of each movement is known. The world model (Stable Virtual Camera~\cite{svc2025}, the world model used by MindJourney~\cite{mindjourney2025}) predicts a bed and walls that contradict the recorded frames, and drifts further when its own prediction is fed back as the input for the second movement. \system instead renders both requested views by re-projecting one reconstruction built from all frames: each view stays consistent with the actual scene, and errors cannot accumulate across movements.}
+	\includegraphics[width=0.96\linewidth]{figures/fig_wm_failure.pdf}
+	\vspace{-0.1in}
+	\caption{A world model (Stable Virtual Camera~\cite{svc2025}, as used by MindJourney~\cite{mindjourney2025}) invents unobserved content and drifts when its prediction is fed back; \system re-projects one stored reconstruction, matching the captured ground-truth views.}
 	\label{fig:world_model_failure}
 	\vspace{-0.1in}
-\end{figure*}
+\end{figure}
 			
 	Based on this rationale, in this paper we present \system, an on-device system that gives the VLM an \emph{explicit scene memory} -- the reconstruction and the views rendered from it -- and lets the VLM take \emph{confidence-guided camera walks} through this memory: short sequences of virtual camera movements in which a learned confidence estimate decides where to walk, whether to branch, and when to stop and answer. To limit the damage of a wrong decision propagating along a single reasoning path, we allow a VLM to adaptively explore multiple camera paths in the reconstructed 3D scenes. While an easy question can be answered from the current view or after one camera movement, a more difficult question can explore additional paths. The main challenge is how to explore multiple camera paths without introducing unnecessary computations on resource-constrained mobile devices. \system adds a learned confidence head that predicts whether each partial path can eventually produce the correct answer. When the current answer has low confidence and several camera movements appear useful, the VLM can create a small number of paths from the same reasoning history. These paths reason independently, so that an incorrect decision in one path does not affect the others. After each movement, \system retains paths with high confidence and removes paths with low confidence. If several high-confidence paths produce different answers, the system keeps them and requests another view that can help resolve the disagreement. Observations from different paths are combined only when they provide complementary information. %If one path already answers the question with high confidence, the system stops without combining additional observations.
 	
@@ -184,7 +184,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_frames_scaling.pdf}
 	\vspace{-0.28in}
-	\caption{Scaling the frame count on Jetson AGX Orin (7B backbone, measured): latency grows superlinearly and memory is exhausted at 512 frames, while the position-embedding limit binds near 128 frames.}
+	\caption{Frame-count scaling on Jetson AGX Orin (7B backbone, measured).}
 	\label{fig:frames_scaling}
 	\vspace{-0.15in}
 \end{figure}
@@ -200,7 +200,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_view_quality.pdf}
 	\vspace{-0.28in}
-	\caption{Two viewpoint proposals on the same reconstruction. Unconstrained proposals view the scene from outside, through the ceiling; \system restricts poses to positions a person could occupy and masks poses without geometric support.}
+	\caption{Naive viewpoint proposals look at the scene from outside; \system constrains poses to human-reachable positions with geometric support.}
 	\label{fig:view_quality}
 	\vspace{-0.15in}
 \end{figure}
@@ -214,7 +214,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_paths_example.pdf}
 	\vspace{-0.28in}
-	\caption{A single reasoning path fails on a real question: the most confident first movement (path A) answers 20\,cm vs.\ ground truth 12, and confidence cannot separate it from the runner-up (0.700 vs.\ 0.697). Retaining two paths lets the next observations correct the error.}
+	\caption{Confidence cannot separate the two best first movements (0.700 vs.\ 0.697); retaining both paths lets later observations correct the wrong one.}
 	\label{fig:paths_example}
 	\vspace{-0.15in}
 \end{figure}
@@ -227,7 +227,7 @@
 		\centering
 		\includegraphics[width=0.97\textwidth]{figures/fig_overview.pdf}
 		\vspace{-0.12in}
-		\caption{\system overview on a real scene. The recent frames are reconstructed once into an explicit scene memory that can render validity-checked views from discrete camera poses (1); a learned gate answers directly when the frames suffice (2); otherwise confidence-guided camera walks acquire the missing views, stop early on agreement, and a final arbitration chooses between the direct and explored answers (3).}
+		\caption{\system overview: the frames are reconstructed once into an explicit scene memory (1); a learned gate answers directly when they suffice (2); otherwise confidence-guided camera walks acquire the missing views, with final arbitration (3).}
 		\label{fig:overview}
 	\end{figure*}
 	
@@ -288,7 +288,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_action_space.pdf}
 	\vspace{-0.25in}
-	\caption{Camera actions and pose validity on a real reconstructed scene. The virtual camera moves between discrete standing spots and viewing directions (left); each candidate pose is rendered and checked before it is offered to the controller (middle, right).}
+	\caption{Camera actions over discrete standing spots (left); every candidate pose is rendered and validity-checked before being offered (right).}
 	\label{fig:action_space}
 	\vspace{-0.15in}
 \end{figure}
@@ -305,7 +305,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_gate_example.pdf}
 	\vspace{-0.25in}
-	\caption{The exploration gate on two real questions. Top: the frames cover the queried areas, so the direct answer is returned after two calls. Bottom: the object's size cannot be judged from distant frames, so the gate starts the search.}
+	\caption{The exploration gate: covered questions are answered directly (top); insufficient coverage starts the search (bottom).}
 	\label{fig:gate_example}
 	\vspace{-0.15in}
 \end{figure}
@@ -317,7 +317,7 @@
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_control_prompt.pdf}
 	\vspace{-0.25in}
-	\caption{One camera-controller step. The valid moves are listed in the prompt, and the scores of all candidate actions are read from a single prefill pass, so a control step costs no answer decoding.}
+	\caption{One controller step: all action scores are read from a single prefill pass, with no decoding.}
 	\label{fig:control_prompt}
 	\vspace{-0.15in}
 \end{figure}
@@ -354,7 +354,7 @@ where $\hat{y}$ is the returned answer, $k=0$ denotes the direct-answer state, a
 	\centering
 	\includegraphics[width=0.97\linewidth]{figures/fig_search_example.pdf}
 	\vspace{-0.12in}
-	\caption{A real \system search on a VSI-Bench question. The gate finds the frames insufficient; the beam explores three standing spots, prunes by calibrated confidence (blue borders), discards views without geometric support (red dashed), and stops at depth three when the retained paths agree on the correct answer.}
+	\caption{A real search: calibrated confidence keeps two paths per level (blue), prunes the rest (grey), discards unsupported views (red dashed), and stops on agreement.}
 	\label{fig:search_example}
 	\vspace{-0.1in}
 \end{figure}
@@ -409,7 +409,7 @@ where $\hat{y}$ is the returned answer, $k=0$ denotes the direct-answer state, a
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_training_pipeline.pdf}
 	\vspace{-0.25in}
-	\caption{\system training. The answerer is first taught to use rendered views (stage 1); a training-time oracle search discovers which camera trajectories fix wrong answers (stage 2); its actions and visited states then supervise the camera controller and the confidence head (stage 3).}
+	\caption{\system training: the answerer learns from rendered views (1); an oracle search finds trajectories that fix wrong answers (2); these supervise the controller and confidence head (3).}
 	\label{fig:training_pipeline}
 	\vspace{-0.15in}
 \end{figure} We first teach the VLM to answer from the original frames and newly rendered views. We then use oracle search to produce camera-action and stopping targets. Finally, we use the states visited during oracle search to train the confidence head. The optional reinforcement-learning stage improves answer prediction but not camera control in our experiments; therefore, the final system uses the controller trained from oracle trajectories.
@@ -434,7 +434,7 @@ where $\hat{y}$ is the returned answer, $k=0$ denotes the direct-answer state, a
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_oracle_example.pdf}
 	\vspace{-0.25in}
-	\caption{An oracle trajectory on a real training question. The direct answer is wrong; one \textsc{Forward} movement fixes it, so the controller's targets are \textsc{Forward} then \textsc{Stop}, and every visited state is labelled by answer correctness for the confidence head.}
+	\caption{An oracle trajectory: one \textsc{Forward} fixes the wrong direct answer, supervising the controller and labelling every visited state for the confidence head.}
 	\label{fig:oracle_example}
 	\vspace{-0.15in}
 \end{figure}
@@ -475,7 +475,7 @@ where $\pi_{\theta}$ is the controller's distribution over camera actions. Inval
 	\centering
 	\includegraphics[width=\linewidth]{figures/fig_runtime.pdf}
 	\vspace{-0.25in}
-	\caption{\system runtime on the embodied device: the reconstruction is reused across questions and paths, repeated views are served from pose-keyed caches, control decisions decode nothing, and the search is bounded with a cheap gated exit.}
+	\caption{\system runtime: shared reconstruction, pose-keyed view caches, decode-free control, and a gated, bounded search.}
 	\label{fig:runtime}
 	\vspace{-0.15in}
 \end{figure}
@@ -500,7 +500,7 @@ We evaluate ViewTree both on a server testbed and on an embodied AI device. All 
     \item \textbf{VSTI-Bench \cite{vstibench2026}} contains 5{,}736 QA pairs on ScanNet validation videos over 9 spatio-temporal types; we report the camera--object relation (C.O.) and object--object relation (O.O.) groups.
     \item \textbf{OST-Bench \cite{ostbench2025}} contains 5{,}557 multiple-choice questions probing online spatio-temporal reasoning over an agent's cumulative image history; we report the overall accuracy (Ovr.).
 \end{itemize}
-QA performance is evaluated as the percentage of correct answer choices; numerical tasks (absolute distance, object size, room size, and the numerical VSTI types) use Mean Relative Accuracy.
+QA performance is evaluated as the percentage of correct answer choices; numerical tasks (absolute distance, object size, room size, and the numerical VSTI types) use Mean Relative Accuracy. Reported VSI and STI averages are means over all ten and eight task types respectively, and R.Dr.\ averages the easy/medium/hard splits.
 
 \noindent\textbf{Baselines.} We compare ViewTree against the following baselines, all using the same VLM backbone, visual resolution, frame budgets, and answer scorer:
 \begin{itemize}
@@ -521,13 +521,13 @@ QA performance is evaluated as the percentage of correct answer choices; numeric
 \subsection{Spatial Task Performance}
 \label{sec:main_results}
 
-Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone, and Table~\ref{tab:vt_scale} the backbone-scale study on VSI-Bench; key deltas are given with scene-bootstrap 95\% confidence intervals.
+Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone (the static-memory row uses the walk-trained answerer with all five rendered views attached), and Table~\ref{tab:vt_scale} the backbone-scale study on VSI-Bench; key deltas are given with scene-bootstrap 95\% confidence intervals.
 
 \noindent\textbf{Main results (7B).} On VSI-Bench, \system reaches 0.530 average over the ten task types, against 0.313 for direct frame input. Most of this gap is closed by training: the standard-SFT baseline, fine-tuned on the same corpus, reaches 0.509 without any rendered view. On top of this strongest baseline, \system's adaptive exploration adds +2.1 points [$-0.0$, $+4.3$], and the per-type columns show exactly where: relative direction ($0.467 \rightarrow 0.516$, with the hard split $+6.2$), relative distance ($+5.0$), and appearance order ($+4.6$) -- the perspective-dependent questions where a new viewpoint changes the visible geometry. On object counting and room size the extra renders \emph{reduce} accuracy slightly ($-1.4$ and $-2.2$): those types are answered best from the original frames, which is why the arbitration of Section~\ref{sec:reasoning} retains the direct answer when exploration does not raise confidence. The SFT+GRPO row confirms that answer-reward RL improves the answer distribution ($0.534$ single pass, $+2.5$ [$+0.3$, $+5.0$] over standard SFT) but, as Section~\ref{sec:ablation} shows, it does not improve the camera policy itself.
 
 \noindent\textbf{Cross-benchmark transfer.} The remaining columns give an honest picture of where view exploration pays. On VSTI-Bench, whose camera--object and object--object questions match the training templates, \system is $+19.4$ (C.O.) and $+17.4$ (O.O.) points over direct input, but its margin over the standard-SFT single pass is not significant ($-0.5$ [$-1.2$, $+0.2$] on the 9-type mean): template-matched training data does the work. On STI-Bench, every fine-tuned system sits below the zero-shot backbone (\system $-2.6$ [$-4.4$, $-0.7$] on the 8-task mean), because half of STI's tasks come from outdoor driving and object-pose domains that an indoor corpus cannot teach. On OST-Bench the walk actively hurts ($-2.1$ [$-3.1$, $-1.2$] versus its own single pass): OST asks about the agent's own trajectory and what it has seen, and a consensus among rendered views of the \emph{current} reconstruction overrides direct answers that were more often right. Multi-step view acquisition earns its cost only where the question concerns room geometry that the input frames under-cover; a deployment should gate the walk per question family, which the current gate learns only for VSI-style questions.
 
-\noindent\textbf{Backbone scale (Table~\ref{tab:vt_scale}).} The 32B backbone is the strongest zero-shot model (0.380) but every 7B-tuned recipe fails to transfer to it: benchmark-QA SFT \emph{lowers} its accuracy by 2.9 points [$-4.9$, $-0.7$], and the training-free \system~variant that gains $+2.8$ [$+1.0$, $+4.7$] at 7B loses $-3.2$ [$-5.2$, $-1.1$] at 32B, where token-confidence pruning lets render-limited consensus override strong direct answers. At the other end, the corpus moves the mobile-class 3B backbone from 0.321 to 0.497 with only a 30k-example subset -- statistically at the level of the 7B data-matched baseline (0.509) -- showing that the answering skill lives in the data rather than the capacity, while the transplanted training-free tree is neutral there ($-0.7$). Adaptive exploration therefore requires per-backbone calibration of the gate and confidence head; the full trained system is built at 7B in this paper.
+\noindent\textbf{Backbone scale (Table~\ref{tab:vt_scale}).} The 32B backbone is the strongest zero-shot model (0.380) but every 7B-tuned recipe fails to transfer to it: benchmark-QA SFT \emph{lowers} its accuracy by 2.9 points [$-4.9$, $-0.7$], and the training-free \system~variant that gains $+2.8$ [$+1.0$, $+4.7$] at 7B loses $-3.2$ [$-5.2$, $-1.1$] at 32B, where token-confidence pruning lets render-limited consensus override strong direct answers. At the other end, the corpus moves the mobile-class 3B backbone from 0.321 to 0.497 with only a 30k-example subset -- statistically at the level of the 7B data-matched baseline (0.509) -- showing that the answering skill lives in the data rather than the capacity, while the transplanted training-free tree is neutral there ($-0.7$). Adaptive exploration therefore requires per-backbone calibration of the gate and confidence head; the full trained system is built at 7B in this paper (fine-tuning the 32B backbone on the corpus exceeded our compute budget, and 32B GRPO was not run).
 
 % ------------------------------------------------------------------
 \begin{table*}[t]
@@ -548,7 +548,7 @@ Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone,
 			\bottomrule
 		\end{tabular}
 	}
-	\caption{Performance with Qwen2.5-VL-7B. Task acronyms are defined in Section~\ref{sec:experiment_setting}; VSI Avg is the mean over all ten VSI task types, STI Avg over all eight STI tasks. R.Dr.\ averages the easy/medium/hard splits. Static scene memory uses the walk-trained answerer with all five rendered views attached to every question. ``--'': prompting- and render-exposure baselines are compared on VSI-Bench.}
+	\caption{Performance with Qwen2.5-VL-7B (``--'': baseline evaluated on VSI-Bench only).}
 	\vspace{-0.2in}
 	\label{tab:vt_main_7B}
 \end{table*}
@@ -578,7 +578,7 @@ Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone,
 			\bottomrule
 		\end{tabular}
 	}
-	\caption{Backbone-scale study on the VSI-Bench held-out split. The trained \system~controller and confidence head are 7B-specific, so 3B/32B use the training-free variant (token-confidence pruning, human-constrained poses). Benchmark-QA SFT/GRPO train on MindCube-style QA~\cite{mindcube2025}; the 30k-subset corpus SFT is the data-matched answerer at 3B (the full corpus SFT does not fit 32B fine-tuning in our budget); static scene memory is zero-shot render exposure. GRPO at 32B was not run.}
+	\caption{Backbone-scale study on VSI-Bench: 3B/32B use the training-free \system; benchmark-QA rows train on MindCube-style QA~\cite{mindcube2025}; static memory is zero-shot render exposure.}
 	\vspace{-0.2in}
 	\label{tab:vt_scale}
 \end{table}
@@ -602,7 +602,7 @@ Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone,
 		\label{fig:vt_eff_breakdown}
 	}
 	\vspace{-0.15in}
-	\caption{Measured compute efficiency on Jetson AGX Orin (7B backbone; energy integrates the three INA3221 power rails).}
+	\caption{Measured compute efficiency on Jetson AGX Orin (7B backbone).}
 	\vspace{-0.1in}
 	\label{fig:vt_efficiency}
 \end{figure*}
@@ -611,7 +611,7 @@ Table~\ref{tab:vt_main_7B} reports the full benchmark grid with the 7B backbone,
 \subsection{On-Device Compute Efficiency}
 \label{sec:efficiency}
 
-Figure~\ref{fig:vt_efficiency} presents the measured per-question cost of \system and the baselines on Jetson AGX Orin, using the deployment of Section~\ref{sec:runtime}. At the evaluation's route mix, \system costs 24.5\,s and 1.1\,kJ per question -- about $2.1\times$ a single 16-frame call (11.7\,s, 0.53\,kJ) and $1.9\times$ \emph{cheaper} than the non-adaptive depth-one tree that renders all five candidate views for most questions (46.3\,s, 2.1\,kJ). The route mix in Figure~\ref{fig:vt_eff_routes} explains why: the exploration gate answers 71\% of questions after two short calls in 9.6\,s -- \emph{less} than the direct-input baseline, because two short-prefill calls are cheaper than one long-prefill call over 16 frames -- and the expensive depth-2/3 walks (71--117\,s) are taken on only 14\% of questions. Figure~\ref{fig:vt_eff_breakdown} decomposes the routes: VLM calls dominate, rendering and encoding the requested views costs 0.6\,s per level, and the per-scene reconstruction (11.3\,s warm) amortizes to 0.7\,s and 32\,J per question at the benchmark's 18 questions per scene. Peak memory with both the VLM and the reconstruction model resident is 25.9\,GB, leaving ample headroom on the 64\,GB device; the 32B backbone fits with 4-bit weights.
+Figure~\ref{fig:vt_efficiency} presents the measured per-question cost of \system and the baselines on Jetson AGX Orin, using the deployment of Section~\ref{sec:runtime}; energy integrates the device's three power rails. At the evaluation's route mix, \system costs 24.5\,s and 1.1\,kJ per question -- about $2.1\times$ a single 16-frame call (11.7\,s, 0.53\,kJ) and $1.9\times$ \emph{cheaper} than the non-adaptive depth-one tree that renders all five candidate views for most questions (46.3\,s, 2.1\,kJ). The route mix in Figure~\ref{fig:vt_eff_routes} explains why: the exploration gate answers 71\% of questions after two short calls in 9.6\,s -- \emph{less} than the direct-input baseline, because two short-prefill calls are cheaper than one long-prefill call over 16 frames -- and the expensive depth-2/3 walks (71--117\,s) are taken on only 14\% of questions. Figure~\ref{fig:vt_eff_breakdown} decomposes the routes: VLM calls dominate, rendering and encoding the requested views costs 0.6\,s per level, and the per-scene reconstruction (11.3\,s warm) amortizes to 0.7\,s and 32\,J per question at the benchmark's 18 questions per scene. Peak memory with both the VLM and the reconstruction model resident is 25.9\,GB, leaving ample headroom on the 64\,GB device; the 32B backbone fits with 4-bit weights.
 
 \begin{figure*}[t]
 	\vspace{-0.1in}
@@ -628,7 +628,7 @@ Figure~\ref{fig:vt_efficiency} presents the measured per-question cost of \syste
 		\includegraphics[width=0.30\linewidth]{figures/vt_temporal_duration.pdf}
 	}
 	\vspace{-0.15in}
-	\caption{Spatial task performance under different levels of scene complexity (VSI-Bench held-out split, 7B backbone): counting questions binned by ground-truth object count; all questions binned by the scene's room area and by video duration (tercile splits).}
+	\caption{Accuracy vs.\ scene complexity on VSI-Bench (7B): object count, room area, and video duration.}
 	\vspace{-0.1in}
 	\label{fig:vt_complexity}
 \end{figure*}
@@ -642,7 +642,7 @@ Figure~\ref{fig:vt_complexity} analyzes how scene complexity affects accuracy, u
 \subsection{Ablation Studies}
 \label{sec:ablation}
 
-\noindent\textbf{View-acquisition strategies.} Table~\ref{tab:vt_keyview_ablation} (left) compares confidence-guided beam search against simpler acquisition strategies with the same trained answerer, on the VSI-Bench held-out split: presenting all five candidate views unconditionally (static memory), a random walk with the same depth budget and pruning, and a greedy walk (beam width 1). \abviewtext{}
+\noindent\textbf{View-acquisition strategies.} Table~\ref{tab:vt_keyview_ablation} (left) compares confidence-guided beam search against simpler acquisition strategies with the same trained answerer, on the VSI-Bench held-out split: presenting all five candidate views unconditionally (static memory), a random walk with the same depth budget and pruning, and a greedy walk (beam width 1). Both ablation tables report the ten-type average and mean VLM calls per question. \abviewtext{}
 
 \noindent\textbf{Transplanting the recipe across backbones.} Table~\ref{tab:vt_keyview_ablation} (right) applies the training-free variant of the same search (token-confidence pruning, identical pose constraints) to all three backbones. It helps only the 7B backbone it was tuned on ($+2.8$); it is neutral at 3B, where the small model answers weakly from renders, and \emph{harmful} at 32B ($-3.2$), where the stronger model's direct answers are overridden by render-limited consensus (the gate releases only 17\% of questions for direct answering there). Adaptivity itself is not free across model sizes: the gate and confidence head must be calibrated per backbone.
 
@@ -675,7 +675,7 @@ Figure~\ref{fig:vt_complexity} analyzes how scene complexity affects accuracy, u
 		\end{tabular}}
 	\end{minipage}
 	\vspace{0.05in}
-	\caption{Left: view-acquisition strategies with the same trained answerer (VSI-Bench held-out, average over ten types and VLM calls per question). Right: the training-free tree transplanted across backbone sizes.}
+	\caption{Left: view-acquisition strategies (7B). Right: the training-free tree across backbone sizes.}
 	\label{tab:vt_keyview_ablation}
 	\vspace{-0.15in}
 \end{table}
@@ -694,7 +694,7 @@ Figure~\ref{fig:vt_complexity} analyzes how scene complexity affects accuracy, u
 		\;\;w/o walk training (corpus SFT)      & 0.509          & 1 \\
 		\;\;w/ RL controller (GRPO over walks)  & 0.522          & 4.6 \\ \bottomrule
 	\end{tabular}
-	\caption{Component ablations on the VSI-Bench held-out split (7B): average over the ten task types and VLM calls per question.}
+	\caption{Component ablations of \system (7B).}
 	\label{tab:vt_component_ablation}
 	\vspace{-0.2in}
 \end{table}

@@ -30,74 +30,67 @@ def img(ax, path, x, y, w, ec="#6b7280", lw=1.1, ls="-"):
     ax.imshow(im, extent=(x, x + w, y, y + h), aspect="auto", zorder=2)
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="square,pad=0", fc="none", ec=ec, lw=lw, ls=ls, zorder=4)); return h
 
-# ================ fig_wm_failure ================
+# ================ fig_wm_failure (single column, vertical) ================
 meta = json.load(open(f"{WA}/pose_meta.json"))
 bev = mpimg.imread(f"{WA}/bev.jpg")
-cy0, cy1, cx0, cx1 = 0, 760, 112, 1035  # crop white margins
+cy0, cy1, cx0, cx1 = 0, 760, 112, 1035
 bevc = bev[cy0:cy1, cx0:cx1]
 
-fig, ax = plt.subplots(figsize=(7.2, 4.25)); ax.set_xlim(0, 7.2); ax.set_ylim(0, 4.25); ax.axis("off")
+fig, ax = plt.subplots(figsize=(3.5, 5.15)); ax.set_xlim(0, 3.5); ax.set_ylim(0.74, 5.86); ax.axis("off")
 
-# -- group 1: captured scene (left) -----------------------------------------
-group(ax, 0.08, 1.78, 2.52, 2.29, TEALD); badge(ax, 0.64, 3.94, 1, "Captured scene", TEALD)
+# -- captured scene group ---------------------------------------------------
+group(ax, 0.06, 3.80, 3.38, 1.84, TEALD); badge(ax, 0.62, 5.76, 1, "Captured scene", TEALD)
 for j, k in enumerate((14, 21, 29, 57)):
-    img(ax, f"{FR}/frame_{k:02d}.jpg", 0.18 + j * 0.585, 3.35, 0.545)
-ax.text(1.33, 3.30, "4 of 64 recorded frames: the bed is covered", fontsize=5.9, color=MUT, ha="center", va="top")
-img(ax, f"{FR}/frame_09.jpg", 0.18, 2.20, 0.95, ec=INK, lw=1.5)
-ax.text(0.655, 2.15, "current view", fontsize=6.4, color=INK, ha="center", va="top", weight="bold")
-
-# BEV with the two requested movements
-bw = 1.28; bh = bw * bevc.shape[0] / bevc.shape[1]
-bx, by = 1.24, 2.02
+    img(ax, f"{FR}/frame_{k:02d}.jpg", 0.14 + j * 0.82, 5.02, 0.78)
+ax.text(1.72, 4.985, "4 of 64 recorded frames: the bed area is covered", fontsize=5.6, color=MUT, ha="center", va="top")
+img(ax, f"{FR}/frame_09.jpg", 0.14, 4.06, 0.95, ec=INK, lw=1.4)
+ax.text(0.615, 4.01, "current view", fontsize=5.9, color=INK, ha="center", va="top", weight="bold")
+bw = 1.04; bh = bw * bevc.shape[0] / bevc.shape[1]
+bx, by = 1.24, 4.02
 ax.imshow(bevc, extent=(bx, bx + bw, by, by + bh), aspect="auto", zorder=2)
 ax.add_patch(FancyBboxPatch((bx, by), bw, bh, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=1.0, zorder=4))
 def bev_pt(k):
     px, py = meta["cam_bev"][k]
     return (bx + (px - cx0) / (cx1 - cx0) * bw, by + bh - (py - cy0) / (cy1 - cy0) * bh)
-def bev_dir(k, L=0.30):
-    p = bev_pt(k); f = meta["fwd_bev"][k]; c = meta["cam_bev"][k]
+def bev_dir(k, L=0.24):
+    pp = bev_pt(k); f = meta["fwd_bev"][k]; c = meta["cam_bev"][k]
     d = np.array([f[0] - c[0], -(f[1] - c[1])]); d = d / (np.linalg.norm(d) + 1e-9)
-    return p, (p[0] + L * d[0], p[1] + L * d[1])
-p9, q9 = bev_dir(9, 0.24); p25, q25 = bev_dir(25, 0.28); p23, q23 = bev_dir(23, 0.22)
-ax.add_patch(Circle(p9, 0.032, fc=INK, ec="white", lw=0.8, zorder=6))
-arr(ax, p9, q9, color="#6d7681", lw=1.3)
-arr(ax, q9, q25, color=RED, lw=1.7, rad=0.5)
-arr(ax, p25, p23, color=PUR, lw=1.7, ls="--")
-ax.text(bx + bw / 2, by - 0.05, "reconstruction (top view)", fontsize=6.0, color=MUT, ha="center", va="top")
+    return pp, (pp[0] + L * d[0], pp[1] + L * d[1])
+p9, q9 = bev_dir(9, 0.20); p25, q25 = bev_dir(25, 0.24); p23, q23 = bev_dir(23, 0.20)
+ax.add_patch(Circle(p9, 0.028, fc=INK, ec="white", lw=0.8, zorder=6))
+arr(ax, p9, q9, color="#6d7681", lw=1.2)
+arr(ax, q9, q25, color=RED, lw=1.5, rad=0.5)
+arr(ax, p25, p23, color=PUR, lw=1.5, ls="--")
+ax.text(bx + bw / 2, by - 0.05, "reconstruction (top view)", fontsize=5.5, color=MUT, ha="center", va="top")
+box(ax, 2.52, 4.22, 0.86, 0.52, "request 1\nturn left\n$\\approx$85$^\\circ$", fc="#fff5f5", ec=RED, ls=(0, (4, 2)), fs=6.0, color=RED, weight="bold")
+arr(ax, (2.44, 4.48), (2.52, 4.48), color=MUT, lw=1.1)
 
-# -- comparison matrix (right) ----------------------------------------------
-cw = 0.98; ch = cw * 3 / 4
-colx = {"wm": 4.06, "gt": 5.13, "ours": 6.20}
-rowy = {1: 2.86, 2: 0.66}
-heads = {"wm": ("World-model\nprediction", BAD), "gt": ("Actual view\n(captured frame)", INK), "ours": ("ViewTree\nrender", OK)}
-for cname, (t, c) in heads.items():
-    ax.text(colx[cname] + cw / 2, 3.68, t, fontsize=7.0, color=c, ha="center", va="bottom", weight="bold")
-cells = [("wm", 1, f"{WA}/svc/hop1/final.png", BAD), ("gt", 1, f"{FR}/frame_25.jpg", "#6b7280"),
-         ("ours", 1, f"{WA}/render_25.jpg", OK),
-         ("wm", 2, f"{WA}/svc/hop2/final.png", BAD), ("gt", 2, f"{FR}/frame_23.jpg", "#6b7280"),
-         ("ours", 2, f"{WA}/render_23.jpg", OK)]
-for cname, r, path, ec in cells:
-    img(ax, path, colx[cname], rowy[r], cw, ec=ec, lw=1.6)
-ax.text(colx["wm"] + cw / 2, rowy[1] - 0.05, "$\\times$ invents a bed and walls that\ncontradict the recorded frames", fontsize=6.0, color=BAD, ha="center", va="top")
-ax.text(colx["ours"] + cw / 2, rowy[1] - 0.05, "$\\checkmark$ same geometry as the\nactual view, sparser texture", fontsize=6.0, color=OK, ha="center", va="top")
-ax.text(colx["wm"] + cw / 2, rowy[2] - 0.05, "$\\times$ drifts further from its\nown invented scene", fontsize=6.0, color=BAD, ha="center", va="top")
-ax.text(colx["ours"] + cw / 2, rowy[2] - 0.05, "$\\checkmark$ no error accumulation", fontsize=6.0, color=OK, ha="center", va="top")
+# -- comparison rows --------------------------------------------------------
+cw = 1.05; ch = cw * 3 / 4
+colx = [0.10, 1.25, 2.40]
+heads = [("World-model\nprediction", BAD), ("Actual view\n(captured)", INK), ("ViewTree\nrender", OK)]
+for cx, (t, c) in zip(colx, heads):
+    ax.text(cx + cw / 2, 3.44, t, fontsize=6.0, color=c, ha="center", va="bottom", weight="bold")
+r1y, r2y = 2.60, 1.06
+cells = [(0, r1y, f"{WA}/svc/hop1/final.png", BAD), (1, r1y, f"{FR}/frame_25.jpg", "#6b7280"),
+         (2, r1y, f"{WA}/render_25.jpg", OK),
+         (0, r2y, f"{WA}/svc/hop2/final.png", BAD), (1, r2y, f"{FR}/frame_23.jpg", "#6b7280"),
+         (2, r2y, f"{WA}/render_23.jpg", OK)]
+for ci, yy, path, ec in cells:
+    img(ax, path, colx[ci], yy, cw, ec=ec, lw=1.5)
+ax.text(colx[0] + cw / 2, r1y - 0.045, "$\\times$ invents a bed & walls that\ncontradict the recording", fontsize=5.4, color=BAD, ha="center", va="top")
+ax.text(colx[2] + cw / 2, r1y - 0.045, "$\\checkmark$ same geometry,\nsparser texture", fontsize=5.4, color=OK, ha="center", va="top")
+ax.text(colx[0] + cw / 2, r2y - 0.045, "$\\times$ drifts further from its\nown invented scene", fontsize=5.4, color=BAD, ha="center", va="top")
+ax.text(colx[2] + cw / 2, r2y - 0.045, "$\\checkmark$ no error\naccumulation", fontsize=5.4, color=OK, ha="center", va="top")
 
-# request boxes act as row labels
-box(ax, 2.70, 2.98, 1.16, 0.56, "request 1\nturn left $\\approx$85$^\\circ$", fc="#fff5f5", ec=RED, ls=(0, (4, 2)), fs=6.9, color=RED, weight="bold")
-box(ax, 2.70, 0.78, 1.16, 0.56, "request 2\nthen forward\n$\\approx$0.7 m", fc="#faf5ff", ec=PUR, ls=(0, (4, 2)), fs=6.6, color=PUR, weight="bold")
-arr(ax, (2.63, 3.26), (2.68, 3.26), color=MUT, lw=1.2)
-arr(ax, (3.88, 3.26), (colx["wm"] - 0.02, 3.26), color=MUT, lw=1.2)
-arr(ax, (3.88, 1.06), (colx["wm"] - 0.02, 1.06), color=MUT, lw=1.2)
-
-# red chain: the prediction is fed back as the next input
-arr(ax, (colx["wm"] + 0.10, rowy[1] - 0.40), (colx["wm"] + 0.10, rowy[2] + ch + 0.04), color=BAD, lw=1.7, rad=-0.10)
-ax.text(colx["wm"] - 0.02, 2.02, "prediction fed back\nas the next input:\nerrors compound", fontsize=6.2, color=BAD, ha="right", va="center", weight="bold")
-# green: both renders re-projected from one stored geometry
-gx = colx["ours"] + cw / 2
-box(ax, 6.02, 1.96, 1.12, 0.36, "same stored geometry\nfor every request", fc="#eef7f1", ec=OK, fs=5.9, color=OK)
-arr(ax, (gx, 2.32), (gx, rowy[1] - 0.28), color=OK, lw=1.5)
-arr(ax, (gx, 1.96), (gx, rowy[2] + ch + 0.30), color=OK, lw=1.5)
+# middle band, aligned per column
+arr(ax, (colx[0] + 0.16, r1y - 0.34), (colx[0] + 0.16, r2y + ch + 0.03), color=BAD, lw=1.5, rad=-0.12)
+ax.text(colx[0] + 0.34, 2.10, "fed back as\nnext input:\nerrors compound", fontsize=5.0, color=BAD, ha="left", va="center", weight="bold")
+box(ax, colx[1] + 0.02, 1.92, 1.01, 0.40, "request 2\nforward $\\approx$0.7 m", fc="#faf5ff", ec=PUR, ls=(0, (4, 2)), fs=5.5, color=PUR, weight="bold")
+gx = colx[2] + cw / 2
+box(ax, colx[2] + 0.02, 1.94, 1.01, 0.36, "same stored\ngeometry", fc="#eef7f1", ec=OK, fs=5.4, color=OK)
+arr(ax, (gx, 2.30), (gx, r1y - 0.30), color=OK, lw=1.3)
+arr(ax, (gx, 1.94), (gx, r2y + ch + 0.03), color=OK, lw=1.3)
 fig.savefig(f"{OUT}/fig_wm_failure.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_wm_failure.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("wm_failure")
 
 # ================ fig_operations ================
