@@ -1081,6 +1081,30 @@ Outputs `results/paperfill/*.jsonl`, scorer `scripts/paperfill_scores.py`,
 lane scripts `results/logs/paperfill/lanes*.sh`. Numbers to be appended here
 when complete.
 
+**Completed (VSI held-out odd half, 2,557 q each; mean of 10 types, paired scene-bootstrap CIs):**
+
+| run | AVG | notes |
+|---|---|---|
+| memzs_7b (zero-shot + 5 human renders) | 0.339 | **+2.6 [+0.5, +4.9]** vs zero-shot 0.313 |
+| memzs_3b | 0.310 | -1.1 vs 3B zero-shot 0.321 |
+| memzs_32b | 0.358 | -2.2 vs 32B zero-shot 0.380 |
+| memstatic_7b (SFT-A + 5 renders always) | 0.516 | -0.7 [-2.6, +1.3] vs SFT-A frames 0.524; -1.4 [-3.2, +0.5] vs beam |
+| greedy_7b (beam 1, keep 1) | 0.530 @ 2.7 calls | +0.0 [-0.7, +0.8] vs beam |
+| random_7b (random actions, same head/gate) | 0.531 @ 4.1 calls | +0.1 [-0.6, +0.7] vs beam |
+| cot_3b (Video-CoT) | 0.357 | +3.6 vs 3B zero-shot |
+
+- **Walk policy does not matter on the VSI average.** Greedy and random-action
+  walks match the deployed beam within +-0.8 (paired). The gate, calibrated head
+  and arbitration carry the gain; a width-1 walk matches at 2.7 vs 4.5 calls.
+- **Late-consensus subset falsifies the old depth attribution:** on the 209
+  questions the beam settles by consensus at depth >= 2, frames-only SFT-A scores
+  0.517 vs beam 0.442 -- deep walks mark hard questions rather than solve them.
+  The paper's 8.4 was corrected accordingly (analysis:
+  `scripts/paperfill_analysis.py`).
+- **Render exposure:** zero-shot +2.6 (7B) but -1.1 (3B) / -2.2 (32B); after
+  answer training -0.7 (n.s.) -- adaptivity, not exposure, is what helps.
+- Pending: cot_7b (partial 0.322 @ n=1410), cot_32b (running).
+
 ## 7. Next milestones
 
 All four stages of the design doc's training pipeline (scaled) are now

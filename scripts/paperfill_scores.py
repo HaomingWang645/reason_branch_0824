@@ -44,13 +44,13 @@ def stats(rows, expect=2557):
 
 RUNS = {
     "cot_7b": ["cot_7b_s0.jsonl", "cot_7b_s1.jsonl"],
-    "cot_3b": ["cot_3b.jsonl"],
+    "cot_3b": ["cot_3b_s0.jsonl", "cot_3b_s1.jsonl", "cot_3b.jsonl"],
     "cot_32b": ["cot_32b_s0b.jsonl", "cot_32b_s1b.jsonl", "cot_32b.jsonl"],
     "memzs_7b": ["memzs_7b.jsonl"],
     "memzs_3b": ["memzs_3b.jsonl"],
     "memzs_32b": ["memzs_32b.jsonl"],
     "memstatic_7b": ["memstatic_7b.jsonl"],
-    "greedy_7b": ["greedy_7b.jsonl"],
+    "greedy_7b": ["greedy_7b_s0.jsonl", "greedy_7b_s1.jsonl", "greedy_7b.jsonl"],
     "random_7b": ["random_7b_s0.jsonl", "random_7b_s1.jsonl"],
 }
 

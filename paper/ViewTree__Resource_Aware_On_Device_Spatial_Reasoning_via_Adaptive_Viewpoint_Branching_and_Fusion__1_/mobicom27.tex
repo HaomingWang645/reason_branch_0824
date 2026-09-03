@@ -50,33 +50,33 @@
 \newcommand{\cotAVGsev}{--}
 \newcommand{\cotAVGthree}{--}
 \newcommand{\cotAVGxxxii}{--}
-\newcommand{\memADsev}{--}
-\newcommand{\memADthree}{--}
-\newcommand{\memADxxxii}{--}
-\newcommand{\memOSsev}{--}
-\newcommand{\memOSthree}{--}
-\newcommand{\memOSxxxii}{--}
-\newcommand{\memRDtsev}{--}
-\newcommand{\memRDtthree}{--}
-\newcommand{\memRDtxxxii}{--}
-\newcommand{\memRDrsev}{--}
-\newcommand{\memRDrthree}{--}
-\newcommand{\memRDrxxxii}{--}
-\newcommand{\memOCsev}{--}
-\newcommand{\memOCthree}{--}
-\newcommand{\memOCxxxii}{--}
-\newcommand{\memAOsev}{--}
-\newcommand{\memAOthree}{--}
-\newcommand{\memAOxxxii}{--}
-\newcommand{\memAVGsev}{--}
-\newcommand{\memAVGthree}{--}
-\newcommand{\memAVGxxxii}{--}
-\newcommand{\abstatA}{--}
-\newcommand{\abrandA}{--}
-\newcommand{\abrandC}{--}
-\newcommand{\abgreedA}{--}
-\newcommand{\abgreedC}{--}
-\newcommand{\abviewtext}{Numbers for the alternative strategies are being finalized.}
+\newcommand{\memADsev}{0.305}
+\newcommand{\memADthree}{0.153}
+\newcommand{\memADxxxii}{0.258}
+\newcommand{\memOSsev}{0.660}
+\newcommand{\memOSthree}{0.171}
+\newcommand{\memOSxxxii}{0.493}
+\newcommand{\memRDtsev}{0.551}
+\newcommand{\memRDtthree}{0.355}
+\newcommand{\memRDtxxxii}{0.545}
+\newcommand{\memRDrsev}{0.498}
+\newcommand{\memRDrthree}{0.470}
+\newcommand{\memRDrxxxii}{0.319}
+\newcommand{\memOCsev}{0.604}
+\newcommand{\memOCthree}{0.292}
+\newcommand{\memOCxxxii}{0.276}
+\newcommand{\memAOsev}{0.657}
+\newcommand{\memAOthree}{0.155}
+\newcommand{\memAOxxxii}{0.259}
+\newcommand{\memAVGsev}{0.516}
+\newcommand{\memAVGthree}{0.310}
+\newcommand{\memAVGxxxii}{0.358}
+\newcommand{\abstatA}{0.516}
+\newcommand{\abrandA}{0.531}
+\newcommand{\abrandC}{4.1}
+\newcommand{\abgreedA}{0.530}
+\newcommand{\abgreedC}{2.7}
+\newcommand{\abviewtext}{Static exposure of all five views is 1.4 points below the adaptive walk and 0.7 below even the frames-only answerer ($[-2.6, +1.3]$, n.s.): unrequested renders do not help a trained answerer. Among the walks, accuracy is statistically indistinguishable (greedy $+0.0$ $[-0.7, +0.8]$, random actions $+0.1$ $[-0.6, +0.7]$ versus ours, paired scene bootstrap): with the same gate, calibrated confidence, and arbitration in place, neither beam width nor the learned action choice moves the VSI average. The confidence machinery, not the walk policy, carries the gain -- and a width-one walk matches the full beam at 2.7 instead of 4.5 calls, an attractive operating point for tighter device budgets.}
 
 \begin{document}
 	
@@ -170,7 +170,7 @@
 	\begin{itemize}
 		\item \system improves spatial reasoning accuracy on VSI-Bench from 0.313 (direct 16-frame input) to 0.530 with the same 7B backbone. Against the strongest baseline fine-tuned on the same training data, \system's adaptive exploration adds 2.1 points on average, and the gains concentrate exactly on the questions where a new viewpoint changes the visible geometry: +6--7 points on relative direction and +5 points on relative distance.
 		\item Adaptive exploration is affordable on-device. On Jetson AGX Orin, \system answers 71\% of the questions directly after a cheap sufficiency check in 9.6\,s -- faster than a single 16-frame VLM call (11.7\,s) -- and averages 24.5\,s and 1.1\,kJ per question, $1.9\times$ cheaper than a non-adaptive tree that explores rendered views for every question (46.3\,s, 2.1\,kJ).
-		\item Adaptivity is also necessary for accuracy: exposing rendered views to every question unconditionally helps a 7B backbone (+2.9 points) but \emph{reduces} a 32B backbone's accuracy by 3.2 points, and unconditional multi-path exploration costs over $12\times$ a direct answer. \system's learned confidence-based control decides per question whether extra views pay off.
+		\item Adaptivity is also necessary for accuracy: exposing rendered views to every question unconditionally helps a zero-shot 7B backbone ($+2.6$ points) but \emph{reduces} a 32B backbone's accuracy ($-2.2$), stops helping once the answerer is fine-tuned ($-0.7$ versus frames only), and unconditional multi-path exploration costs over $12\times$ a direct answer. \system's learned confidence-based control decides per question whether extra views pay off.
 	\end{itemize}
 	
 	\section{Background and Motivation}
@@ -194,7 +194,7 @@
 	\subsection{Generating or Rendering New Views}
 	Recent work allows a VLM to request new views from a generative world model~\cite{mindjourney2025,spatialdreamer2025,avic2026,astra2026}: the VLM chooses a camera movement and the world model synthesizes the requested viewpoint. The generated image, however, is a prediction rather than an observation; large camera movements produce views that are geometrically inconsistent with the captured scene~\cite{visa2025}, and every imagined view costs a full generative-model invocation on a device that is already running the VLM. Reconstructing the observed scene and rendering from it avoids both problems: all rendered views refer to the same stored geometry, and rendering is nearly free at the system level -- on Jetson AGX Orin a rendered view costs 0.12\,s, two orders of magnitude below the 4--5\,s VLM call that must read it. The real question is therefore not how to produce views, but \emph{which few views the VLM should be asked to read} -- the classic active-perception question \cite{bajcsy1988active,jayaraman2018learning,chaplot2020ans}.
 
-	Our measurements show that naive exposure of the reconstruction fails in two concrete ways. First, viewpoint proposals must be physically grounded: a naive proposer that simply orbits the reconstruction placed \emph{none} of its cameras inside the room on held-out scenes -- every view looked down through the ceiling from outside (Figure~\ref{fig:view_quality}) -- and even among human-reachable poses, roughly a quarter render too little supported geometry and must be rejected. Second, unconditionally attaching a fixed set of rendered views to every question helps on average but hurts where the renders are irrelevant: with the 7B backbone it adds $+2.9$ points overall yet \emph{reduces} accuracy on object counting and room size once the model is trained to attend to renders, and with a 32B backbone the same fixed recipe is $3.2$ points \emph{below} frames-only prompting -- a stronger model is distracted more by views it did not ask for.
+	Our measurements show that naive exposure of the reconstruction fails in two concrete ways. First, viewpoint proposals must be physically grounded: a naive proposer that simply orbits the reconstruction placed \emph{none} of its cameras inside the room on held-out scenes -- every view looked down through the ceiling from outside (Figure~\ref{fig:view_quality}) -- and even among human-reachable poses, roughly a quarter render too little supported geometry and must be rejected. Second, unconditionally attaching a fixed set of rendered views to every question is unreliable: it lifts a zero-shot 7B backbone by $+2.6$ points on average, yet the same recipe sits $2.2$ points \emph{below} frames-only prompting at 32B, and once the answerer is fine-tuned it no longer helps at all ($-0.7$ versus frames only) -- a model is distracted by views it did not ask for.
 
 \begin{figure}[t]
 	\centering
@@ -680,7 +680,7 @@ Figure~\ref{fig:vt_complexity} analyzes how scene complexity affects accuracy, u
 	\vspace{-0.15in}
 \end{table}
 
-\noindent\textbf{Component ablations.} Table~\ref{tab:vt_component_ablation} isolates the contribution of each part of \system. Capping the search at depth one costs 1.3 points despite \emph{more} VLM calls (up to 8 versus 4.5), because the gate of the full system answers 71\% of questions directly while the depth-one tree renders five views for most of them; the extra depth pays on the 209 questions that reach consensus only at depth two or three. Removing exploration entirely (the walk-trained answerer on frames alone) costs 0.6 points but is the cheapest option at one call -- this gap, concentrated on relative direction and distance, is what the walk buys. Replacing the walk-trained answerer with the plain corpus SFT costs a further 1.5 points, showing that training with rendered context improves even frames-only answering. Finally, adding GRPO to the controller does not help ($0.522$, $-0.8$ [$-2.2$, $+0.7$] versus the imitation-trained controller): the policy collapsed toward stopping early during RL, and the same adapter answering frames-only scores 0.534 -- the reward moved the answer tokens, not the camera policy, so the deployed system uses the imitation-trained controller without RL.
+\noindent\textbf{Component ablations.} Table~\ref{tab:vt_component_ablation} isolates the contribution of each part of \system. Capping the search at depth one costs 1.3 points despite \emph{more} VLM calls (up to 8 versus 4.5), because the gate of the full system answers 71\% of questions directly while the depth-one tree renders five views for most of them. Notably, depth itself is not where the profit lies: on the 209 questions that the beam settles by consensus only at depth two or three, frames-only answering would have scored \emph{higher} (0.52 vs.\ 0.44) -- deep walks mostly mark hard questions rather than solve them, which is why bounding the depth costs little while gating pays much. Removing exploration entirely (the walk-trained answerer on frames alone) costs 0.6 points but is the cheapest option at one call -- this gap, concentrated on relative direction and distance, is what the walk buys. Replacing the walk-trained answerer with the plain corpus SFT costs a further 1.5 points, showing that training with rendered context improves even frames-only answering. Finally, adding GRPO to the controller does not help ($0.522$, $-0.8$ [$-2.2$, $+0.7$] versus the imitation-trained controller): the policy collapsed toward stopping early during RL, and the same adapter answering frames-only scores 0.534 -- the reward moved the answer tokens, not the camera policy, so the deployed system uses the imitation-trained controller without RL.
 
 \begin{table}[t]
 	\centering
