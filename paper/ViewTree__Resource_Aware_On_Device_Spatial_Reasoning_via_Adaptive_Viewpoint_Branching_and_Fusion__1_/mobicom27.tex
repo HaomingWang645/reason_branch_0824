@@ -116,23 +116,52 @@
 	\section{Background and Motivation}
 	\label{sec:background}
 	\subsection{Spatial Reasoning from Fixed Views}
-	Existing 3D question-answering benchmarks ask a VLM to reason from the current image, a set of history frames, or a video clip~\cite{scanqa2021,sqa3d2022,openeqa2024}. This input is sufficient when the queried objects are visible in one view. However, perspective taking, occlusion, and spatial memory often require information from a different camera position. Recent benchmarks show that current VLMs remain unreliable when the same object appears at different locations across views or when the required objects are observed in separate frames~\cite{vsibench2024,mindcube2025}.
-	
-	One common solution is to append more history frames. These frames come directly from the captured scene, but the VLM must still determine which frames are useful, estimate how the camera moved, and match the same objects across views. Supplying more frames also increases visual-token computation and may distract a small VLM with repeated or irrelevant observations. Other work converts the history frames into a fixed bird's-eye-view or semantic map~\cite{gpt4scene2025,mosaicthinker2026}. Such maps align information across views, but they must decide in advance which scene information to include and do not allow the VLM to request a missing view during reasoning.
-	
-	These limitations motivate \system to let the VLM choose what to observe next. Instead of processing a fixed number of frames or one fixed map, the VLM can request a camera movement when the current views do not provide enough information.
-	
+	Existing 3D question-answering benchmarks ask a VLM to reason from the current image, a set of history frames, or a video clip~\cite{scanqa2021,sqa3d2022,openeqa2024}. This input is sufficient when the queried objects are visible in one view, but perspective taking, occlusion, and spatial memory often require information from a camera position that was never given~\cite{vsibench2024,mindcube2025}.
+
+	To quantify this gap beyond the examples in Section 1, we measured Qwen2.5-VL-7B on the held-out half of VSI-Bench (2{,}557 questions; Section~\ref{sec:experiment_setting}). With 16 uniformly sampled frames, the model averages only 0.31 over the ten task types, and collapses on exactly the tasks that need cross-view geometry: 0.09 relative accuracy on absolute distance and 0.29 on appearance order. Two natural remedies fail for different, instructive reasons. \emph{Fine-tuning does not fix it:} training the same backbone on the benchmark's own training distribution moves the average by only $+1.4$ points (0.327), and adding answer-reward reinforcement learning on top changes nothing -- the bottleneck is the input, not the weights. \emph{More frames do not fix it either:} as Figure~\ref{fig:frames_scaling} shows on Jetson AGX Orin, per-question latency grows superlinearly from 12.3\,s at 16 frames to 300\,s at 384, the process runs out of the 64\,GB unified memory at 512 frames, and the model's position embeddings bind even earlier, near 128 frames. Meanwhile consecutive frames of a walkthrough are near-duplicates, so the added tokens mostly repeat evidence the model already failed to use. Other work converts the history frames into a fixed bird's-eye-view or semantic map~\cite{gpt4scene2025,mosaicthinker2026}; such maps align information across views, but they must decide in advance what to include and cannot supply a missing view during reasoning.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_frames_scaling.pdf}
+	\vspace{-0.28in}
+	\caption{Scaling the frame count on Jetson AGX Orin (7B backbone, measured): latency grows superlinearly and memory is exhausted at 512 frames, while the position-embedding limit binds near 128 frames.}
+	\label{fig:frames_scaling}
+	\vspace{-0.15in}
+\end{figure}
+
+	These measurements motivate \system to change the input rather than enlarge it: the VLM should be able to request the specific missing view, instead of receiving ever more fixed frames or one fixed map.
+
 	\subsection{Generating or Rendering New Views}
-	Recent work allows a VLM to request new views from a generative world model~\cite{mindjourney2025,spatialdreamer2025,avic2026,astra2026}. The VLM chooses a camera movement, and the world model generates an image from the requested viewpoint. This can reveal an occluded object or show a spatial relationship from a view that is easier to understand. However, the generated image is a prediction rather than an actual observation from the captured scene. A large camera movement may produce frames that are geometrically inconsistent with one another or with the actual scene layout~\cite{visa2025}. Generating several views also adds substantial latency and energy consumption on mobile devices.
-	
-	Another approach reconstructs the observed scene and renders virtual views from the reconstruction. All rendered views then refer to the same stored geometry, and rendering is less expensive than generating new scene content. However, directly providing the complete point cloud or a dense set of rendered views introduces substantial irrelevant information. A small VLM may have difficulty finding the few views needed for the current question.
-	
-	These limitations motivate \system to reconstruct the scene once but expose it through a virtual camera. The VLM receives only the 2D view requested by its current reasoning, while every requested view is rendered from the same reconstructed scene.
-	
+	Recent work allows a VLM to request new views from a generative world model~\cite{mindjourney2025,spatialdreamer2025,avic2026,astra2026}: the VLM chooses a camera movement and the world model synthesizes the requested viewpoint. The generated image, however, is a prediction rather than an observation; large camera movements produce views that are geometrically inconsistent with the captured scene~\cite{visa2025}, and every imagined view costs a full generative-model invocation on a device that is already running the VLM. Reconstructing the observed scene and rendering from it avoids both problems: all rendered views refer to the same stored geometry, and rendering is nearly free at the system level -- on Jetson AGX Orin a rendered view costs 0.12\,s, two orders of magnitude below the 4--5\,s VLM call that must read it. The real question is therefore not how to produce views, but \emph{which few views the VLM should be asked to read}.
+
+	Our measurements show that naive exposure of the reconstruction fails in two concrete ways. First, viewpoint proposals must be physically grounded: a naive proposer that simply orbits the reconstruction placed \emph{none} of its cameras inside the room on held-out scenes -- every view looked down through the ceiling from outside (Figure~\ref{fig:view_quality}) -- and even among human-reachable poses, roughly a quarter render too little supported geometry and must be rejected. Second, unconditionally attaching a fixed set of rendered views to every question helps on average but hurts where the renders are irrelevant: with the 7B backbone it adds $+2.9$ points overall yet \emph{reduces} accuracy on object counting and room size once the model is trained to attend to renders, and with a 32B backbone the same fixed recipe is $3.2$ points \emph{below} frames-only prompting -- a stronger model is distracted more by views it did not ask for.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_view_quality.pdf}
+	\vspace{-0.28in}
+	\caption{Two viewpoint proposals on the same reconstruction. Unconstrained proposals view the scene from outside, through the ceiling; \system restricts poses to positions a person could occupy and masks poses without geometric support.}
+	\label{fig:view_quality}
+	\vspace{-0.15in}
+\end{figure}
+
+	These observations motivate the two design choices of Section~\ref{sec:reasoning}: candidate views are constrained to physically plausible, renderable poses, and they are acquired selectively -- only when the current question needs them -- rather than attached wholesale.
+
 	\subsection{Single and Multiple Reasoning Paths}
-	Existing methods allow a VLM to move a virtual camera through a reconstructed 3D scene~\cite{cov2026,think3d2026}. These methods follow one camera path. When several movements appear useful, an incorrect early choice may lead the VLM toward a region that does not contain the required information. One path may also be insufficient when answering a question requires observations from different directions. General multimodal tree-search methods can explore several reasoning paths~\cite{visuothink2025}, and fixed camera grids can render several views in advance~\cite{cdviews2025}. However, expanding many camera paths at every step is too expensive for mobile devices. Each additional path requires view rendering, visual encoding, VLM decoding, and memory for its reasoning history. More views are not always helpful because repeated or irrelevant observations may reduce the accuracy of a small VLM. These limitations motivate \system to create reasoning paths only when the input frames are insufficient. 
-	
-	\section{System Overview}
+	Existing methods allow a VLM to move a virtual camera through a reconstructed 3D scene~\cite{cov2026,think3d2026}, but follow a single camera path. Figure~\ref{fig:paths_example} shows why this is brittle, on a real held-out question. Asked for the size of an exhaust fan, the model's two best first movements are nearly indistinguishable in confidence (0.700 vs.\ 0.697), yet the marginally more confident one answers 20\,cm -- 67\% away from the ground truth of 12 -- while the runner-up answers 14. A single-path search must commit at exactly the moment when confidence carries the least information; here it would commit wrongly. Retaining both paths defers the decision: one movement later, every continuation of \emph{both} paths agrees on 14, and the search stops with an answer 17\% from the ground truth. This pattern is not rare: on the held-out evaluation, 209 questions reach agreement only at depth two or three, and on those questions the direct answer was correct less than half the time.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=\linewidth]{figures/fig_paths_example.pdf}
+	\vspace{-0.28in}
+	\caption{A single reasoning path fails on a real question: the most confident first movement (path A) answers 20\,cm vs.\ ground truth 12, and confidence cannot separate it from the runner-up (0.700 vs.\ 0.697). Retaining two paths lets the next observations correct the error.}
+	\label{fig:paths_example}
+	\vspace{-0.15in}
+\end{figure}
+
+	The opposite extreme -- expanding several paths at every step, as generic multimodal tree search does~\cite{visuothink2025}, or rendering fixed camera grids in advance~\cite{cdviews2025} -- is unaffordable on device. Each additional path pays view rendering, visual encoding, VLM prefill, and memory for its reasoning history: fully expanding three movements per step to depth three costs 21 VLM calls, 117\,s, and 5.3\,kJ per question on Jetson AGX Orin -- more than $12\times$ the cost of answering directly from the frames. And as the previous subsection showed, indiscriminate extra views can \emph{lower} accuracy. Multi-path exploration therefore has to be conditional: created only when the input frames are insufficient (on our evaluation, 71\% of questions need no exploration at all), pruned aggressively while exploring, and stopped as soon as independent paths agree. This is precisely the search that \system's confidence head and gate implement.
+
+		\section{System Overview}
 	\label{sec:overview}
 	\begin{figure*}[t]
 		\centering

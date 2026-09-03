@@ -191,3 +191,48 @@ ax.text(0.15, 0.85, "the shortest trajectory whose answer becomes correct superv
 ax.text(0.15, 0.62, "wrong ones (35 cm) -- is labelled by answer correctness and trains the confidence head; questions that are already", fontsize=7.0, color=MUT, va="top")
 ax.text(0.15, 0.39, "correct from the frames contribute depth-zero Stop labels, teaching the controller not to over-explore.", fontsize=7.0, color=MUT, va="top")
 fig.savefig(f"{OUT}/fig_oracle_example.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_oracle_example.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("oracle_example")
+
+# ================ fig_frames_scaling (measured, sec 2.1) ================
+fr = [16, 24, 32, 48, 64, 96, 128, 192, 256, 384]
+lat = [12.3, 16.6, 21.0, 31.2, 40.8, 61.6, 83.4, 129.9, 179.2, 299.7]
+mem = [22.6, 23.1, 23.5, 24.5, 25.4, 27.2, 29.1, 32.8, 36.5, 43.8]
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.2, 2.1))
+for a in (a1, a2):
+    for sp in ("top", "right"): a.spines[sp].set_visible(False)
+    a.grid(True, color="#e3e2de", lw=0.7); a.set_axisbelow(True); a.set_xlabel("input frames", fontsize=8); a.tick_params(labelsize=7.5)
+a1.plot(fr, lat, "-o", color="#d62828", ms=3.5, lw=1.6)
+a1.scatter([512], [340], marker="x", s=60, color="#d62828"); a1.annotate("OOM", (512, 340), textcoords="offset points", xytext=(-6, 8), fontsize=8, color="#d62828", weight="bold")
+a1.axvline(128, color="#7b1fa2", ls=":", lw=1.2); a1.annotate("position-embedding\nlimit (~128)", (128, 250), textcoords="offset points", xytext=(4, 0), fontsize=6.8, color="#7b1fa2")
+a1.set_ylabel("latency per question (s)", fontsize=8); a1.set_xlim(0, 560)
+a2.plot(fr, mem, "-o", color="#155e63", ms=3.5, lw=1.6)
+a2.scatter([512], [45.3], marker="x", s=60, color="#d62828"); a2.annotate("alloc fails\n(64 GB unified)", (512, 45.3), textcoords="offset points", xytext=(-58, -22), fontsize=6.8, color="#d62828")
+a2.set_ylabel("peak GPU memory (GB)", fontsize=8); a2.set_xlim(0, 560)
+fig.tight_layout()
+fig.savefig(f"{OUT}/fig_frames_scaling.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_frames_scaling.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("frames_scaling")
+
+# ================ fig_view_quality (sec 2.2) ================
+fig, ax = plt.subplots(figsize=(7.2, 2.35)); ax.set_xlim(0, 7.2); ax.set_ylim(0, 2.35); ax.axis("off")
+h1 = img(ax, f"{R}/data/renders/scannetpp_3864514494/view1.png", 0.15, 0.55, 2.15, ec=BAD, lw=1.7, ls="--")
+ax.text(1.22, 0.44, "unconstrained proposal: outside the room,\nlooking down through the ceiling", fontsize=6.9, color=BAD, ha="center", va="top")
+h2 = img(ax, f"{R}/data/renders_human/scannetpp_3864514494/view0.png", 2.75, 0.55, 2.15, ec=OK, lw=1.7)
+ax.text(3.82, 0.44, "constrained to a human-reachable pose:\neye level inside the recorded region", fontsize=6.9, color=OK, ha="center", va="top")
+box(ax, 5.25, 0.62, 1.85, 1.55, "on held-out scenes, a naive\nproposer placed 0% of\ncameras inside the room;\nthe constraints reach 100%\nvalid poses, and ~25% of\ncandidate poses still fail\nthe support check and\nmust be masked", fs=6.8, fc="#f6f8fa")
+ax.text(0.15, 2.27, "the same reconstruction, two viewpoint proposals for the same scene", fontsize=7.2, color=MUT, va="top")
+fig.savefig(f"{OUT}/fig_view_quality.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_view_quality.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("view_quality")
+
+# ================ fig_paths_example (sec 2.3) ================
+D28 = os.path.join(R, "figures/treeD_trace/2288")
+fig, ax = plt.subplots(figsize=(7.2, 3.2)); ax.set_xlim(0, 7.2); ax.set_ylim(0, 3.2); ax.axis("off")
+ax.text(0.15, 3.12, '"What is the longest dimension of the exhaust fan, in centimeters?"  (ground truth: 12)', fontsize=7.6, color=INK, va="top", weight="bold")
+h1 = img(ax, f"{D28}/view0.jpg", 0.3, 1.5, 1.45, ec=BAD, lw=1.8)
+ax.text(1.02, 1.4, "path A, step 1 (conf 0.700):\nanswers 20 ✗ (67% off)\n$\\bf{a\\ single{-}path\\ search}$\n$\\bf{commits\\ here}$", fontsize=6.7, color=BAD, ha="center", va="top")
+h2 = img(ax, f"{D28}/view8.jpg", 2.15, 1.5, 1.45, ec="#2f6feb", lw=1.6)
+ax.text(2.87, 1.4, "path B, step 1 (conf 0.697):\nanswers 14 --- nearly tied,\nretained as the second path", fontsize=6.7, color="#2f6feb", ha="center", va="top")
+h3 = img(ax, f"{D28}/view88.jpg", 4.35, 1.6, 1.3, ec=OK, lw=1.5)
+h4 = img(ax, f"{D28}/view1.jpg", 4.35, 0.35, 1.3, ec=OK, lw=1.5)
+ax.text(5.15, 2.72, "step 2: every continuation of $\\it{both}$ paths answers 14", fontsize=6.9, color=OK, ha="center")
+arr(ax, (1.78, 2.2), (4.35, 2.35), color=MUT, rad=-0.1); arr(ax, (3.62, 2.1), (4.35, 1.0), color=MUT, rad=0.12)
+box(ax, 5.85, 1.15, 1.28, 1.25, "paths agree:\nfinal 14\n(17% off) ✓\n\nsingle path:\n20 ✗", fc="#dafbe1", ec=OK, fs=6.9)
+arr(ax, (5.65, 2.3), (5.85, 2.0), color=OK); arr(ax, (5.65, 0.85), (5.85, 1.35), color=OK)
+ax.text(0.15, 0.14, "a real VSI-Bench search: the most confident first movement is wrong; keeping two paths lets later observations correct it", fontsize=7.0, color=MUT, va="top")
+fig.savefig(f"{OUT}/fig_paths_example.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_paths_example.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("paths_example")
