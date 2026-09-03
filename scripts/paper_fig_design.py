@@ -67,41 +67,84 @@ box(ax, 3.9, 0.25, 3.2, 0.9, "Controller output (one token, from prefill logits)
 arr(ax, (3.45, 0.7), (3.9, 0.7))
 fig.savefig(f"{OUT}/fig_control_prompt.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_control_prompt.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("control_prompt")
 
-# ================ fig_training_pipeline ================
-fig, ax = plt.subplots(figsize=(7.2, 3.1)); ax.set_xlim(0, 7.2); ax.set_ylim(0, 3.1); ax.axis("off")
-group(ax, 0.08, 0.5, 2.15, 2.3, RED); badge(ax, 0.75, 0.34, 1, "Answering", RED)
-strip(ax, [f"{KA}/frames_64/frame_{k:02d}.jpg" for k in (10, 28, 46)], 0.2, 2.15, w=0.56)
-img(ax, f"{KA}/reconstruction_views/render_spot08_dir2.jpg", 1.02, 1.32, 0.75, ec=TEALD, lw=1.3)
-ax.text(0.62, 1.62, "+ 0..3\nrendered\nviews", fontsize=6.8, color=TEALD, ha="center")
-ax.text(1.15, 1.2, "same correct answer supervises\nevery trajectory prefix", fontsize=6.8, color=MUT, ha="center", va="top")
-group(ax, 2.5, 0.5, 2.15, 2.3, MAG); badge(ax, 3.2, 0.34, 2, "Oracle search", MAG)
-r0 = (3.55, 2.35); ax.add_patch(Circle(r0, 0.055, fc=INK, ec="white", zorder=6))
-for (kx, ky), c, t in [((2.95, 1.75), BAD, "✗"), ((3.55, 1.75), OK, "✓ shortest"), ((4.15, 1.75), OK, "✓")]:
-    arr(ax, r0, (kx, ky), color=c, lw=1.4)
-    ax.add_patch(Circle((kx, ky), 0.05, fc=c, ec="white", zorder=6))
-    ax.text(kx, ky - 0.16, t, fontsize=6.8, color=c, ha="center")
-ax.text(3.57, 1.25, "try valid movements; keep the\nshortest trajectory that fixes\nthe answer (ground truth known);\ncorrect at start → Stop, depth 0", fontsize=6.8, color=MUT, ha="center", va="top")
-group(ax, 4.95, 0.5, 2.15, 2.3, PUR); badge(ax, 5.6, 0.34, 3, "Policy & confidence", PUR)
-box(ax, 5.05, 2.15, 1.95, 0.55, "camera controller:\nimitate oracle actions + Stop", fc="#e3f0ef", ec=TEALD, fs=6.9)
-box(ax, 5.05, 1.45, 1.95, 0.55, "confidence head: predict\nanswer correctness per state", fc="#e3f0ef", ec=TEALD, fs=6.9)
-box(ax, 5.05, 0.72, 1.95, 0.55, "optional RL over trajectories\n(kept as ablation)", fc="white", ec=MUT, ls=(0, (4, 2)), fs=6.8, color=MUT)
-arr(ax, (2.23, 1.65), (2.5, 1.65)); arr(ax, (4.65, 2.4), (5.05, 2.4)); arr(ax, (4.65, 1.72), (5.05, 1.72))
-ax.text(0.08, 3.04, "all labels come from answer outcomes on the training corpus; no human annotation of camera trajectories", fontsize=7, color=MUT, va="top")
+# ================ fig_training_pipeline (block flow-chart style) ================
+BLUF, PURF, ARC = "#BDD7EE", "#C08BBB", "#2F5773"
+fig, ax = plt.subplots(figsize=(3.6, 4.5)); ax.set_xlim(0, 3.6); ax.set_ylim(0, 4.5); ax.axis("off")
+
+def bb2(x, y, w, h, text, fill, fs=11):
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.10",
+                                fc=fill, ec="none", zorder=3))
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs,
+            color="#111111", weight="bold", zorder=4)
+
+def ta2(p_, q, lw=2.8, col=None):
+    ax.add_patch(FancyArrowPatch(p_, q, arrowstyle="-|>", mutation_scale=18,
+                                 color=col or ARC, lw=lw, shrinkA=1, shrinkB=1, zorder=5))
+
+def flame2(x, y, k=0.8):
+    import matplotlib.patches as mp
+    ax.add_patch(mp.Polygon([(x, y), (x - 0.09 * k, y + 0.10 * k), (x - 0.045 * k, y + 0.085 * k),
+                             (x - 0.02 * k, y + 0.24 * k), (x + 0.05 * k, y + 0.10 * k),
+                             (x + 0.09 * k, y + 0.14 * k), (x + 0.10 * k, y + 0.02 * k)],
+                            closed=True, fc="#f4801f", ec="#c9560a", lw=0.7, zorder=7))
+    ax.add_patch(mp.Polygon([(x, y + 0.01), (x - 0.035 * k, y + 0.09 * k), (x + 0.01 * k, y + 0.13 * k),
+                             (x + 0.045 * k, y + 0.06 * k)], closed=True, fc="#ffd166", ec="none", zorder=8))
+
+def num(x, y, n):
+    ax.add_patch(Circle((x, y), 0.13, fc="#111111", ec="none", zorder=6))
+    ax.text(x, y, str(n), fontsize=10, color="white", ha="center", va="center", weight="bold", zorder=7)
+
+# stage 1: answer from rendered views
+num(0.32, 4.2, 1)
+bb2(0.55, 3.85, 1.85, 0.62, "Frames +\nRendered Views", BLUF, 10)
+ta2((2.42, 4.16), (2.62, 4.16))
+bb2(2.62, 3.85, 0.82, 0.62, "VLM", PURF, 13)
+flame2(3.36, 4.36, 0.7)
+ta2((3.03, 3.83), (3.03, 3.42))
+# stage 2: oracle search over camera walks
+num(0.32, 3.1, 2)
+bb2(0.55, 2.75, 1.7, 0.62, "Oracle\nSearch", PURF, 11)
+r0 = (2.75, 3.28)
+ax.add_patch(Circle(r0, 0.055, fc="#111111", ec="white", zorder=6))
+for (kx, ky), col, t in [((2.42, 2.86), "#cf222e", "\u2717"), ((2.78, 2.82), "#1a7f37", "\u2713"), ((3.16, 2.9), "#1a7f37", "\u2713")]:
+    ta2(r0, (kx, ky), lw=1.6, col=col)
+    ax.add_patch(Circle((kx, ky), 0.05, fc=col, ec="white", zorder=6))
+    ax.text(kx, ky - 0.14, t, fontsize=9, color=col, ha="center", va="top", weight="bold")
+ta2((1.4, 2.73), (1.4, 2.32))
+bb2(0.55, 1.75, 2.5, 0.55, "Walks + State Labels", BLUF, 10.5)
+# stage 3: supervise controller and confidence head
+num(0.32, 1.42, 3)
+ta2((1.25, 1.73), (0.95, 1.22))
+ta2((2.35, 1.73), (2.7, 1.22))
+bb2(0.2, 0.6, 1.55, 0.6, "Controller", PURF, 11)
+flame2(1.66, 1.1, 0.65)
+bb2(1.95, 0.6, 1.55, 0.6, "Confidence\nHead", PURF, 10)
+flame2(3.41, 1.1, 0.65)
+ta2((1.0, 0.58), (1.0, 0.28)); ta2((2.72, 0.58), (2.72, 0.28))
+bb2(1.1, 0.02, 1.55, 0.24, "guide the search", "#eef2f6", 8)
 fig.savefig(f"{OUT}/fig_training_pipeline.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_training_pipeline.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("training_pipeline")
 
-# ================ fig_runtime ================
-fig, ax = plt.subplots(figsize=(7.2, 2.75)); ax.set_xlim(0, 7.2); ax.set_ylim(0, 2.75); ax.axis("off")
-group(ax, 0.08, 0.35, 2.15, 2.1, RED); badge(ax, 0.85, 0.2, 1, "Scene reuse", RED)
-box(ax, 0.18, 1.5, 1.95, 0.8, "reconstruct once per scene\n11.3 s warm → 0.7 s and 32 J\nper question amortized", fc="#ddf4ff", ec="#0969da", fs=6.9)
-box(ax, 0.18, 0.55, 1.95, 0.8, "pose-keyed caches: rendered\nviews (0.12 s each) and their\ntokens; repeats are free", fc="#ddf4ff", ec="#0969da", fs=6.9)
-group(ax, 2.5, 0.35, 2.15, 2.1, MAG); badge(ax, 3.3, 0.2, 2, "Cheap calls", MAG)
-box(ax, 2.6, 1.5, 1.95, 0.8, "per-level batching: sibling\nviews rendered and encoded\ntogether, no model switching", fc="#fdf2f8", ec=MAG, fs=6.9)
-box(ax, 2.6, 0.55, 1.95, 0.8, "decode-free control: action\nscores from prefill logits;\nfused confidence readout\nsaves 4.0 s per scored answer", fc="#fdf2f8", ec=MAG, fs=6.6)
-group(ax, 4.95, 0.35, 2.15, 2.1, PUR); badge(ax, 5.75, 0.2, 3, "Bounded search", PUR)
-box(ax, 5.05, 1.5, 1.95, 0.8, "width 3, keep 2, depth ≤ 3;\ngate exits after 2 calls on\n71% of questions", fc="#faf5ff", ec=PUR, fs=6.9)
-box(ax, 5.05, 0.55, 1.95, 0.8, "expected cost 4.7 calls:\n24.5 s / 1104 J per question\n(Jetson AGX Orin, 7B)", fc="#faf5ff", ec=PUR, fs=6.9)
-arr(ax, (2.25, 1.4), (2.5, 1.4)); arr(ax, (4.67, 1.4), (4.95, 1.4))
-ax.text(0.08, 2.68, "one reconstruction serves every question and every search path in the scene; prefill dominates VLM cost, so the runtime batches and shortens prefills", fontsize=7, color=MUT, va="top")
+# ================ fig_runtime (block flow-chart style) ================
+fig, ax = plt.subplots(figsize=(3.6, 4.1)); ax.set_xlim(0, 3.6); ax.set_ylim(0, 4.1); ax.axis("off")
+
+def mech(x, y, w, h, title, line, fill, fs=10.5):
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.10",
+                                fc=fill, ec="none", zorder=3))
+    ax.text(x + w / 2, y + h - 0.30, title, ha="center", va="center", fontsize=fs,
+            color="#111111", weight="bold", zorder=4)
+    ax.text(x + w / 2, y + 0.34, line, ha="center", va="center", fontsize=8,
+            color="#222222", zorder=4)
+
+bb2(0.95, 3.6, 1.7, 0.45, "Question + Video", BLUF, 10.5)
+ta2((1.35, 3.58), (1.15, 3.30)); ta2((2.25, 3.58), (2.45, 3.30))
+mech(0.2, 2.25, 1.55, 1.0, "Reconstruct\nonce  \u2744", "11.3 s / scene \u2192\n0.7 s / question", PURF)
+mech(1.9, 2.25, 1.5, 1.0, "Pose-keyed\ncaches", "render 0.12 s;\nrepeats are free", BLUF)
+ta2((0.97, 2.23), (0.97, 1.95)); ta2((2.65, 2.23), (2.65, 1.95))
+mech(0.2, 0.9, 1.55, 1.0, "Gated, bounded\nsearch", "71% exit in 9.6 s;\nb=3, keep 2, d\u22643", PURF, 9.5)
+flame2(1.62, 1.75, 0.6)
+mech(1.9, 0.9, 1.5, 1.0, "Decode-free\ncontrol", "prefill logits only;\nfused head \u22124.0 s", BLUF, 10)
+ta2((2.65, 0.88), (2.65, 0.62), lw=2.2); ta2((0.97, 0.88), (0.97, 0.62), lw=2.2)
+bb2(0.75, 0.1, 2.1, 0.5, "Answer: 24.5 s / 1.1 kJ avg.", BLUF, 9.5)
 fig.savefig(f"{OUT}/fig_runtime.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_runtime.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("runtime")
 
 # ================ fig_search_example (single-column, vertical flow) ================
