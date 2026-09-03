@@ -227,7 +227,7 @@
 		\centering
 		\includegraphics[width=0.97\textwidth]{figures/fig_overview.pdf}
 		\vspace{-0.12in}
-		\caption{\system overview: the frames are reconstructed once into an explicit scene memory (1); a learned gate answers directly when they suffice (2); otherwise confidence-guided camera walks acquire the missing views, with final arbitration (3).}
+		\caption{\system overview: the video is reconstructed once into an explicit scene memory; the VLM issues camera actions, reads back rendered views with their poses, and its trained confidence head decides whether to answer or keep exploring.}
 		\label{fig:overview}
 	\end{figure*}
 	

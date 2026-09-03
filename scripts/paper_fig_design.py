@@ -179,38 +179,76 @@ for cx, top, bot, st, par in d3:
         arr(ax, (cx, bot - 0.10), (1.78, 0.60), color=OK, lw=1.1, rad=0.1 if cx > 1.78 else -0.1)
 fig.savefig(f"{OUT}/fig_search_example.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_search_example.png", dpi=200, bbox_inches="tight"); plt.close(fig); print("search_example")
 
-# ================ fig_overview (replaces the tikz placeholder) ================
+# ================ fig_overview (block flow-chart style) ================
 TR = os.path.join(R, "figures/treeD_trace")
-fig, ax = plt.subplots(figsize=(14.2, 3.4)); ax.set_xlim(0, 14.2); ax.set_ylim(0, 3.4); ax.axis("off")
-box(ax, 0.15, 2.3, 1.75, 0.75, "User query:\n\"which object is the\nclosest to the microwave?\"", fc="#fff8f8", ec=RED, ls=(0,(4,2)), fs=7.2)
-strip(ax, [f"{KA}/frames_64/frame_{k:02d}.jpg" for k in (6, 30, 54)], 0.2, 1.35, w=0.56)
-ax.text(1.05, 1.22, "recent video frames", fontsize=7, color=MUT, ha="center", va="top")
-group(ax, 2.35, 0.5, 3.1, 2.7, RED); badge(ax, 3.15, 0.34, 1, "Scene memory (once per scene)", RED)
-box(ax, 2.5, 2.35, 1.3, 0.6, "frozen 3D\nreconstruction", fc="#155e63", color="white", ec="#155e63", fs=7.3)
-img(ax, f"{KA}/bev_no_ceiling.jpg", 2.5, 0.75, 1.35)
-ax.text(3.17, 0.62, "explicit scene memory", fontsize=6.8, color=MUT, ha="center", va="top")
-img(ax, f"{KA}/reconstruction_views/render_spot03_dir2.jpg", 4.0, 1.9, 1.3, ec=TEALD, lw=1.3)
-ax.text(4.65, 1.8, "renderable from 97\ndiscrete camera poses\n(validity-checked)", fontsize=6.8, color=TEALD, ha="center", va="top")
-arr(ax, (1.95, 2.0), (2.35, 2.0))
-group(ax, 5.75, 0.5, 2.0, 2.7, MAG); badge(ax, 6.35, 0.34, 2, "Exploration gate", MAG)
-box(ax, 5.87, 2.2, 1.75, 0.75, "direct answer from\nframes + learned gate:\nenough information?", fc="#fdf2f8", ec=MAG, fs=7.0)
-box(ax, 5.87, 1.25, 1.75, 0.55, "Yes (71%):\nreturn direct answer", fc="#dafbe1", ec=OK, fs=7.0)
-box(ax, 5.87, 0.65, 1.75, 0.42, "Explore: start search", fc="white", ec=MAG, fs=7.0)
-arr(ax, (5.45, 2.0), (5.75, 2.0)); arr(ax, (6.75, 2.2), (6.75, 1.8), color=OK); arr(ax, (6.75, 1.25), (6.75, 1.07), color=MAG)
-group(ax, 8.1, 0.5, 4.4, 2.7, PUR); badge(ax, 9.0, 0.34, 3, "Confidence-guided camera walks", PUR)
-for j, (v, yb) in enumerate([("view16", 2.15), ("view23", 1.25), ("view0", 0.72)]):
-    w = 0.95
-    hh = img(ax, f"{TR}/2027/{v}.jpg", 8.25, yb, w, ec=("#2f6feb" if j < 2 else "#9aa4b1"), lw=(1.6 if j < 2 else 1.0))
-arr(ax, (7.62, 0.86), (8.25, 1.6), color=MAG)
-ax.text(9.25, 2.6, "expand 3 actions per path,\nkeep 2 by calibrated confidence", fontsize=6.9, color=MUT, ha="left")
-img(ax, f"{TR}/2027/view57.jpg", 10.55, 1.5, 1.0, ec=OK, lw=1.6)
-arr(ax, (9.25, 2.0), (10.55, 2.0), color=PUR)
-ax.text(9.9, 2.08, "walk deeper\n(depth ≤ 3)", fontsize=6.8, color=PUR, ha="center")
-ax.text(11.05, 1.4, "retained paths agree →\nstop early", fontsize=6.8, color=OK, ha="center", va="top")
-box(ax, 11.75, 2.15, 0.62, 0.55, "cup ✓", fc="#dafbe1", ec=OK, fs=7.5)
-arr(ax, (11.6, 2.2), (11.75, 2.35), color=OK)
-box(ax, 12.62, 0.8, 1.45, 2.0, "final arbitration:\nhighest calibrated\nconfidence among\ndirect + explored\nanswers\n\n(falls back to the\ndirect answer when\nrenders mislead)", fc="#faf5ff", ec=PUR, fs=6.8)
-arr(ax, (12.38, 2.4), (12.62, 2.4), color=PUR)
+BLUF, PURF, ARC = "#BDD7EE", "#C08BBB", "#2F5773"
+fig, ax = plt.subplots(figsize=(13.6, 4.4)); ax.set_xlim(0, 13.6); ax.set_ylim(0, 4.4); ax.axis("off")
+
+def bb(x, y, w, h, text, fill, fs=13):
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.14",
+                                fc=fill, ec="none", zorder=3))
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs,
+            color="#111111", weight="bold", zorder=4)
+
+def tarr(p_, q, lw=3.4, ls="-"):
+    ax.add_patch(FancyArrowPatch(p_, q, arrowstyle="-|>", mutation_scale=24, color=ARC,
+                                 lw=lw, ls=ls, shrinkA=1, shrinkB=1, zorder=5))
+
+def flame(x, y, k=1.0):
+    import matplotlib.patches as mp
+    ax.add_patch(mp.Polygon([(x, y), (x - 0.09 * k, y + 0.10 * k), (x - 0.045 * k, y + 0.085 * k),
+                             (x - 0.02 * k, y + 0.24 * k), (x + 0.05 * k, y + 0.10 * k),
+                             (x + 0.09 * k, y + 0.14 * k), (x + 0.10 * k, y + 0.02 * k)],
+                            closed=True, fc="#f4801f", ec="#c9560a", lw=0.8, zorder=7))
+    ax.add_patch(mp.Polygon([(x, y + 0.01), (x - 0.035 * k, y + 0.09 * k), (x + 0.01 * k, y + 0.13 * k),
+                             (x + 0.045 * k, y + 0.06 * k)], closed=True, fc="#ffd166", ec="none", zorder=8))
+
+# ---- inputs and VLM ----
+bb(0.25, 2.75, 1.5, 0.55, "Query", BLUF, 14)
+bb(1.95, 2.75, 1.75, 0.55, "Context\nFrames", BLUF, 12)
+bb(0.70, 1.15, 2.0, 1.15, "VLM", PURF, 27)
+flame(2.52, 2.02, 1.1)
+tarr((1.0, 2.73), (1.35, 2.34)); tarr((2.82, 2.73), (2.15, 2.34))
+# action out, confidence below
+bb(3.65, 1.95, 1.5, 0.55, "Action", BLUF, 14)
+tarr((2.72, 1.85), (3.63, 2.15))
+bb(3.65, 0.75, 1.9, 0.55, "Confidence", PURF, 13)
+flame(5.42, 1.18, 0.85)
+tarr((2.72, 1.35), (3.63, 1.05))
+bb(6.30, 0.75, 1.35, 0.55, "Answer", BLUF, 14)
+tarr((5.58, 1.02), (6.28, 1.02))
+tarr((4.60, 1.32), (4.40, 1.93))
+ax.text(4.30, 1.70, "explore", fontsize=9, color=ARC, ha="right", va="center", weight="bold")
+ax.text(5.92, 1.36, "answer", fontsize=9, color=ARC, ha="center", va="bottom", weight="bold")
+
+# ---- explicit scene memory (dashed group) ----
+ax.add_patch(FancyBboxPatch((8.6, 0.35), 4.75, 3.85, boxstyle="round,pad=0.02,rounding_size=0.06",
+                            fc="none", ec="#111111", lw=2.0, ls=(0, (6, 4)), zorder=2))
+ax.text(10.97, 4.06, "Explicit Scene Memory", fontsize=12, color="#111111", ha="center", va="center", weight="bold")
+bb(9.0, 3.42, 2.0, 0.5, "Video Frames", BLUF, 12.5)
+tarr((10.0, 3.40), (10.0, 3.26))
+bb(9.0, 2.72, 2.0, 0.5, "VGGT  \u2744", PURF, 12.5)
+im = mpimg.imread(f"{R}/figures/wm_failure_assets/bev.jpg")[60:700, 112:1035]
+iw = 2.3; ih = iw * im.shape[0] / im.shape[1]
+ax.imshow(im, extent=(10.0 - iw / 2, 10.0 + iw / 2, 2.62 - ih, 2.62), aspect="auto", zorder=2)
+ax.add_patch(FancyBboxPatch((10.0 - iw / 2, 2.62 - ih), iw, ih, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=1.0, zorder=4))
+tarr((10.0, 2.70), (10.0, 2.64))
+tarr((10.0, 2.62 - ih - 0.02), (10.0, 1.04))
+bb(9.0, 0.48, 2.0, 0.52, "Scene Memory", PURF, 12.5)
+himg = mpimg.imread(f"{KA}/reconstruction_views/render_spot03_dir2.jpg")
+rw = 1.3; rh = rw * himg.shape[0] / himg.shape[1]
+ax.imshow(himg, extent=(11.9, 11.9 + rw, 1.58, 1.58 + rh), aspect="auto", zorder=2)
+ax.add_patch(FancyBboxPatch((11.9, 1.58), rw, rh, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=1.0, zorder=4))
+tarr((11.02, 0.80), (12.25, 1.56))
+# action into the memory; rendered view + pose back to the VLM along the bottom rail
+tarr((5.17, 2.05), (9.0, 0.90))
+ax.plot([12.9, 12.9, 9.32], [1.56, 0.30, 0.30], color=ARC, lw=3.0, zorder=5)
+bb(7.75, 0.06, 1.55, 0.5, "View + Pose", BLUF, 11.5)
+ax.plot([7.73, 1.55], [0.30, 0.30], color=ARC, lw=3.0, zorder=5)
+tarr((1.55, 0.30), (1.55, 1.13))
+# legend
+flame(0.35, 0.52, 0.8); ax.text(0.52, 0.60, "trained", fontsize=9, color="#444444", ha="left", va="center")
+ax.text(1.25, 0.60, "\u2744 frozen", fontsize=9, color="#444444", ha="left", va="center")
 fig.savefig(f"{OUT}/fig_overview.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_overview.png", dpi=150, bbox_inches="tight"); plt.close(fig); print("overview")
 
 # ================ fig_gate_example ================
