@@ -104,10 +104,80 @@ arr(ax, (2.25, 1.4), (2.5, 1.4)); arr(ax, (4.67, 1.4), (4.95, 1.4))
 ax.text(0.08, 2.68, "one reconstruction serves every question and every search path in the scene; prefill dominates VLM cost, so the runtime batches and shortens prefills", fontsize=7, color=MUT, va="top")
 fig.savefig(f"{OUT}/fig_runtime.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_runtime.png", dpi=170, bbox_inches="tight"); plt.close(fig); print("runtime")
 
-# ================ fig_search_example ================
-fig, ax = plt.subplots(figsize=(7.4, 4.7)); ax.axis("off")
-im = mpimg.imread(f"{R}/figures/treeD_object_rel_distance_2027.png")
-ax.imshow(im); fig.savefig(f"{OUT}/fig_search_example.pdf", bbox_inches="tight", dpi=200); plt.close(fig); print("search_example")
+# ================ fig_search_example (single-column, vertical flow) ================
+TD = os.path.join(R, "figures/treeD_trace/2027")
+fig, ax = plt.subplots(figsize=(3.5, 4.9)); ax.set_xlim(0, 3.5); ax.set_ylim(0, 4.9); ax.axis("off")
+KEPT, PRUN = "#0969da", "#9aa4b1"
+
+def cell(x, ytop, w, path, action, score, state):
+    im = mpimg.imread(path); h = w * im.shape[0] / im.shape[1]
+    y = ytop - h
+    ec, lw, ls = {"kept": (KEPT, 1.6, "-"), "pruned": (PRUN, 0.9, "-"), "invalid": (BAD, 1.1, (0, (3, 2)))}[state]
+    ax.imshow(im, extent=(x, x + w, y, ytop), aspect="auto", zorder=2, alpha=1.0 if state == "kept" else 0.88)
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="square,pad=0", fc="none", ec=ec, lw=lw, ls=ls, zorder=4))
+    ax.text(x + w / 2, ytop + 0.015, action, fontsize=4.8, color=MUT, ha="center", va="bottom", zorder=7,
+            bbox=dict(boxstyle="square,pad=0.12", fc="white", ec="none", alpha=0.78))
+    if state == "invalid":
+        ax.text(x + w / 2, y - 0.02, "invalid", fontsize=4.9, color=BAD, ha="center", va="top")
+    else:
+        ax.text(x + w / 2, y - 0.02, score, fontsize=5.1, color=KEPT if state == "kept" else MUT,
+                ha="center", va="top", weight="bold" if state == "kept" else "normal")
+    return (x + w / 2, ytop, y)  # center-x, top, bottom
+
+# context frames + gate
+for j2, k in enumerate((0, 3, 6)):
+    im = mpimg.imread(f"{TD}/frame{k}.jpg"); h = 0.5 * im.shape[0] / im.shape[1]
+    ax.imshow(im, extent=(0.10 + j2 * 0.54, 0.60 + j2 * 0.54, 4.82 - h, 4.82), aspect="auto", zorder=2)
+    ax.add_patch(FancyBboxPatch((0.10 + j2 * 0.54, 4.82 - h), 0.5, h, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=0.8, zorder=4))
+ax.text(0.86, 4.82 - 0.5 * 0.75 - 0.03, "8 context frames (3 shown)", fontsize=5.0, color=MUT, ha="center", va="top")
+box(ax, 1.86, 4.56, 0.72, 0.24, "gate: EXPLORE", fc="#eaf3fb", ec=KEPT, fs=5.6)
+box(ax, 2.68, 4.56, 0.74, 0.24, "direct: D [0.60]", fc="#f6f8fa", ec="#9aa4b1", fs=5.6)
+arr(ax, (2.24, 4.56), (1.75, 4.20), color=MUT, lw=1.0, rad=0.15)
+
+def rlabel(y, t):
+    ax.text(0.045, y, t, fontsize=5.6, color=INK, ha="center", va="center", rotation=90, weight="bold")
+
+# depth 1: three starting spots (two kept)
+rlabel(3.55, "depth 1")
+t1 = 3.94; w1 = 0.86
+d1 = [cell(0.14, t1, w1, f"{TD}/view0.jpg", "spot 1", "D  [0.59]", "pruned"),
+      cell(1.14, t1, w1, f"{TD}/view8.jpg", "spot 2", "D  [0.59]", "kept"),
+      cell(2.14, t1, w1, f"{TD}/view16.jpg", "spot 3", "D  [0.60]", "kept")]
+
+# depth 2: three children per kept spot; both kept children come from spot 3
+rlabel(2.62, "depth 2")
+t2 = 2.90
+d2spec = [("view15.jpg", "turn left", "D  [0.57]", "pruned", 1), ("view9.jpg", "turn right", "D  [0.57]", "pruned", 1),
+          ("view16.jpg", "next spot", "D  [0.58]", "pruned", 1), ("view23.jpg", "turn left", "D  [0.58]", "pruned", 2),
+          ("view17.jpg", "turn right", "D  [0.59]", "kept", 2), ("view24.jpg", "next spot", "D  [0.59]", "kept", 2)]
+x = 0.14; d2 = []
+for f, act, sc, st, par in d2spec:
+    w = 0.62 if st == "kept" else 0.46
+    d2.append(cell(x, t2, w, f"{TD}/{f}", act, sc, st) + (st, par)); x += w + 0.055
+for cx, top, bot, st, par in d2:
+    px, ptop, pbot = d1[par]
+    arr(ax, (px, pbot - 0.10), (cx, top + 0.10), color=KEPT if st == "kept" else PRUN, lw=0.9 if st == "kept" else 0.6, rad=0.0)
+
+# depth 3: children of the two kept depth-2 nodes
+rlabel(1.66, "depth 3")
+t3 = 1.94
+d3spec = [("view31.jpg", "turn left", "D  [0.60]", "pruned", 5), ("view25.jpg", "turn right", "", "invalid", 5),
+          ("view28.jpg", "look around", "D  [0.61]", "kept", 5), ("view18.jpg", "turn right", "", "invalid", 4),
+          ("view57.jpg", "forward", "D  [0.61]", "kept", 4)]
+x = 0.14; d3 = []
+for f, act, sc, st, par in d3spec:
+    w = 0.62 if st == "kept" else 0.46
+    d3.append(cell(x, t3, w, f"{TD}/{f}", act, sc, st) + (st, par)); x += w + 0.055
+for cx, top, bot, st, par in d3:
+    px, ptop, pbot = d2[par][:3]
+    arr(ax, (px, pbot - 0.10), (cx, top + 0.10), color=KEPT if st == "kept" else PRUN, lw=0.9 if st == "kept" else 0.6, rad=0.0)
+
+# consensus
+box(ax, 0.95, 0.14, 1.66, 0.44, "consensus at depth 3\nfinal: D = GT $\checkmark$ (18 VLM calls)", fc="#eef7f1", ec=OK, fs=6.0, color=OK)
+for cx, top, bot, st, par in d3:
+    if st == "kept":
+        arr(ax, (cx, bot - 0.10), (1.78, 0.60), color=OK, lw=1.1, rad=0.1 if cx > 1.78 else -0.1)
+fig.savefig(f"{OUT}/fig_search_example.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_search_example.png", dpi=200, bbox_inches="tight"); plt.close(fig); print("search_example")
 
 # ================ fig_overview (replaces the tikz placeholder) ================
 TR = os.path.join(R, "figures/treeD_trace")

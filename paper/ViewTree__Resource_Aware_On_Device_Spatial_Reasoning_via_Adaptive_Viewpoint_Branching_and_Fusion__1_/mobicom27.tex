@@ -298,14 +298,14 @@ where $\sigma$ is the logistic function and the temperature $T$ is fitted on hel
 \end{equation}
 where $\hat{y}$ is the returned answer, $k=0$ denotes the direct-answer state, and $\mathcal{B}_{\mathrm{final}}$ contains the retained explored states. This final arbitration matters in practice: it prevents an incomplete or distracting reconstruction from automatically overriding an answer that was already well supported by the original frames.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 	\centering
-	\includegraphics[width=0.92\textwidth]{figures/fig_search_example.pdf}
-	\vspace{-0.15in}
+	\includegraphics[width=0.97\linewidth]{figures/fig_search_example.pdf}
+	\vspace{-0.12in}
 	\caption{A real \system search on a VSI-Bench question. The gate finds the frames insufficient; the beam explores three standing spots, prunes by calibrated confidence (blue borders), discards views without geometric support (red dashed), and stops at depth three when the retained paths agree on the correct answer.}
 	\label{fig:search_example}
 	\vspace{-0.1in}
-\end{figure*}
+\end{figure}
 
 		Algorithm~\ref{alg:viewtree} summarizes \system inference.
 	%\subsection{Reasoning under an Acquisition Budget}
