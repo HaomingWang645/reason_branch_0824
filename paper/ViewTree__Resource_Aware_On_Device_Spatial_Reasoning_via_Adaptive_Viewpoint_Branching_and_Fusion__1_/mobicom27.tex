@@ -38,7 +38,7 @@
 	\maketitle
 	\pagestyle{plain}
 	
-	\section{Introduction}
+\section{Introduction}
 	Many mobile and embedded devices nowadays use visual streams as the input to vision-language models (VLMs) to perceive the physical world and guide device actions \cite{}. Instead of using cloud AI services, executing VLMs locally protects data privacy and avoids possible network disruptions, both of which are important to interactive applications such as robotic manipulation \cite{zheng2025survey, yuan2024cross}, navigation \cite{simon2023mononav}, AR/VR assistants \cite{skurowski2024energy, liu2019edge} and mobile video analytics \cite{wang2025empowering}. 
 	
 	Being different from traditional appearance-based visual tasks such as object detection \cite{cheng2024yolo, liu2024grounding} and semantic segmentation \cite{kirillov2023segment,liu2024grounding} shown in Figure \ref{fig:all_scenarios}(a), these emerging applications build on the ability of \textbf{spatial intelligence}, which comprehends the 3D physical properties of the environment and geometric relations (e.g., distance, orientation, and relative positioning) between objects in different views. For example in Figure \ref{fig:all_scenarios}(b), to identify the correct box to retrieve, a robot translates the allocentric input command into egocentric actions, requiring correct understanding of the spatial relationships across the camera's view and robot's view. Similarly, a wearable AR assistant estimates the object's 3D dimensions to determine whether it fits into the elevator, and a search-and-rescue drone builds a 3D map of an unknown area to report the survivor's location relative to the landmarks. 
@@ -46,6 +46,7 @@
 	\begin{figure}
 		\centering
 		% First subfigure
+		\vspace{-0.05in}
 		\subfigure[Traditional visual tasks of object detection and recognition]{
 			\includegraphics[width=0.85\linewidth]{figures/traditional_task.pdf}
 			\label{fig:traditional_task}
@@ -58,60 +59,67 @@
 		}
 		%	\vspace{-0.1in}
 		\caption{Different VLM-based tasks on mobile and embedded devices}
-		\vspace{-0.2in}
+		\vspace{-0.25in}
 		\label{fig:all_scenarios}
 	\end{figure}
 	
-	In these tasks, the spatial information needed for the task is usually outside the current view or distributed across several video frames. Current VLMs have been proved to be unreliable on integrating spatial information from multiple viewpoints \cite{blink2024,muirbench2024,vsibench2024,mindcube2025}, because they perceive a 3D scene only through separated 2D images and cannot properly choose what to observe next. More specifically, each image is encoded according to the corresponding camera view, but the same object may appear at a different location/scale or being occluded in different frames. To combine these frames, the VLMs need to precisely estimate how the camera moves across frames, match the same object across views, place them in a unified 3D space, and memorize the objects' relationships in context. This is difficult or even infeasible for most of today's VLMs, especially small on-device VLMs that fit the memory and compute constraints of mobile and embedded devices \cite{}. Moreover, the LM can only perceive the frames given as input but cannot control the camera movement or request a specific view, even when important information is missing. Simply adding more frames does not help because these frames still need to be correctly aligned and combined, and redundant or irrelevant views may also distract the VLM and cause extra errors \cite{mosaicthinker2026}.
-
-    \begin{figure}
-	\centering
-	\vspace{-0.05in}
-	\includegraphics[width=0.85\linewidth]{figures/method_rationale.pdf}
-	\vspace{-0.1in}
-	\caption{ViewTree renders task-relevant views from one reconstructed scene instead of processing redundant history frames.}
-	\label{fig:method_rationale}
-	\vspace{-0.15in}
-\end{figure}
-	
-	
-	An intuitive solution to this deficiency of VLMs is to explicitly provide 3D information to the VLM. Existing methods inject 3D supervision during VLM training~\cite{spatialvlm2024,ross3d2025}, or construct bird's-eye-view (BEV) and semantic maps from observed frames~\cite{gpt4scene2025,mosaicthinker2026}. Although these approaches can improve spatial grounding, the fixed global representation they provide may not be always suitable for a small on-device VLM, because using dense geometry contains substantial task-irrelevant information and using a sparse map must decide in advance which objects and relationships to preserve. In both cases, the VLM passively receives a predetermined representation that may not contain all the spatial information required by VLM's reasoning.
-	
-	Instead, a better alternative is to externalize the state of 3D scene and allow the VLM to \emph{actively acquire} the necessary spatial information in task-related views. %For example, after observing that a cabinet occludes the queried doorway, the VLM can request a leftward camera motion. The returned view is appended to the reasoning context, and the VLM can determine whether the doorway becomes visible, request another motion, or answer. Such an action-observation loop can convert an occlusion or coordinate-transformation problem into a simpler visual comparison from a deliberately selected viewpoint.
-	Rather than requesting camera movements in the physical world to capture new views that is usually infeasible in practice, recent work suggest that a VLM uses the new views generated from a \emph{world model} \cite{mindjourney2025,spatialdreamer2025,avic2026,astra2026}. 
+	In these tasks, the spatial information needed for the task is usually outside the current view and distributed across several video frames. Current VLMs have been proved to be unreliable on integrating spatial information from multiple viewpoints \cite{blink2024,muirbench2024,vsibench2024,mindcube2025}, because they perceive a 3D scene only through separated 2D images and cannot properly choose what to observe next. More specifically, each image is encoded according to the corresponding camera view, but the same object may appear at a different location/scale or being occluded in different frames. To combine these frames, the VLMs need to precisely estimate how the camera moves across frames, match the same object across views, place them in a unified 3D space, and memorize the objects' relationships in context. This is difficult for most of today's VLMs, especially small on-device VLMs \cite{}. Moreover, the VLM can only perceive the frames given as input but cannot control the camera movement or request new views, even if important information is missing. Simply adding more frames does not help because these frames still need to be correctly aligned and combined, and redundant or irrelevant views may distract the VLM and cause extra errors \cite{mosaicthinker2026}.
+		
+	An intuitive solution is to explicitly provide 3D information to the VLM. Existing methods inject 3D supervision during VLM training~\cite{spatialvlm2024,ross3d2025}, or construct bird's-eye-view (BEV) and semantic maps from observed frames~\cite{gpt4scene2025,mosaicthinker2026}. Although these approaches can improve spatial grounding, the fixed global representation they provide may not be always suitable for a small on-device VLM, because using dense geometry contains substantial task-irrelevant information and using a sparse map must decide in advance which objects and relationships to preserve. In both cases, the VLM passively receives a predetermined representation that may not contain all the spatial information required in reasoning.
+			
+	Instead, a better alternative is to externalize the state of 3D scene and allow the VLM to \emph{actively acquire} the necessary spatial information in task-relevant views. %For example, after observing that a cabinet occludes the queried doorway, the VLM can request a leftward camera motion. The returned view is appended to the reasoning context, and the VLM can determine whether the doorway becomes visible, request another motion, or answer. Such an action-observation loop can convert an occlusion or coordinate-transformation problem into a simpler visual comparison from a deliberately selected viewpoint.
+	%Rather than requesting camera movements in the physical world to capture new views that is usually infeasible in practice,
+	More specifically, a VLM can use a \emph{world model} to generate new views \cite{mindjourney2025,spatialdreamer2025,avic2026,astra2026}, 
 	%The VLM first chooses a camera movement, and the world model then generates an image from the requested viewpoint. 
-	Doing so can help reveal an occluded object or show a spatial relationship from a viewpoint that is easier for the VLM to perceive. \textcolor{red}{For example, as shown in Figure~\ref{fig:method_rationale}, the VLM can first request a view from farther back to locate the nightstand and then request a view facing the nearby wall to find the light switch. In this way, the VLM uses a small number of task-related views instead of reasoning over all history frames at once.} However, the generated view is only a prediction from the world model rather than an actual observation from the captured scene.
-	Especially when the prediction corresponds to large camera movement, the world model's prediction may lose physical consistency and largely deviate from the actual scene \cite{visa2025}, \textcolor{red}{as shown in Figure \ref{fig:world_model_failure}}. Leveraging multiple prediction from the world model can help, but adds substantial compute cost to mobile devices.
-
-    
-    \begin{figure}
-	\centering
-	\vspace{-0.05in}
-	\includegraphics[width=0.85\linewidth]{figures/world_model_failure.pdf}
-	\vspace{-0.1in}
-	\caption{Failure mode of using world model for view prediction: physical inconsistency}
-	\label{fig:world_model_failure}
-	\vspace{-0.15in}
-\end{figure}
-
-	%To minimize such physical inconsistency, our basic idea, as shown in Figure ?? \textcolor{red}{[I don't understand your write-up here. Are you saying that you use one predicted view as input for another world model prediction? Use the same figure to illustrate your basic idea? if needed, you can put two subfigures there: one to show the existing work and another to show your idea]}, is to reconstruct the observed scene once and use the reconstruction to render each requested camera view, rather than generating them with a world model \textcolor{red}{[I don't understand the difference between the two, and what you mean by "reconstruct the observed scene" "use the reconstruction to render".]}. 
-
-    \textcolor{red}{To reduce inconsistency across requested views, we use a geometry model such as VGGT~\cite{vggt2025} to reconstruct the captured scene as a set of 3D points with estimated camera poses. When the VLM selects a camera movement, the system moves a virtual camera to the requested pose and projects the stored 3D points into a new 2D view. Compared with images generated by a world model, the rendered view may contain less detailed textures or missing pixels due to limited resolution but preserves the geometry of the original scene.}
-
-	To address the possible cascaded error propagation across predicted views, we allow a VLM to adaptively explore multiple camera paths in a reconstructed 3D scene. While an easy question can be answered from the current view or after one camera movement, a more difficult question can explore additional paths.
+	which help reveal an occluded object or show a spatial relationship from a viewpoint that is easier for the VLM to perceive. For example, as shown in Figure~\ref{fig:method_rationale}, the VLM first requests a view from further back to locate the nightstand and then requests a view facing the nearby wall to find the light switch. In this way, it uses only a small number of task-relevant views, rather than reasoning over all the available frames that may be irrelevant and hence confusing. 
 	
+	
+	\begin{figure}
+		\centering
+		\vspace{-0.05in}
+		\includegraphics[width=0.85\linewidth]{figures/method_rationale.pdf}
+		\vspace{-0.1in}
+		\caption{ViewTree actively requests task-relevant views instead of perceiving redundant frames}
+		\label{fig:method_rationale}
+		\vspace{-0.15in}
+	\end{figure}
+	
+	However, the generated view is only a prediction from the world model, rather than an actual observation from the captured scene. Especially when the prediction corresponds to large camera movement, it may lose physical consistency and largely deviate from the actual scene \cite{visa2025}, as shown in Figure \ref{fig:world_model_failure}. Leveraging multiple predictions from the world model can help, but adds substantial compute cost to mobile devices. To address this issue, our basic rationale is to use a geometry grounded 3D reconstruction model, such as VGGT \cite{vggt2025}, to reconstruct the input video scenes as a set of 3D structures (e.g., 3D point clouds or depth maps) with estimated camera poses. Afterwards, when the VLM requests a camera movement, the system can virtually move to the requested camera pose and project the available 3D structures to a new 2D view. In this way, the rendered view can ensure to preserve the geometry and other physical properties of the original scene. Moreover, this also prevents errors from accumulating over consecutive movements: a world model must feed its own prediction back as the next input, so its errors compound, whereas every rendered view is re-projected from the same stored reconstruction (Figure~\ref{fig:world_model_failure}).
 	
 	%However, when several camera movements appear useful, an incorrect early choice may lead the VLM toward a region that does not contain the required information. Existing methods that follow a single reasoning path~\cite{cov2026,think3d2026} may also be insufficient when answering a question requires observations from different directions. To explore multiple paths efficiently, instead of expanding several camera paths at every reasoning step, the system must adaptively determine when alternative camera trajectories are necessary, which trajectories should receive computation, and when their observations should be combined, subject to the device’s latency, energy, memory constraints.
 	
-	Based on this idea, in this paper we present \system, an on-device spatial reasoning system that first uses a frozen geometry model to reconstruct recent history frames~\cite{vggt2025}, and then maintains the reconstructed scene across nearby questions to provide a virtual camera that the VLM can control. At each reasoning step, the VLM selects one of four operations: \textsc{Move}, \textsc{Branch}, \textsc{Fuse}, or \textsc{Stop}. \textsc{Move} changes the virtual camera position and returns an encoded view with its camera pose. In this way, the VLM receives only the view requested by its current reasoning, rather than processing the complete 3D reconstruction.
+		
+	\begin{figure*}[t]
+	\centering
+	\includegraphics[width=0.94\textwidth]{figures/fig_wm_failure.pdf}
+	\vspace{-0.12in}
+	\caption{World-model view prediction versus \system's reconstruct-then-render, on a real captured scene. From the current view, the VLM requests ``turn left $\approx$85$^\circ$'' and then ``move forward $\approx$0.7\,m''; both requested views were actually captured in the walkthrough, so the correct outcome of each movement is known. The world model (Stable Virtual Camera, the one used by MindJourney~\cite{mindjourney2025}) predicts a bed and walls that contradict the recorded frames, and drifts further when its own prediction is fed back as the input for the second movement. \system instead renders both requested views by re-projecting one reconstruction built from all frames: each view stays consistent with the actual scene, and errors cannot accumulate across movements.}
+	\label{fig:world_model_failure}
+	\vspace{-0.1in}
+\end{figure*}
+			
+	Based on this rationale, in this paper we present \system, an on-device system that gives the VLM an \emph{explicit scene memory} -- the reconstruction and the views rendered from it -- and lets the VLM take \emph{confidence-guided camera walks} through this memory: short sequences of virtual camera movements in which a learned confidence estimate decides where to walk, whether to branch, and when to stop and answer. To limit the damage of a wrong decision propagating along a single reasoning path, we allow a VLM to adaptively explore multiple camera paths in the reconstructed 3D scenes. While an easy question can be answered from the current view or after one camera movement, a more difficult question can explore additional paths. The main challenge is how to explore multiple camera paths without introducing unnecessary computations on resource-constrained mobile devices. \system adds a learned confidence head that predicts whether each partial path can eventually produce the correct answer. When the current answer has low confidence and several camera movements appear useful, the VLM can create a small number of paths from the same reasoning history. These paths reason independently, so that an incorrect decision in one path does not affect the others. After each movement, \system retains paths with high confidence and removes paths with low confidence. If several high-confidence paths produce different answers, the system keeps them and requests another view that can help resolve the disagreement. Observations from different paths are combined only when they provide complementary information. %If one path already answers the question with high confidence, the system stops without combining additional observations.
 	
-	The main challenge is to explore multiple camera paths without introducing unnecessary computation. \system adds a learned confidence head that predicts whether each partial path can eventually produce the correct answer. When the current answer has low confidence and several camera movements appear useful, the VLM can create a small number of paths from the same reasoning history. These paths reason independently so that an incorrect decision in one path does not affect the others. After each movement, \system retains paths with high confidence and removes paths with low confidence. If several high-confidence paths produce different answers, the system keeps them and requests another view that can help resolve the disagreement. Observations from different paths are combined only when they provide complementary information. If one path already answers the question with high confidence, the system stops without combining additional observations.
+	With the available set of camera paths, at each reasoning step the VLM selects one of four operations: \textsc{Move}, \textsc{Branch}, \textsc{Fuse}, or \textsc{Stop}. \textsc{Move} changes the virtual camera position and returns an encoded view with its camera pose. \textsc{Branch} forks the current reasoning history into a few paths that continue independently from the same context. \textsc{Fuse} combines the views retained by different paths into one context to produce a single answer. \textsc{Stop} ends a path and commits its answer together with a confidence estimate. Figure~\ref{fig:operations} illustrates the four operations. In this way, the VLM receives only the view requested by its current reasoning, rather than processing the complete 3D reconstruction.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.92\linewidth]{figures/fig_operations.pdf}
+	\vspace{-0.1in}
+	\caption{The four reasoning operations of \system.}
+	\label{fig:operations}
+	\vspace{-0.15in}
+\end{figure}
 	
-	To run efficiently on mobile devices, \system reuses computation shared by different camera paths. The 3D reconstruction is reused across nearby questions, while rendered views and visual features are cached for later requests. Camera movements from different paths are rendered and encoded in batches, and the paths share the VLM’s prefix KV cache before they separate. A device-aware scheduler adjusts the number and length of camera paths according to the available latency, energy, memory, and thermal budget. In this way, the VLM decides which paths are useful, while the scheduler determines how many useful paths the device can support.
+	To run efficiently on mobile and embedded devices, \system reuses computation shared by different camera paths. %The 3D reconstruction is reused across nearby questions, while rendered views and visual features are cached for later requests. 
+	Camera movements from different paths are rendered and encoded in batches, and the paths share the VLM's prefix KV cache before they separate. A device-aware scheduler then adjusts the number and length of camera paths according to the available latency, energy, memory, and thermal budget. In this way, the VLM decides which paths are useful, and the scheduler determines how many useful paths the device can support.
 	
-	[I didn't revise the above 3 paragraphs. I will need to see your figures and revisions to fully understand these before revision.]
-	
-	This paper makes the following contributions:
+	We implemented \system with PyTorch and HuggingFace Transformers, training on a server with 8$\times$NVIDIA H100 GPUs and deploying the complete inference pipeline on an NVIDIA Jetson AGX Orin (64\,GB, JetPack~6). We evaluated \system with Qwen2.5-VL backbones of 3B, 7B, and 32B parameters~\cite{bai2025qwen2} on four spatial reasoning benchmarks: VSI-Bench~\cite{vsibench2024}, STI-Bench~\cite{li2025sti}, VSTI-Bench~\cite{vstibench2026}, and OST-Bench~\cite{ostbench2025}. From the experiment results, we have the following conclusions:
+	\begin{itemize}
+		\item \system improves spatial reasoning accuracy on VSI-Bench from 0.313 (direct 16-frame input) to 0.530 with the same 7B backbone. Against the strongest baseline fine-tuned on the same training data, \system's adaptive exploration adds 2.1 points on average, and the gains concentrate exactly on the questions where a new viewpoint changes the visible geometry: +6--7 points on relative direction and +5 points on relative distance.
+		\item Adaptive exploration is affordable on-device. On Jetson AGX Orin, \system answers 71\% of the questions directly after a cheap sufficiency check in 9.6\,s -- faster than a single 16-frame VLM call (11.7\,s) -- and averages 24.5\,s and 1.1\,kJ per question, $1.9\times$ cheaper than a non-adaptive tree that explores rendered views for every question (46.3\,s, 2.1\,kJ).
+		\item Adaptivity is also necessary for accuracy: exposing rendered views to every question unconditionally helps a 7B backbone (+2.9 points) but \emph{reduces} a 32B backbone's accuracy by 3.2 points, and unconditional multi-path exploration costs over $12\times$ a direct answer. \system's learned confidence-based control decides per question whether extra views pay off.
+	\end{itemize}
 	
 	\section{Background and Motivation}
 	\label{sec:background}
@@ -431,11 +439,11 @@ where $\pi_{\theta}$ is the controller's distribution over camera actions. Inval
 
 We evaluate ViewTree both on a server testbed and on an embodied AI device. All controller training and large-scale benchmark evaluations run on a server with 8$\times$NVIDIA H100 GPUs; the complete inference pipeline is additionally deployed on an NVIDIA Jetson AGX Orin (64\,GB) to characterize on-device feasibility. We apply VLM backbones with various parameter sizes to match different device budgets: Qwen2.5-VL-3B, Qwen2.5-VL-7B, and Qwen2.5-VL-32B \cite{bai2025qwen2}, where the 32B model is deployed on Jetson with 4-bit weight quantization.
 
-\noindent\textbf{System setup.} On the server, all models run in PyTorch with bfloat16 precision. On Jetson AGX Orin, the VLM runs with quantized weights, and the remaining pipeline stages are executed as stage-level batches: the frozen VGGT \cite{wang2025vggt} reconstruction is computed once per scene and reused across all questions and reasoning branches; candidate views proposed at the same tree level are rendered in one point-splat pass and encoded as one batch; rendered views and their encoded tokens are cached by camera pose and scene version, so repeated requests skip both the renderer and the visual encoder. The end-to-end latency reported in Section~\ref{sec:evaluation} includes reconstruction (amortized and upfront), rendering, visual encoding, and all VLM calls of the reasoning tree.
+\noindent\textbf{System setup.} On the server, all models run in PyTorch with bfloat16 precision. On Jetson AGX Orin, the VLM runs with quantized weights, and the remaining pipeline stages are executed as stage-level batches: the frozen VGGT \cite{vggt2025} reconstruction is computed once per scene and reused across all questions and reasoning branches; candidate views proposed at the same tree level are rendered in one point-splat pass and encoded as one batch; rendered views and their encoded tokens are cached by camera pose and scene version, so repeated requests skip both the renderer and the visual encoder. The end-to-end latency reported in Section~\ref{sec:evaluation} includes reconstruction (amortized and upfront), rendering, visual encoding, and all VLM calls of the reasoning tree.
 
-\noindent\textbf{Benchmarks.} Our experiments evaluate the spatial-cognition capabilities that ViewTree is designed to improve. Following the task grouping of Section~\ref{sec:experiment_setting}, we use \emph{Metric Measurement} (absolute distance, object size, room size), \emph{Perspective-dependent Reasoning} (relative direction, relative distance, object counting, route planning), and \emph{Spatiotemporal Tracking} (appearance order, camera-motion and camera--object relations). We evaluate on four benchmark datasets (\textcolor{red}{()}):
+\noindent\textbf{Benchmarks.} Our experiments evaluate the spatial-cognition capabilities that ViewTree is designed to improve. Following the task grouping of Section~\ref{sec:experiment_setting}, we use \emph{Metric Measurement} (absolute distance, object size, room size), \emph{Perspective-dependent Reasoning} (relative direction, relative distance, object counting, route planning), and \emph{Spatiotemporal Tracking} (appearance order, camera-motion and camera--object relations). We evaluate on four benchmark datasets:
 \begin{itemize}
-    \item \textbf{VSI-Bench \cite{yang2025thinking}} contains $>$5{,}000 QA pairs from 288 indoor videos over 10 spatial tasks; we report absolute distance (A.D.), object size (O.S.), relative distance (R.Dt.), relative direction (R.Dr.), object count (O.C.), and appearance order (Ap.Or.). To prevent any information leakage from confidence-head fitting, all VSI-Bench numbers are reported on a held-out half of the scenes (144 scenes, 2{,}557 questions) that is never touched by any training or calibration; splits are at scene level throughout.
+    \item \textbf{VSI-Bench \cite{vsibench2024}} contains $>$5{,}000 QA pairs from 288 indoor videos over 10 spatial tasks; we report absolute distance (A.D.), object size (O.S.), relative distance (R.Dt.), relative direction (R.Dr.), object count (O.C.), and appearance order (Ap.Or.). To prevent any information leakage from confidence-head fitting, all VSI-Bench numbers are reported on a held-out half of the scenes (144 scenes, 2{,}557 questions) that is never touched by any training or calibration; splits are at scene level throughout.
     \item \textbf{STI-Bench \cite{li2025sti}} contains 300 videos and $>$2{,}000 QA pairs; we report dimensional measurement (D.Meas.) and 3D video grounding (Grd.) to complement VSI-Bench.
     \item \textbf{VSTI-Bench \cite{vstibench2026}} contains 5{,}736 QA pairs on ScanNet validation videos over 9 spatio-temporal types; we report the camera--object relation (C.O.) and object--object relation (O.O.) groups.
     \item \textbf{OST-Bench \cite{ostbench2025}} contains 5{,}557 multiple-choice questions probing online spatio-temporal reasoning over an agent's cumulative image history; we report the overall accuracy (Ovr.).
@@ -445,14 +453,14 @@ QA performance is evaluated as the percentage of correct answer choices; numeric
 \noindent\textbf{Baselines.} We compare ViewTree against the following baselines, all using the same VLM backbone, visual resolution, frame budgets, and answer scorer:
 \begin{itemize}
     \item \textbf{Direct input} uniformly downsamples the video and feeds the frames directly to the VLM.
-    \item \textbf{Standard SFT} 
+    \item \textbf{Standard SFT} fine-tunes the backbone on the training QA with answer supervision only, using the input frames without any rendered view.
     \item \textbf{Standard SFT+GRPO} further applies GRPO with answer-correctness reward on top of standard SFT.
-    \item \textbf{Video-COT}
-    \item \textbf{Static Scene memory} 
+    \item \textbf{Video-CoT} prompts the same backbone to produce step-by-step textual reasoning over the input frames before committing to an answer.
+    \item \textbf{Static scene memory} attaches a fixed set of rendered views (a bird's-eye view plus eye-level renders) to the input frames of every question, i.e., scene reconstruction without adaptive exploration.
 \end{itemize}
 
 
-\noindent\textbf{Training setup.} 
+\noindent\textbf{Training setup.} All trained components are LoRA adapters (rank 16) on the frozen backbone plus the two-layer confidence head; the backbone weights are never updated. Training data come from the VLM-3R spatial-QA corpus~\cite{vstibench2026} (493{,}663 QA pairs over 1{,}709 ScanNet and ScanNet++ scenes); every scene that appears in any evaluation benchmark is excluded, and all fine-tuned baselines use the same corpus and compute budget. The answerer is trained on roughly 100k walk-generated examples (Section~\ref{sec:training}), the controller and confidence head on 8{,}639 oracle walks, and the optional RL stage runs GRPO with an answer-correctness reward over 30k walk episodes.
 
 % ===================================================================
 \section{Performance Evaluation}
