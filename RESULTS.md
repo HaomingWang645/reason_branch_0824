@@ -1092,6 +1092,8 @@ when complete.
 | greedy_7b (beam 1, keep 1) | 0.530 @ 2.7 calls | +0.0 [-0.7, +0.8] vs beam |
 | random_7b (random actions, same head/gate) | 0.531 @ 4.1 calls | +0.1 [-0.6, +0.7] vs beam |
 | cot_3b (Video-CoT) | 0.357 | +3.6 vs 3B zero-shot |
+| cot_7b (Video-CoT) | 0.315 | +0.2 vs 7B zero-shot 0.313 (no gain) |
+| cot_32b (Video-CoT) | 0.381 | +0.1 vs 32B zero-shot 0.380 (no gain; best 32B cell by a hair) |
 
 - **Walk policy does not matter on the VSI average.** Greedy and random-action
   walks match the deployed beam within +-0.8 (paired). The gate, calibrated head
@@ -1103,7 +1105,9 @@ when complete.
   `scripts/paperfill_analysis.py`).
 - **Render exposure:** zero-shot +2.6 (7B) but -1.1 (3B) / -2.2 (32B); after
   answer training -0.7 (n.s.) -- adaptivity, not exposure, is what helps.
-- Pending: cot_7b (partial 0.322 @ n=1410), cot_32b (running).
+- **All paper-fill runs complete (2026-09-03).** Video-CoT: the missing
+  information is visual, not inferential -- no gain at 7B/32B, +3.6 at 3B.
+  All numbers are in mobicom27 Tables 1-4.
 
 ## 7. Next milestones
 
