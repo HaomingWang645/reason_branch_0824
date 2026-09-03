@@ -267,7 +267,7 @@ ax.text(5.92, 1.36, "answer", fontsize=9, color=ARC, ha="center", va="bottom", w
 # ---- explicit scene memory (dashed group) ----
 ax.add_patch(FancyBboxPatch((8.6, 0.35), 4.75, 3.85, boxstyle="round,pad=0.02,rounding_size=0.06",
                             fc="none", ec="#111111", lw=2.0, ls=(0, (6, 4)), zorder=2))
-ax.text(10.97, 4.06, "Explicit Scene Memory", fontsize=12, color="#111111", ha="center", va="center", weight="bold")
+ax.text(10.45, 4.06, "Explicit Scene Memory", fontsize=12, color="#111111", ha="center", va="center", weight="bold")
 bb(9.0, 3.42, 2.0, 0.5, "Video Frames", BLUF, 12.5)
 tarr((10.0, 3.40), (10.0, 3.26))
 bb(9.0, 2.72, 2.0, 0.5, "VGGT  \u2744", PURF, 12.5)
@@ -278,7 +278,7 @@ ax.add_patch(FancyBboxPatch((10.0 - iw / 2, 2.62 - ih), iw, ih, boxstyle="square
 tarr((10.0, 2.70), (10.0, 2.64))
 tarr((10.0, 2.62 - ih - 0.02), (10.0, 1.04))
 bb(9.0, 0.48, 2.0, 0.52, "Scene Memory", PURF, 12.5)
-himg = mpimg.imread(f"{KA}/reconstruction_views/render_spot03_dir2.jpg")
+himg = mpimg.imread(f"{R}/figures/wm_failure_assets/render_25.jpg")
 rw = 1.3; rh = rw * himg.shape[0] / himg.shape[1]
 ax.imshow(himg, extent=(11.9, 11.9 + rw, 1.58, 1.58 + rh), aspect="auto", zorder=2)
 ax.add_patch(FancyBboxPatch((11.9, 1.58), rw, rh, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=1.0, zorder=4))
@@ -289,6 +289,24 @@ ax.plot([12.9, 12.9, 9.32], [1.56, 0.30, 0.30], color=ARC, lw=3.0, zorder=5)
 bb(7.75, 0.06, 1.55, 0.5, "View + Pose", BLUF, 11.5)
 ax.plot([7.73, 1.55], [0.30, 0.30], color=ARC, lw=3.0, zorder=5)
 tarr((1.55, 0.30), (1.55, 1.13))
+# example imagery in / under the blocks
+BFR = f"{R}/figures/motivation_assets/vsi_arkit_47334117/frames_64"
+for j, k in enumerate((9, 25, 57)):
+    fim = mpimg.imread(f"{BFR}/frame_{k:02d}.jpg")
+    fx = 1.10 + j * 0.80
+    ax.imshow(fim, extent=(fx, fx + 0.75, 3.52, 3.52 + 0.56), aspect="auto", zorder=2)
+    ax.add_patch(FancyBboxPatch((fx, 3.52), 0.75, 0.56, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=0.9, zorder=4))
+tarr((2.82, 3.50), (2.82, 3.34), lw=2.4)
+for j, k in enumerate((14, 29)):
+    fim = mpimg.imread(f"{BFR}/frame_{k:02d}.jpg")
+    fx = 11.30 + j * 0.86
+    ax.imshow(fim, extent=(fx, fx + 0.80, 3.26, 3.26 + 0.60), aspect="auto", zorder=2)
+    ax.add_patch(FancyBboxPatch((fx, 3.26), 0.80, 0.60, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=0.9, zorder=4))
+vim = mpimg.imread(f"{R}/figures/wm_failure_assets/render_25.jpg")
+vh = 0.78 * vim.shape[0] / vim.shape[1]
+ax.imshow(vim, extent=(6.52, 7.30, 0.02, 0.02 + vh), aspect="auto", zorder=6)
+ax.add_patch(FancyBboxPatch((6.52, 0.02), 0.78, vh, boxstyle="square,pad=0", fc="none", ec="#6b7280", lw=0.9, zorder=7))
+ax.text(4.40, 2.62, "e.g., Turn-Left, Forward", fontsize=8.5, color="#555555", ha="center", va="bottom", style="italic")
 # legend
 flame(0.35, 0.52, 0.8); ax.text(0.52, 0.60, "trained", fontsize=9, color="#444444", ha="left", va="center")
 ax.text(1.25, 0.60, "\u2744 frozen", fontsize=9, color="#444444", ha="left", va="center")
