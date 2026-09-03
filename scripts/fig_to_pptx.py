@@ -254,6 +254,21 @@ CHARTS = {
     "vt_temporal_duration": b_complexity("temporal_duration", "video duration"),
 }
 
+
+def b_eff_backbone(tag, title):
+    lat = {"3b": (8.4, 8.0, 35.3, 17.6), "7b": (11.7, 11.4, 46.3, 24.5), "32b": (32.2, 31.4, 126.5, 69.6)}[tag]
+    en = {"3b": (0.338, 0.319, 1.321, 0.681), "7b": (0.529, 0.518, 2.110, 1.104), "32b": (1.690, 1.673, 6.717, 3.690)}[tag]
+    def b(slide):
+        cats = ["Direct Input", "Static Memory", "Tree d=1", "Ours"]
+        ch = col_chart(slide, 1.2, 0.9, 10.9, 5.6, cats, [("Latency (s)", lat), ("Energy (kJ)", en)])
+        style_series(ch.plots[0], 0, "4C72B0"); style_series(ch.plots[0], 1, "C44E52")
+        add_textbox(slide, SW / 2, 6.7, title + " - measured on Jetson AGX Orin (energy in kJ on the same axis)", 13, None)
+    return b
+
+CHARTS["vt_eff_3b"] = b_eff_backbone("3b", "Qwen2.5-VL-3B")
+CHARTS["vt_eff_7b"] = b_eff_backbone("7b", "Qwen2.5-VL-7B")
+CHARTS["vt_eff_32b"] = b_eff_backbone("32b", "Qwen2.5-VL-32B (NF4 4-bit; bf16 OOM)")
+
 def run():
     for name, b in CHARTS.items():
         chart_slide(name, b)

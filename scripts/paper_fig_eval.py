@@ -91,6 +91,41 @@ def eff_breakdown():
     fig.tight_layout()
     fig.savefig(f"{OUT}/vt_eff_breakdown.pdf"); fig.savefig(f"{OUT}/vt_eff_breakdown.png", dpi=170); plt.close(fig)
 
+
+# ---------------- per-backbone cost facets (example-paper style) ----------------
+EBLUE, ERED = "#4C72B0", "#C44E52"
+BB_DATA = {
+    "3b":  ("Qwen2.5-VL-3B (bf16)",  [8.4, 8.0, 35.3, 17.6],  [0.338, 0.319, 1.321, 0.681], None),
+    "7b":  ("Qwen2.5-VL-7B (bf16)",  [11.7, 11.4, 46.3, 24.5], [0.529, 0.518, 2.110, 1.104], None),
+    "32b": ("Qwen2.5-VL-32B (NF4)",  [32.2, 31.4, 126.5, 69.6], [1.690, 1.673, 6.717, 3.690], "bf16: OOM"),
+}
+METHS = ["Direct", "Static\nMem.", "Tree\nd=1", "Ours"]
+
+def eff_backbone(tag):
+    name, lat, en, note = BB_DATA[tag]
+    fig, ax = plt.subplots(figsize=(2.45, 1.95))
+    x = np.arange(4)
+    ax.bar(x - 0.20, lat, 0.34, color=EBLUE, label="Latency (s)")
+    ax.set_ylabel("Latency (s)", color=EBLUE, fontsize=8)
+    ax.tick_params(axis="y", labelcolor=EBLUE, labelsize=7)
+    ax2 = ax.twinx()
+    ax2.bar(x + 0.20, en, 0.34, color=ERED, label="Energy (kJ)")
+    ax2.set_ylabel("Energy (kJ)", color=ERED, fontsize=8)
+    ax2.tick_params(axis="y", labelcolor=ERED, labelsize=7)
+    ymax = max(lat) * 1.45; ax.set_ylim(0, ymax)
+    y2max = max(en) * 1.45; ax2.set_ylim(0, y2max)
+    for xi, v in zip(x, lat):
+        ax.text(xi - 0.24, v + ymax * 0.015, f"{v:.0f}" if v >= 10 else f"{v:.1f}", ha="center", fontsize=5.5, color=EBLUE, weight="bold")
+    for xi, v in zip(x, en):
+        ax2.text(xi + 0.24, v + y2max * 0.015, f"{v:.1f}" if v < 10 else f"{v:.0f}", ha="center", fontsize=5.5, color=ERED, weight="bold")
+    ax.set_xticks(x); ax.set_xticklabels(METHS, fontsize=6.4)
+    h1, l1 = ax.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
+    ax.legend(h1 + h2, l1 + l2, fontsize=5.6, loc="upper left", frameon=True, framealpha=0.9, edgecolor="#cccccc", handlelength=1.0, borderpad=0.25, labelspacing=0.25, handletextpad=0.4)
+    if note:
+        ax.text(0.985, 0.985, note, transform=ax.transAxes, fontsize=5.8, color=ERED, ha="right", va="top", weight="bold")
+    fig.tight_layout()
+    fig.savefig(f"{OUT}/vt_eff_{tag}.pdf"); fig.savefig(f"{OUT}/vt_eff_{tag}.png", dpi=170); plt.close(fig)
+
 # ---------------- complexity (per-question analysis) ----------------
 def compute_bins():
     import cv2
@@ -187,6 +222,8 @@ def complexity_figs(data):
         print(fname, [(b["label"], round(b["direct"], 3), round(b["sft"], 3), round(b["vt"], 3), b["n"]) for b in bins])
 
 if __name__ == "__main__":
-    eff_methods(); eff_routes(); eff_breakdown(); print("efficiency figs done")
+    eff_methods(); eff_routes(); eff_breakdown()
+    for t in ("3b", "7b", "32b"): eff_backbone(t)
+    print("efficiency figs done")
     data = json.load(open(CACHE)) if os.path.exists(CACHE) and "--recompute" not in sys.argv else compute_bins()
     complexity_figs(data)
